@@ -1,0 +1,776 @@
+<?php
+/**
+ * add amazon options metaboxes to product edit page
+ */
+
+class WPLA_Product_MetaBox {
+
+	function __construct() {
+
+		add_action( 'add_meta_boxes', array( &$this, 'add_meta_box' ) );
+		add_action( 'woocommerce_process_product_meta', array( &$this, 'save_meta_box' ), 0, 2 );
+
+        // add options to variable products
+        add_action('woocommerce_product_after_variable_attributes', array(&$this, 'woocommerce_variation_options'), 1, 3);
+        add_action('woocommerce_product_after_variable_attributes', array(&$this, 'woocommerce_custom_variation_meta_fields'), 2, 3);
+        add_action('woocommerce_process_product_meta_variable', array(&$this, 'process_product_meta_variable'), 10, 1);
+        add_action('woocommerce_process_product_meta_variable', array(&$this, 'process_custom_variation_meta_fields'), 10, 1);
+
+		// remove amazon specific meta data from duplicated products
+		add_action( 'woocommerce_duplicate_product', array( &$this, 'woocommerce_duplicate_product' ), 0, 2 );
+	}
+
+	function add_meta_box() {
+
+		$title = __('Amazon Options', 'wpla');
+		add_meta_box( 'wpla-amazon-options', $title, array( &$this, 'meta_box_basic' ), 'product', 'normal', 'default');
+
+		$title = __('Advanced Amazon Options', 'wpla');
+		add_meta_box( 'wpla-amazon-advanced', $title, array( &$this, 'meta_box_advanced' ), 'product', 'normal', 'default');
+
+		// $this->enqueueFileTree();
+
+	}
+
+	function meta_box_basic() {
+		global $woocommerce, $post;
+
+	    // if ( get_option( 'wpla_enable_missing_details_warning' ) == '1' ) {
+		//	$this->add_validation_js();
+	    // }
+
+        ?>
+        <style type="text/css">
+        	/* standard input fields */
+            #wpla-amazon-options label, 
+            #wpla-amazon-advanced label { 
+            	float: left;
+            	width:25%;
+            	line-height: 2em;
+            }
+            #wpla-amazon-options input, 
+            #wpla-amazon-advanced input { 
+            	width:70%; 
+            }
+
+            /* radio buttons */
+            #wpla-amazon-options label ul.wc-radios label, 
+            #wpla-amazon-advanced label ul.wc-radios label { 
+            	float: right;
+            	width:auto;
+            }
+            #wpla-amazon-options input.select, 
+            #wpla-amazon-advanced input.select { 
+            	width:auto; 
+            }
+
+            #wpla-amazon-options .description, 
+            #wpla-amazon-advanced .description { 
+            	clear: both;
+            	margin-left: 25%;
+            }
+            #wpl_amazon_product_description { 
+            	height: 10em;
+            }
+        </style>
+        <?php
+
+		woocommerce_wp_text_input( array(
+			'id' 			=> 'wpl_amazon_product_id',
+			'label' 		=> __('Product ID', 'wpla'),
+			'placeholder' 	=> 'UPC or EAN',
+			'description' 	=> 'A standard, alphanumeric string that uniquely identifies the product. This could be a GCID (16 alphanumeric characters), UPC or EAN. This is a required field to list new products on Amazon.',
+			'desc_tip'		=>  true,
+			'value'			=> get_post_meta( $post->ID, '_amazon_product_id', true )
+		) );
+
+		woocommerce_wp_select( array(
+		// woocommerce_wp_radio( array(
+			'id' 			=> 'wpl_amazon_id_type',
+			'label' 		=> __('Product ID Type', 'wpla'),
+			'options' 		=> array( 
+					''          => __('-- use profile setting --', 'wpla'),
+					'UPC'   	=> __('UPC', 'wpla'),
+					'EAN'   	=> __('EAN', 'wpla')
+				),
+			'description' 	=> 'The type of standard, unique identifier entered in the Product ID field. This is a required field to list new products on Amazon.',
+			'desc_tip'		=>  true,
+			'value'			=> get_post_meta( $post->ID, '_amazon_id_type', true )
+		) );
+
+		woocommerce_wp_text_input( array(
+			'id' 			=> 'wpl_amazon_title',
+			'label' 		=> __('Listing title', 'wpla'),
+			'placeholder' 	=> 'Custom listing title',
+			'description' 	=> __('Leave empty to generate title from product name.','wpla'),
+			'desc_tip'		=>  true,
+			'custom_attributes' => array( 'maxlength' => 500 ),
+			'value'			=> get_post_meta( $post->ID, '_amazon_title', true )
+		) );
+
+		if ( get_option( 'wpla_enable_custom_product_prices', 1 ) != 0 ) {
+
+			woocommerce_wp_text_input( array(
+				'id' 			=> 'wpl_amazon_price',
+				'label' 		=> __('Amazon Price', 'wpla'),
+				'description' 	=> __('Leave empty to use product price.','wpla'),
+				'desc_tip'		=>  true,
+				'placeholder' 	=> 'Custom Price',
+				'value'			=> get_post_meta( $post->ID, '_amazon_price', true )
+			) );
+
+		}
+
+		if ( get_option( 'wpla_enable_minmax_product_prices', 0 ) != 0 ) {
+
+			woocommerce_wp_text_input( array(
+				'id' 			=> 'wpl_amazon_minimum_price',
+				'label' 		=> __('Minimum Price', 'wpla'),
+				'description' 	=> __('This is used to automatically set the price to the lowest price on Amazon - if it is between minimum and maxmimum price.','wpla'),
+				'desc_tip'		=>  true,
+				'placeholder' 	=> 'Minimum Price',
+				'value'			=> get_post_meta( $post->ID, '_amazon_minimum_price', true )
+			) );
+
+			woocommerce_wp_text_input( array(
+				'id' 			=> 'wpl_amazon_maximum_price',
+				'label' 		=> __('Maximum Price', 'wpla'),
+				'description' 	=> __('This is used to automatically set the price to the lowest price on Amazon - if it is between minimum and maxmimum price.','wpla'),
+				'desc_tip'		=>  true,
+				'placeholder' 	=> 'Maximum Price',
+				'value'			=> get_post_meta( $post->ID, '_amazon_maximum_price', true )
+			) );
+
+		}
+
+		woocommerce_wp_select( array(
+			'id' 			=> 'wpl_amazon_condition_type',
+			'label' 		=> __('Item Condition', 'wpla'),
+			'options' 		=> array( 
+					''                      => __('-- use profile setting --', 'wpla'),
+					'New'                   => __('New', 'wpla'),
+					'UsedLikeNew'           => __('Used - Like New', 'wpla'),
+					'UsedVeryGood'          => __('Used - Very Good', 'wpla'),
+					'UsedGood'              => __('Used - Good', 'wpla'),
+					'UsedAcceptable'        => __('Used - Acceptable', 'wpla'),
+					'Refurbished'           => __('Refurbished', 'wpla'),
+					'CollectibleLikeNew'    => __('Collectible - Like New', 'wpla'),
+					'CollectibleVeryGood'   => __('Collectible - Very Good', 'wpla'),
+					'CollectibleGood'       => __('Collectible - Good', 'wpla'),
+					'CollectibleAcceptable' => __('Collectible - Acceptable', 'wpla'),
+				),
+			'description' 	=> 'Indicates the condition of the item. Review the condition guidelines definitions.',
+			'desc_tip'		=>  true,
+			'value'			=> get_post_meta( $post->ID, '_amazon_condition_type', true )
+		) );
+
+		woocommerce_wp_text_input( array(
+			'id' 			=> 'wpl_amazon_condition_note',
+			'label' 		=> __('Condition Note', 'wpla'),
+			'description' 	=> 'Descriptive text explaining the actual condition of the item. Required if item condition is not "New". <br>Example: "Small dent in left side panel."',
+			'desc_tip'		=>  true,
+			'custom_attributes' => array( 'maxlength' => 1000 ),
+			'value'			=> get_post_meta( $post->ID, '_amazon_condition_note', true )
+		) );
+
+
+		woocommerce_wp_text_input( array(
+			'id' 			=> 'wpl_amazon_bullet_point1',
+			'label' 		=> __('Bullet Point 1', 'wpla'),
+			'custom_attributes' => array( 'maxlength' => 2000 ),
+			'value'			=> get_post_meta( $post->ID, '_amazon_bullet_point1', true )
+		) );
+		woocommerce_wp_text_input( array(
+			'id' 			=> 'wpl_amazon_bullet_point2',
+			'label' 		=> __('Bullet Point 2', 'wpla'),
+			'custom_attributes' => array( 'maxlength' => 2000 ),
+			'value'			=> get_post_meta( $post->ID, '_amazon_bullet_point2', true )
+		) );
+		woocommerce_wp_text_input( array(
+			'id' 			=> 'wpl_amazon_bullet_point3',
+			'label' 		=> __('Bullet Point 3', 'wpla'),
+			'custom_attributes' => array( 'maxlength' => 2000 ),
+			'value'			=> get_post_meta( $post->ID, '_amazon_bullet_point3', true )
+		) );
+		woocommerce_wp_text_input( array(
+			'id' 			=> 'wpl_amazon_bullet_point4',
+			'label' 		=> __('Bullet Point 4', 'wpla'),
+			'custom_attributes' => array( 'maxlength' => 2000 ),
+			'value'			=> get_post_meta( $post->ID, '_amazon_bullet_point4', true )
+		) );
+		woocommerce_wp_text_input( array(
+			'id' 			=> 'wpl_amazon_bullet_point5',
+			'label' 		=> __('Bullet Point 5', 'wpla'),
+			'custom_attributes' => array( 'maxlength' => 2000 ),
+			'value'			=> get_post_meta( $post->ID, '_amazon_bullet_point5', true )
+		) );
+
+		woocommerce_wp_text_input( array(
+			'id' 			=> 'wpl_amazon_generic_keywords1',
+			'label' 		=> __('Keywords 1', 'wpla'),
+			'custom_attributes' => array( 'maxlength' => 500 ),
+			'value'			=> get_post_meta( $post->ID, '_amazon_generic_keywords1', true )
+		) );
+		woocommerce_wp_text_input( array(
+			'id' 			=> 'wpl_amazon_generic_keywords2',
+			'label' 		=> __('Keywords 2', 'wpla'),
+			'custom_attributes' => array( 'maxlength' => 500 ),
+			'value'			=> get_post_meta( $post->ID, '_amazon_generic_keywords2', true )
+		) );
+		woocommerce_wp_text_input( array(
+			'id' 			=> 'wpl_amazon_generic_keywords3',
+			'label' 		=> __('Keywords 3', 'wpla'),
+			'custom_attributes' => array( 'maxlength' => 500 ),
+			'value'			=> get_post_meta( $post->ID, '_amazon_generic_keywords3', true )
+		) );
+		woocommerce_wp_text_input( array(
+			'id' 			=> 'wpl_amazon_generic_keywords4',
+			'label' 		=> __('Keywords 4', 'wpla'),
+			'custom_attributes' => array( 'maxlength' => 500 ),
+			'value'			=> get_post_meta( $post->ID, '_amazon_generic_keywords4', true )
+		) );
+		woocommerce_wp_text_input( array(
+			'id' 			=> 'wpl_amazon_generic_keywords5',
+			'label' 		=> __('Keywords 5', 'wpla'),
+			'custom_attributes' => array( 'maxlength' => 500 ),
+			'value'			=> get_post_meta( $post->ID, '_amazon_generic_keywords5', true )
+		) );
+
+	} // meta_box_basic()
+
+	function meta_box_advanced() {
+		global $woocommerce, $post;
+
+		woocommerce_wp_textarea_input( array(
+			'id' 			=> 'wpl_amazon_product_description',
+			'label' 		=> __('Custom Product Description', 'wpla'),
+			'placeholder' 	=> 'Leave this empty to use the default description.',
+			// 'description' 	=> 'Leave this empty to use the default description.',
+			// 'desc_tip'		=>  true,
+			'value'			=> get_post_meta( $post->ID, '_amazon_product_description', true )
+		) );
+
+		woocommerce_wp_text_input( array(
+			'id' 			=> 'wpl_amazon_asin',
+			'label' 		=> __('ASIN', 'wpla'),
+			'placeholder' 	=> 'ASIN',
+			'description' 	=> 'Do not change this unless you know what you are doing.',
+			// 'desc_tip'		=>  true,
+			'value'			=> get_post_meta( $post->ID, '_wpla_asin', true )
+		) );
+
+		// $tb_url = 'admin-ajax.php?action=wpla_show_product_matches&id='.$post->ID.'&width=640&height=420';
+		// echo '<a href="'.$tb_url.'" class="thickbox" title="Match product on Amazon"><img src="'.WPLA_URL.'/img/search3.png" alt="match" /></a>';
+
+	} // meta_box_advanced()
+
+
+	function add_validation_js() {
+		global $woocommerce;
+        wc_enqueue_js("
+			jQuery( document ).ready( function () {
+
+			    // 
+			    // Validation
+			    // 
+
+				// check required values on submit
+				jQuery('form#post').on('submit', function() {
+
+					var missing_fields = new Array();
+
+					// SKU
+					if ( jQuery('#_sku')[0].value == '' ) {
+						// alert('Please enter a SKU to be able to list this product on Amazon.'); //return false;
+						missing_fields.push('SKU');
+					}
+
+					// handle variable products
+					if ( jQuery('#product-type')[0].value == 'variable' ) {
+
+					} else { // non-variable product
+
+						// Price
+						if ( jQuery('#_regular_price')[0].value == '' ) {
+							// alert('Please enter a price to be able to list this product on Amazon.'); //return false;
+							missing_fields.push('".__('Price','wpla')."');
+						}
+
+						// Sale Price Dates
+						// if ( jQuery('#_sale_price')[0].value != '' ) {
+						// 	if ( jQuery('#_sale_price_dates_from')[0].value == '' ) {
+						// 		missing_fields.push('".__('Sale start date','wpla')."');
+						// 	}
+						// 	if ( jQuery('#_sale_price_dates_to')[0].value == '' ) {
+						// 		missing_fields.push('".__('Sale end date','wpla')."');
+						// 	}
+						// }
+
+						// Quantity
+						if ( jQuery('#_stock')[0].value == '' ) {
+							// alert('Please enter a stock quantity to be able to list this product on Amazon.'); //return false;
+							missing_fields.push('".__('Quantity','wpla')."');
+						}
+
+					}
+
+					if ( missing_fields.length > 0 ) {
+						var CRLF = \"\\n\";
+						var msg  = '".__('This product is missing the following fields required to be listed on Amazon:','wpla')."' + CRLF + CRLF + '- ' + missing_fields.join(CRLF+'- ');
+						alert(msg); //return false;
+					}
+
+					return true;
+				})
+
+			});
+	    ");
+	} // add_validation_js()
+
+
+	function save_meta_box( $post_id, $post ) {
+		$lm = new WPLA_ListingsModel();
+
+		if ( isset( $_POST['wpl_amazon_title'] ) ) {
+
+			// convert decimal comma for all price fields
+			$_amazon_price         = str_replace( ',', '.', @$_POST['wpl_amazon_price'] );
+			$_amazon_minimum_price = str_replace( ',', '.', @$_POST['wpl_amazon_minimum_price'] );
+			$_amazon_maximum_price = str_replace( ',', '.', @$_POST['wpl_amazon_maximum_price'] );
+
+			// Update post meta
+			update_post_meta( $post_id, '_amazon_title', 				esc_attr( trim( @$_POST['wpl_amazon_title'] ) ) );
+			update_post_meta( $post_id, '_amazon_price', 				esc_attr( trim( $_amazon_price ) ) );
+			update_post_meta( $post_id, '_amazon_minimum_price', 		esc_attr( trim( $_amazon_minimum_price ) ) );
+			update_post_meta( $post_id, '_amazon_maximum_price', 		esc_attr( trim( $_amazon_maximum_price ) ) );
+			update_post_meta( $post_id, '_amazon_product_id', 			esc_attr( trim( @$_POST['wpl_amazon_product_id'] ) ) );
+			update_post_meta( $post_id, '_amazon_id_type', 				esc_attr( @$_POST['wpl_amazon_id_type'] ) );
+			update_post_meta( $post_id, '_amazon_condition_type', 		esc_attr( @$_POST['wpl_amazon_condition_type'] ) );
+			update_post_meta( $post_id, '_amazon_condition_note', 		esc_attr( @$_POST['wpl_amazon_condition_note'] ) );
+			update_post_meta( $post_id, '_amazon_bullet_point1',		esc_attr( @$_POST['wpl_amazon_bullet_point1'] ) );
+			update_post_meta( $post_id, '_amazon_bullet_point2',		esc_attr( @$_POST['wpl_amazon_bullet_point2'] ) );
+			update_post_meta( $post_id, '_amazon_bullet_point3',		esc_attr( @$_POST['wpl_amazon_bullet_point3'] ) );
+			update_post_meta( $post_id, '_amazon_bullet_point4',		esc_attr( @$_POST['wpl_amazon_bullet_point4'] ) );
+			update_post_meta( $post_id, '_amazon_bullet_point5',		esc_attr( @$_POST['wpl_amazon_bullet_point5'] ) );
+			update_post_meta( $post_id, '_amazon_generic_keywords1',	esc_attr( @$_POST['wpl_amazon_generic_keywords1'] ) );
+			update_post_meta( $post_id, '_amazon_generic_keywords2',	esc_attr( @$_POST['wpl_amazon_generic_keywords2'] ) );
+			update_post_meta( $post_id, '_amazon_generic_keywords3',	esc_attr( @$_POST['wpl_amazon_generic_keywords3'] ) );
+			update_post_meta( $post_id, '_amazon_generic_keywords4',	esc_attr( @$_POST['wpl_amazon_generic_keywords4'] ) );
+			update_post_meta( $post_id, '_amazon_generic_keywords5',	esc_attr( @$_POST['wpl_amazon_generic_keywords5'] ) );
+			update_post_meta( $post_id, '_amazon_product_description',	esc_attr( @$_POST['wpl_amazon_product_description'] ) );
+
+			update_post_meta( $post_id, '_wpla_asin',					esc_attr( @$_POST['wpl_amazon_asin'] ) );
+
+		}
+
+		// update min/max prices in listings table
+		if ( isset( $_POST['wpl_amazon_minimum_price'] ) ) {
+
+			$min_price = $_amazon_minimum_price;
+			$max_price = $_amazon_maximum_price;
+			$data      = array();
+
+			if ( $listing = $lm->getItemByPostID( $post_id ) ) {
+
+				if ( $min_price != $listing->min_price ) {
+					$data['min_price']  = $min_price;
+					$data['pnq_status'] = 1; // mark as changed
+				}
+
+				if ( $max_price != $listing->max_price ) {
+					$data['max_price']  = $max_price;
+					$data['pnq_status'] = 1; // mark as changed
+				}
+
+				// update listing
+				if ( ! empty($data) ) {
+					$lm->updateWhere( array( 'id' => $listing->id ), $data );
+				}
+
+			}
+
+		}
+
+		// update custom listings title
+		$lm->updateCustomListingTitle( $post_id );
+
+	} // save_meta_box()
+
+
+
+	/* show custom meta fields for variations */
+    function woocommerce_custom_variation_meta_fields( $loop, $variation_data, $variation ) {
+
+		// get variation post_id - WC2.3
+		$variation_post_id = $variation ? $variation->ID : false;
+
+		// handle custom variation meta fields
+		$variation_meta_fields = get_option('wpla_variation_meta_fields', array() );
+		foreach ( $variation_meta_fields as $key => $varmeta ) :
+
+			// $meta_key    = 'meta_'.$key;
+			$field_label = $varmeta['label'];
+
+			// get current value
+			$current_value = get_post_meta( $variation_post_id, $key, true );
+			?>
+
+            <div>
+                <p class="form-row form-row-full">
+                    <label>
+                        <?php echo $field_label ?>
+                    </label> 
+                    <input type="text" name="variable_wpla_<?php echo $key; ?>[<?php echo $loop; ?>]" class="" value="<?php echo $current_value ?>" placeholder="" />
+                </p>
+            </div>
+
+			<?php
+		endforeach;
+
+	} // woocommerce_custom_variation_meta_fields()
+
+    public function process_custom_variation_meta_fields( $post_id ) {
+
+		// get custom variation meta fields
+		$variation_meta_fields = get_option('wpla_variation_meta_fields', array() );
+		if ( ! is_array($variation_meta_fields) ) return;
+		
+		foreach ( $variation_meta_fields as $key => $varmeta ) {
+			$this->process_single_custom_variation_meta_field( $post_id, $key );
+		}
+
+	} // process_custom_variation_meta_fields()
+
+    public function process_single_custom_variation_meta_field( $post_id, $key ) {
+        if ( ! isset($_POST['variable_wpla_'.$key]) ) return;
+
+		$variable_post_id       = $_POST['variable_post_id'];
+		$variable_VALUES        = $_POST['variable_wpla_'.$key];
+
+        $max_loop = max( array_keys( $_POST['variable_post_id'] ) );
+        for ( $i=0; $i <= $max_loop; $i++ ) {
+
+            if ( ! isset( $variable_post_id[$i] ) ) continue;
+            $variation_id = (int) $variable_post_id[$i];
+
+            // Update post meta
+            update_post_meta( $variation_id, $key, $variable_VALUES[$i] );
+
+        } // each variation
+
+    } // process_single_custom_variation_meta_field()
+
+
+
+	/* show additional fields for variations */
+    function woocommerce_variation_options( $loop, $variation_data, $variation ) {
+        // echo "<pre>";print_r($loop);echo"</pre>";#die();
+        // echo "<pre>";print_r($variation_data);echo"</pre>";#die();
+        // echo "<pre>";print_r($variation);echo"</pre>";#die();
+
+
+        // available ID types
+		$options = array( 
+			''          => __('-- use profile setting --', 'wpla'),
+			'UPC'   	=> __('UPC', 'wpla'),
+			'EAN'   	=> __('EAN', 'wpla')
+		);
+
+		// // current values
+		// $_amazon_id_type       = isset( $variation_data['_amazon_id_type'][0] ) 		? $variation_data['_amazon_id_type'][0] 		: '';
+		// $_amazon_product_id    = isset( $variation_data['_amazon_product_id'][0] ) 		? $variation_data['_amazon_product_id'][0] 		: '';
+		// $_amazon_price         = isset( $variation_data['_amazon_price'][0] )      		? $variation_data['_amazon_price'][0] 			: '';
+		// $_amazon_minimum_price = isset( $variation_data['_amazon_minimum_price'][0] )   ? $variation_data['_amazon_minimum_price'][0] 	: '';
+		// $_amazon_maximum_price = isset( $variation_data['_amazon_maximum_price'][0] )   ? $variation_data['_amazon_maximum_price'][0] 	: '';
+		// $_amazon_asin          = isset( $variation_data['_wpla_asin'][0] ) 				? $variation_data['_wpla_asin'][0] 				: '';
+
+		// get variation post_id - WC2.3
+		$variation_post_id = $variation ? $variation->ID : $variation_data['variation_post_id']; // $variation exists since WC2.2 (at least)
+
+		// get current values - WC2.3
+		$_amazon_id_type       = get_post_meta( $variation_post_id, '_amazon_id_type'  		, true );
+		$_amazon_product_id    = get_post_meta( $variation_post_id, '_amazon_product_id'  	, true );
+		$_amazon_price         = get_post_meta( $variation_post_id, '_amazon_price'       	, true );
+		$_amazon_minimum_price = get_post_meta( $variation_post_id, '_amazon_minimum_price' , true );
+		$_amazon_maximum_price = get_post_meta( $variation_post_id, '_amazon_maximum_price' , true );
+		$_amazon_asin          = get_post_meta( $variation_post_id, '_wpla_asin'  			, true );
+
+        ?>
+
+            <div>
+	        	<h4 style="border-bottom: 1px solid #ddd; margin:0; padding-top:1em; clear:both;"><?php _e('Amazon Options', 'wpla'); ?></h4>
+                <p class="form-row form-row-first">
+                    <label>
+                        <?php _e('Product ID', 'wpla'); ?>
+                        <a class="tips" data-tip="To list <b>new products</b> on Amazon, you need to enter a UPC or EAN for each single variation.<br>If your products already exist on Amazon leave this empty and enter or select an ASIN below." href="#">[?]</a>
+                    </label> 
+                    <input type="text" name="variable_amazon_product_id[<?php echo $loop; ?>]" class="" value="<?php echo $_amazon_product_id ?>" placeholder="UPC / EAN" />
+                </p>
+                <p class="form-row form-row-last">
+                    <label>
+                        <?php _e('Product ID Type', 'wpla'); ?>
+                        <a class="tips" data-tip="The type of standard, unique identifier entered in the Product ID field. You can leave this unset if you specify the Product ID Type in your listing profile." href="#">[?]</a>
+                    </label> 
+                    <select name="variable_amazon_id_type[<?php echo $loop; ?>]" class="wpla_var_selector">
+                        <?php
+                        foreach ( $options as $key => $option_name ) {
+                            echo '<option value="' . $key . '" ';
+                            selected($key, $_amazon_id_type);
+                            echo '>' . $option_name . '</option>';
+                        }
+                        ?>
+                    </select>
+                </p>
+            </div>
+            <div>
+                <p class="form-row form-row-first">
+                    <label>
+                        <?php _e('ASIN', 'wpla'); ?>
+                        <a class="tips" data-tip="To list <b>existing products</b> on Amazon, you need to enter an ASIN for each variation." href="#">[?]</a>
+                    </label> 
+                    <input type="text" id="variable_amazon_asin_<?php echo $loop; ?>" name="variable_amazon_asin[<?php echo $loop; ?>]" class="" value="<?php echo $_amazon_asin ?>" />
+                </p>
+                <p class="form-row form-row-last">
+                	<label>&nbsp;</label>
+                	<?php 
+                		$tb_url = "admin-ajax.php?action=wpla_show_product_matches&id=" . $variation_post_id; // . "&height=420&width=640"; 
+                		$onclick  = 'window.wpla_matching_asin_field_id = "variable_amazon_asin_'.$loop.'";';
+                		$onclick .= 'tb_show("Match variation #'.$variation_post_id.' on Amazon", "'.$tb_url.'");';
+                		$onclick .= 'return false;';
+                	?>
+                    <a href="#" onclick='<?php echo $onclick ?>' class="button">
+                    	<?php echo 'Select from Amazon' ?>
+                    </a>
+                </p>
+            </div>
+
+            <?php if ( get_option( 'wpla_enable_custom_product_prices', 1 ) == 1 ) : ?>
+            <div>
+                <p class="form-row form-row-first">
+                    <label>
+                        <?php _e('Amazon Price', 'wpla'); ?>
+                        <a class="tips" data-tip="Custom price to be used when listing this product on Amazon. This will override price modifier settings in your listing profile." href="#">[?]</a>
+                    </label> 
+                    <input type="text" name="variable_amazon_price[<?php echo $loop; ?>]" class="" value="<?php echo $_amazon_price ?>" />
+                </p>
+                <p class="form-row form-row-last">
+                	&nbsp;
+                </p>
+            </div>
+            <?php endif; ?>
+
+            <?php if ( get_option( 'wpla_enable_minmax_product_prices', 0 ) == 1 ) : ?>
+            <div>
+                <p class="form-row form-row-first">
+                    <label>
+                        <?php _e('Minimum Price', 'wpla'); ?>
+                        <a class="tips" data-tip="This is used to automatically set the price to the lowest price on Amazon - if it is between minimum and maxmimum price." href="#">[?]</a>
+                    </label> 
+                    <input type="text" name="variable_amazon_minimum_price[<?php echo $loop; ?>]" class="" value="<?php echo $_amazon_minimum_price ?>" />
+                </p>
+                <p class="form-row form-row-last">
+                    <label>
+                        <?php _e('Maximum Price', 'wpla'); ?>
+                        <a class="tips" data-tip="This is used to automatically set the price to the lowest price on Amazon - if it is between minimum and maxmimum price." href="#">[?]</a>
+                    </label> 
+                    <input type="text" name="variable_amazon_maximum_price[<?php echo $loop; ?>]" class="" value="<?php echo $_amazon_maximum_price ?>" />
+                </p>
+            </div>
+            <?php endif; ?>
+
+        <?php
+
+    } // woocommerce_variation_options()
+
+
+    public function process_product_meta_variable( $post_id ) {
+        // echo "<pre>";print_r($_POST);echo"</pre>";die();
+        if ( ! isset($_POST['variable_sku']) ) return;
+
+		$variable_post_id              = $_POST['variable_post_id'];
+		$variable_amazon_product_id    = $_POST['variable_amazon_product_id'];
+		$variable_amazon_id_type       = $_POST['variable_amazon_id_type'];
+		$variable_amazon_asin          = $_POST['variable_amazon_asin'];
+		$variable_sku                  = $_POST['variable_sku'];
+		$variable_amazon_price         = isset( $_POST['variable_amazon_price']         ) ? $_POST['variable_amazon_price']         : '';
+		$variable_amazon_minimum_price = isset( $_POST['variable_amazon_minimum_price'] ) ? $_POST['variable_amazon_minimum_price'] : '';
+		$variable_amazon_maximum_price = isset( $_POST['variable_amazon_maximum_price'] ) ? $_POST['variable_amazon_maximum_price'] : '';
+
+		// convert decimal comma for all price fields
+		$variable_amazon_price         = str_replace( ',', '.', $variable_amazon_price         );
+		$variable_amazon_minimum_price = str_replace( ',', '.', $variable_amazon_minimum_price );
+		$variable_amazon_maximum_price = str_replace( ',', '.', $variable_amazon_maximum_price );
+
+        // if (isset($_POST['variable_enabled']))
+        //     $variable_enabled           = $_POST['variable_enabled'];
+
+        $lm = new WPLA_ListingsModel();
+        $all_variations_with_SKU  = array();
+        $all_variations_with_ASIN = array();
+
+        $max_loop = max( array_keys( $_POST['variable_post_id'] ) );
+        for ( $i=0; $i <= $max_loop; $i++ ) {
+
+            if ( ! isset( $variable_post_id[$i] ) ) continue;
+            $variation_id = (int) $variable_post_id[$i];
+
+            // Update post meta
+            update_post_meta( $variation_id, '_amazon_product_id', 		$variable_amazon_product_id[$i] );
+            update_post_meta( $variation_id, '_amazon_id_type', 		$variable_amazon_id_type[$i] );
+            update_post_meta( $variation_id, '_wpla_asin', 				$variable_amazon_asin[$i] );
+            update_post_meta( $variation_id, '_amazon_price', 			isset( $variable_amazon_price[$i]         ) ? trim( $variable_amazon_price[$i]         ) : '' );
+            update_post_meta( $variation_id, '_amazon_minimum_price', 	isset( $variable_amazon_minimum_price[$i] ) ? trim( $variable_amazon_minimum_price[$i] ) : '' );
+            update_post_meta( $variation_id, '_amazon_maximum_price', 	isset( $variable_amazon_maximum_price[$i] ) ? trim( $variable_amazon_maximum_price[$i] ) : '' );
+
+            // if ( $variable_amazon_product_id[$i] !== 'parent' )
+            //     update_post_meta( $variation_id, '_amazon_product_id', $variable_amazon_product_id[$i] );
+            // else
+            //     delete_post_meta( $variation_id, '_amazon_product_id' );
+
+			// update min/max prices in listings table
+			if ( isset( $_POST['variable_amazon_minimum_price'] ) ) {
+
+				$min_price = isset( $variable_amazon_minimum_price[$i] ) ? $variable_amazon_minimum_price[$i] : '';
+				$max_price = isset( $variable_amazon_maximum_price[$i] ) ? $variable_amazon_maximum_price[$i] : '';
+				$data      = array();
+
+				if ( $min_price || $max_price ) {
+
+					if ( $listing = $lm->getItemByPostID( $variation_id ) ) {
+
+						if ( $min_price != $listing->min_price ) {
+							$data['min_price']  = $min_price;
+							$data['pnq_status'] = 1; // mark as changed
+						}
+
+						if ( $max_price != $listing->max_price ) {
+							$data['max_price']  = $max_price;
+							$data['pnq_status'] = 1; // mark as changed
+						}
+
+						// update listing
+						if ( ! empty($data) ) {
+							$lm->updateWhere( array( 'id' => $listing->id ), $data );
+						}
+
+					}
+
+				}
+
+			}
+
+            // collect (matched) variations with ASIN
+            if ( $variable_amazon_asin[$i] ) {
+            	$all_variations_with_ASIN[ $variation_id ] = $variable_amazon_asin[$i];
+            }
+            // collect all variations with SKU
+            if ( $variable_sku[$i] ) {
+            	$all_variations_with_SKU[ $variation_id ] = $variable_sku[$i];
+            }
+
+        } // each variation
+
+        // process matched variations
+        // check all variations with ASIN and add missing ones to listings table
+        if ( ! empty( $all_variations_with_ASIN ) ) {
+
+			$lm = new WPLA_ListingsModel();
+			$default_account_id = get_option( 'wpla_default_account_id', 1 );
+			if ( ! $default_account_id ) return; // ***
+
+        	foreach ( $all_variations_with_ASIN as $variation_id => $asin ) {
+
+        		// check if this ASIN / ID already exist - skip if it does
+				if ( $lm->getItemByASIN( $asin, false ) ) continue;
+				if ( $lm->getItemByPostID( $variation_id ) ) continue;
+
+        		// insert matched listing
+				$success = $lm->insertMatchedProduct( $variation_id, $asin, $default_account_id );
+
+				if ( $success ) {
+					$error_msg = isset($lm->lastError) ? $lm->lastError : false;
+				} else {
+					if ( isset($lm->lastError) ) echo $lm->lastError."\n";
+					echo "Failed to match variation #$variation_id - please report this to support.";
+				}
+
+        	} // each matched variation
+        } // if $all_variations_with_ASIN
+
+
+        // add missing variations
+        // if the parent product has a listing item, then check for and add missing variation listings
+		$lm = new WPLA_ListingsModel();
+		$parent_listing = $lm->getItemByPostID( $post_id );
+		if ( $parent_listing ) {
+
+        	foreach ( $all_variations_with_SKU as $variation_id => $sku ) {
+
+        		// check if this SKU / ID already exist - skip if it does
+				if ( $lm->getItemBySKU( $sku, false ) ) continue;
+				if ( $lm->getItemByPostID( $variation_id ) ) continue;
+
+				// check if this variation has a UPC/EAN set - skip if empty
+				// TODO: make this an option (brand registry)
+				$_amazon_product_id = get_post_meta( $variation_id, '_amazon_product_id', true );
+				if ( ! $_amazon_product_id ) continue;
+
+        		// insert variation listing
+				$success = $lm->insertMissingVariation( $variation_id, $sku, $parent_listing );
+
+				if ( $success ) {
+					$error_msg = isset($lm->lastError) ? $lm->lastError : false;
+				} else {
+					if ( isset($lm->lastError) ) echo $lm->lastError."\n";
+					echo "Failed to match variation #$variation_id - please report this to support.";
+				}
+
+        	} // each variation
+        } // if parent listing exists
+
+
+    } // process_product_meta_variable()
+
+
+
+
+
+
+
+
+	function woocommerce_duplicate_product( $new_id, $post ) {
+
+		// remove amazon specific meta data from duplicated products
+		delete_post_meta( $new_id, '_amazon_title' 			);
+		delete_post_meta( $new_id, '_amazon_price' 			);
+		delete_post_meta( $new_id, '_amazon_minimum_price' 	);
+		delete_post_meta( $new_id, '_amazon_maximum_price' 	);
+		delete_post_meta( $new_id, '_amazon_product_id' 	);
+		delete_post_meta( $new_id, '_amazon_id_type' 		);
+		delete_post_meta( $new_id, '_wpla_asin'				);
+
+	} // woocommerce_duplicate_product()
+
+
+	function enqueueFileTree() {
+
+		// // jqueryFileTree
+		// wp_register_style('jqueryFileTree_style', WPLA_URL.'/js/jqueryFileTree/jqueryFileTree.css' );
+		// wp_enqueue_style('jqueryFileTree_style'); 
+
+		// // jqueryFileTree
+		// wp_register_script( 'jqueryFileTree', WPLA_URL.'/js/jqueryFileTree/jqueryFileTree.js', array( 'jquery' ) );
+		// wp_enqueue_script( 'jqueryFileTree' );
+
+		// // mustache template engine
+		// wp_register_script( 'mustache', WPLA_URL.'/js/template/mustache.js', array( 'jquery' ) );
+		// wp_enqueue_script( 'mustache' );
+
+		// // jQuery UI Autocomplete
+		// wp_enqueue_script( 'jquery-ui-button' );
+		// wp_enqueue_script( 'jquery-ui-autocomplete' );
+
+	}
+
+} // class WPLA_Product_MetaBox
+// $WPLA_Product_MetaBox = new WPLA_Product_MetaBox();

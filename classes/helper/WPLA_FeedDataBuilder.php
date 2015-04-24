@@ -1,0 +1,1326 @@
+<?php
+
+class WPLA_FeedDataBuilder {
+	
+	var $account;
+	var $logger;
+	public $result;
+
+	public function __construct() {
+		global $wpla_logger;
+		$this->logger = &$wpla_logger;
+	}
+
+	/**
+	 * New products feed
+	 */
+
+	static function return_csv_object( $csv_body = '', $csv_header = '', $template_type = false ) {
+
+		$csvObj = new stdClass();
+		$csvObj->data          = $csv_header . $csv_body;
+		$csvObj->template_type = $template_type;
+		$csvObj->line_count    = substr_count( $csv_body, "\n" );
+
+		return $csvObj;
+	}
+
+	// generate csv feed for prepared products
+	static function buildNewProductsFeedData( $items, $account_id, $profile, $append_feed = false ) {
+		global $wpla_logger;
+		if ( ! $profile || ! $profile->id ) {
+			// $wpla_logger->info('no profile found, falling back to ListingLoader (Offer) - profile: '.print_r($profile,1));
+			$wpla_logger->info('no profile found, falling back to ListingLoader (Offer)');
+			return self::buildListingLoaderFeedData( $items, $account_id, $append_feed );
+			// return '';
+		}
+
+		$template = new WPLA_AmazonFeedTemplate( $profile->tpl_id );
+		if ( ! $template || ! $template->id ) {
+			$wpla_logger->info('no template, falling back to ListingLoader (Offer) - tpl_id: '.$profile->tpl_id);
+			return self::buildListingLoaderFeedData( $items, $account_id, $append_feed );
+			// return '';
+		}
+
+		$columns = $template->getFieldNames();
+		$profile_fields = maybe_unserialize( $profile->fields );
+
+		// echo "<pre>";print_r($items);echo"</pre>";#die();
+		// echo "<pre>";print_r($template);echo"</pre>";#die();
+		// echo "<pre>";print_r($profile);echo"</pre>";#die();
+		// echo "<pre>";print_r($columns);echo"</pre>";#die();
+		// echo "<pre>";print_r($profile_fields);echo"</pre>";#die();
+
+		if ( ! $columns ) {
+			$wpla_logger->error('no columns found in template - tpl_id: '.$profile->tpl_id);
+			$wpla_logger->info('profile: '.print_r($profile,1));
+			$wpla_logger->info('template: '.print_r($template,1));
+			$wpla_logger->info('columns: '.print_r($columns,1));
+			$wpla_logger->info('items: '.print_r($items,1));
+			return '';
+		}
+
+		// add variation columns 
+		// (not really needed - if the template doesn't already have them, variations are probably not allowed or the template is outdated)
+		if ( $template->name != 'Offer' ) {
+
+			// $profile_details = maybe_unserialize( $profile->details );
+			// $variations_mode = isset( $profile_details['variations_mode'] ) ? $profile_details['variations_mode'] : 'default';
+
+			// if ( $variations_mode != 'flat' ) {
+			// 	$columns[] = 'parent-sku';
+			// 	$columns[] = 'parentage';
+			// 	$columns[] = 'relationship-type';
+			// 	$columns[] = 'variation-theme';		
+			// }
+
+		}
+
+		// header
+		$csv_header  = 'TemplateType='. $template->name . "\t" . 'Version=' . $template->version . str_repeat("\t", sizeof($columns) - 2 ) . "\n";
+		$csv_header .= join( "\t", $columns ) . "\n";
+		if ($template->name != 'Offer') 
+			$csv_header .= join( "\t", $columns ) . "\n";
+		$csv_body = '';
+
+		// loop products
+		foreach ( $items as $item ) {
+
+			// get WooCommerce product data
+			$product_id = $item['post_id'];
+			$product = get_product( $product_id );
+			if ( ! $product ) continue;
+			if ( ! $item['sku'] ) continue;
+			// echo "<pre>";print_r($product);echo"</pre>";#die();
+			$wpla_logger->debug('processing item '.$item['sku'].' - ID '.$product_id);
+
+			// reset row cache
+			WPLA()->memcache->clearColumnCache();
+
+			// process product
+			foreach ( $columns as $col ) {
+				$value = self::parseProductColumn( $col, $item, $product, $profile );
+				$value = apply_filters( 'wpla_filter_listing_feed_column', $value, $col, $item, $product, $profile, $template->name );
+				$value = str_replace( array("\t","\n","\r"), ' ', $value );	// make sure there are no tabs or line breaks in any field
+				$csv_body .= $value . "\t";
+				WPLA()->memcache->setColumnValue( $product->sku, $col, $value );
+			}
+			$csv_body .= "\n";
+
+		}
+		// echo "<pre>";print_r($csv);echo"</pre>";die();
+
+		// check if any rows were created
+		if ( ! $csv_body ) return self::return_csv_object();
+
+		// only return body when appending feed
+		if ( $append_feed ) return self::return_csv_object( $csv_body, '', $template->name );
+
+		// return csv object
+		return self::return_csv_object( $csv_body, $csv_header, $template->name );
+
+	} // buildNewProductsFeedData()
+
+	static function parseProductColumn( $column, $item, $product, $profile ) {
+		wpla_logger_start_timer('parseProductColumn');
+
+		$profile_fields  = $profile ? maybe_unserialize( $profile->fields )  : array();
+		$profile_details = $profile ? maybe_unserialize( $profile->details ) : array();
+		$variations_mode = isset( $profile_details['variations_mode'] ) ? $profile_details['variations_mode'] : 'default';
+		$value           = '';
+
+		// handle FBA mode / fallback
+		if ( get_option('wpla_fba_enable_fallback') == 1 ) {
+			// fallback enabled
+			// if there is no FBA qty, FBA will be disabled
+			$fba_enabled = $item['fba_quantity'] > 0 ? true : false; // if there is FBA qty, always enable FBA
+		} else {
+			// fallback disabled
+			$fba_enabled = $item['fba_fcid'] && ( $item['fba_fcid'] != 'DEFAULT' ) ; // regard fba_fcid column - ignore stock
+		}
+
+		// if fulfillment_center_id is forced to AMAZON_NA in the listing profile,
+		// make sure to set fba_enabled to regarding this overwrite in ListingLoader feeds as well
+		if ( isset( $profile_fields['fulfillment_center_id'] ) && ! empty( $profile_fields['fulfillment_center_id'] ) ) {
+			$fba_enabled = $profile_fields['fulfillment_center_id'] == 'DEFAULT' ? false : true;
+		}
+
+		// get custom product level feed columns - and merge with profile columns
+		$custom_feed_columns = get_post_meta( $product->id, '_wpla_custom_feed_columns', true );
+		if ( $custom_feed_columns && is_array( $custom_feed_columns ) && ! empty( $custom_feed_columns ) ) {
+			$profile_fields = array_merge( $profile_fields, $custom_feed_columns );
+		}
+
+		// set correct post_id for variations
+		$post_id = $product->id;
+		if ( $product->product_type == 'variation' )
+			$post_id = $product->variation_id;
+
+
+		// process hard coded fields
+		switch ( $column ) {
+
+			case 'external_product_id':
+				$value = get_post_meta( $post_id, '_amazon_product_id', true );
+				break;
+			
+			case 'external_product_id_type':
+				$value = get_post_meta( $post_id, '_amazon_id_type', true );
+				break;
+			
+			case 'sku':			// update feed
+			case 'item_sku':    // new items feed
+				// $value = $product->sku;
+				$value = $item['sku']; // we have to use the item SKU - or feed processing would fail if SKU is different in WooCommerce and WP-Lister
+				break;
+
+			case 'price':		// update feed
+				// $value = $product->get_price();			// WC2.1+
+				$value = $product->regular_price;			// WC2.0
+				$value = $profile ? $profile->processProfilePrice( $value ) : $value;
+				$value = apply_filters( 'wpla_filter_product_price', $value, $post_id, $product, $item, $profile );
+				if ( ( $post_id != $product->id ) && ( $product_value = get_post_meta( $product->id, '_amazon_price', true ) ) ) {	// parent price
+					if ( $product_value > 0 ) $value = $product_value;
+				}
+				if ( $product_value = get_post_meta( $post_id, '_amazon_price', true ) ) {											// variation price
+					if ( $product_value > 0 ) $value = $product_value;
+				}
+				$value = $value ? round($value,2) : $value;
+
+				// make sure price stays within min/max boundaries - prevent errors in PNQ feed
+				if ( $item['min_price'] > 0 ) $value = max( $value, $item['min_price'] );
+				if ( $item['max_price'] > 0 ) $value = min( $value, $item['max_price'] );
+
+				break;
+
+			case 'sale-price':			// update feed
+			case 'sale_price':			// new items feed
+				// $value = $product->get_sale_price();		// WC2.1+
+				$value = $product->sale_price;				// WC2.0
+				$value = $profile ? $profile->processProfilePrice( $value ) : $value;
+				$value = apply_filters( 'wpla_filter_sale_price', $value, $post_id, $product, $item, $profile );
+				$value = $value ? round($value,2) : $value;
+				break;
+
+			case 'sale_from_date':	// new items feed
+			case 'sale-start-date':		// update feed
+				$date = get_post_meta( $post_id, '_sale_price_dates_from', true );
+				if ( $date ) $value = date( 'Y-m-d', $date );
+				// if sale_price column is set but no start date, fill in 2010-01-01
+				$sale_price = WPLA()->memcache->getColumnValue( $product->sku, 'sale_price' );
+				if ( ! $value && $sale_price ) $value = '2010-01-01';
+				$sale_price = WPLA()->memcache->getColumnValue( $product->sku, 'sale-price' );
+				if ( ! $value && $sale_price ) $value = '2010-01-01';
+				break;
+
+			case 'sale_end_date':	// new items feed
+			case 'sale-end-date':		// update feed
+				$date = get_post_meta( $post_id, '_sale_price_dates_to', true );
+				if ( $date ) $value = date( 'Y-m-d', $date );
+				// if sale_price column is set but no start date, fill in 2029-12-31
+				$sale_price = WPLA()->memcache->getColumnValue( $product->sku, 'sale_price' );
+				if ( ! $value && $sale_price ) $value = '2029-12-31';
+				$sale_price = WPLA()->memcache->getColumnValue( $product->sku, 'sale-price' );
+				if ( ! $value && $sale_price ) $value = '2029-12-31';
+				break;
+
+			case 'minimum-seller-allowed-price':
+				$value = get_post_meta( $post_id, '_amazon_minimum_price', true );
+				break;
+			case 'maximum-seller-allowed-price':
+				$value = get_post_meta( $post_id, '_amazon_maximum_price', true );
+				break;
+
+			case 'quantity':
+				if ( ! $fba_enabled ) {
+					$value = $product->product_type == 'variable' ? '' : intval( $product->get_total_stock() );
+					if ( $value < 0 ) $value = 0; // amazon doesn't allow negative values
+				}
+				break;
+
+			case 'fulfillment_latency':
+				// if qty is empty, make sure fulfillment_latency is empty as well (prevent error 99006)
+				$quantity = WPLA()->memcache->getColumnValue( $product->sku, 'quantity' );
+				if ( $quantity === ''    ) $value = '[---]';
+				if ( $quantity === false ) $value = '[---]';
+				break;
+
+			case 'bullet_point1':
+				$value = get_post_meta( $product->id, '_amazon_bullet_point1', true ); break;
+			case 'bullet_point2':
+				$value = get_post_meta( $product->id, '_amazon_bullet_point2', true ); break;
+			case 'bullet_point3':
+				$value = get_post_meta( $product->id, '_amazon_bullet_point3', true ); break;
+			case 'bullet_point4':
+				$value = get_post_meta( $product->id, '_amazon_bullet_point4', true ); break;
+			case 'bullet_point5':
+				$value = get_post_meta( $product->id, '_amazon_bullet_point5', true ); break;
+		
+			case 'generic_keywords1':
+				$value = get_post_meta( $product->id, '_amazon_generic_keywords1', true ); break;
+			case 'generic_keywords2':
+				$value = get_post_meta( $product->id, '_amazon_generic_keywords2', true ); break;
+			case 'generic_keywords3':
+				$value = get_post_meta( $product->id, '_amazon_generic_keywords3', true ); break;
+			case 'generic_keywords4':
+				$value = get_post_meta( $product->id, '_amazon_generic_keywords4', true ); break;
+			case 'generic_keywords5':
+				$value = get_post_meta( $product->id, '_amazon_generic_keywords5', true ); break;
+		
+			// case 'standard_price':
+			// 	$value = $product->get_price();
+			// 	break;
+			
+			// case 'sale_price':
+			// 	$value = $product->get_sale_price();
+			// 	break;
+
+			case 'main_image_url':
+				// $value = $product->get_image('full');
+				$attachment_id = get_post_thumbnail_id( $post_id );
+				$image_url     = wp_get_attachment_image_src( $attachment_id, 'full' );
+				$value         = @$image_url[0];
+
+				// maybe fall back to parent variation featured image
+				if ( empty($value) && $product->product_type == 'variation' ) {
+					$attachment_id = get_post_thumbnail_id( $product->id );
+					$image_url     = wp_get_attachment_image_src( $attachment_id, 'full' );
+					$value         = @$image_url[0];
+				}
+
+				// if main image is disabled, use first enabled gallery image
+				$disabled_images = explode( ',', get_post_meta( $product->id, '_wpla_disabled_gallery_images', true ) );
+				if ( in_array( $attachment_id, $disabled_images ) ) {
+		            $gallery_images = $product->get_gallery_attachment_ids();
+		            $gallery_images = array_values( array_diff( $gallery_images, $disabled_images ) );
+	    	        $gallery_images = apply_filters( 'wpla_product_gallery_attachment_ids', $gallery_images, $post_id );
+		            if ( isset( $gallery_images[0] ) ) {
+						$image_url = wp_get_attachment_image_src( $gallery_images[0], 'full' );
+						$value = @$image_url[0];
+		            }
+				}
+
+	            $value = apply_filters( 'wpla_product_main_image_url', $value, $post_id );
+				$value = self::convertImageUrl( $value );
+				break;
+			
+			case 'other_image_url1':
+			case 'other_image_url2':
+			case 'other_image_url3':
+			case 'other_image_url4':
+			case 'other_image_url5':
+			case 'other_image_url6':
+			case 'other_image_url7':
+			case 'other_image_url8':
+
+				if ( 'skip' == get_option( 'wpla_product_gallery_first_image' )) {
+					$image_index = substr($column, -1);		// skip first image
+				} else {
+					$image_index = substr($column, -1) - 1;	// include first image
+				}
+
+				// build list of enabled gallery images (attachment_ids)
+				$disabled_images = explode( ',', get_post_meta( $product->id, '_wpla_disabled_gallery_images', true ) );
+	            $gallery_images = $product->get_gallery_attachment_ids();
+	            $gallery_images = array_values( array_diff( $gallery_images, $disabled_images ) );
+	            $gallery_images = apply_filters( 'wpla_product_gallery_attachment_ids', $gallery_images, $post_id );
+
+
+	            if ( isset( $gallery_images[ $image_index ] ) ) {
+					$image_url = wp_get_attachment_image_src( $gallery_images[ $image_index ], 'full' );
+					$value = @$image_url[0];
+					$value = self::convertImageUrl( $value );
+	            }
+				break;
+
+
+			/* Inventory Loader (delete) feed columns */
+			case 'add-delete':
+				$value = $item['status'] == 'trash' ? 'x' : 'a';
+				break;
+
+			/* Listing Loader feed columns */
+			case 'product-id':
+				$value = get_post_meta( $post_id, '_wpla_asin', true );
+				break;
+			case 'product-id-type':
+				if ( $matched_asin = get_post_meta( $post_id, '_wpla_asin', true ) ) {
+					$value = 'ASIN';
+				} elseif ( $custom_id_type = get_post_meta( $post_id, '_amazon_id_type', true ) ) {
+					$value = $custom_id_type;
+				} else {
+					$value = '';
+				}
+				break;
+			case 'condition-type': // update feed (ListingLoader - no profile)
+				$value = get_post_meta( $product->id, '_amazon_condition_type', true );
+				// if this item was imported but has no product level condition, use original report value
+				if ( ! $value && $item['source'] == 'imported' ) {
+					$report_row = json_decode( $item['details'], true );
+					if ( is_array($report_row) && isset( $report_row['item-condition'] ) ) {
+						$value = WPLA_ImportHelper::convertNumericConditionIdToType( $report_row['item-condition'] );
+					}		
+				}
+				if ( ! $value && ! isset( $profile_fields[$column] ) ) {
+					$value = 'New';	// avoid an empty value for Offer feeds without profile
+				}
+				break;
+			case 'condition_type': // new items feed
+				$value = get_post_meta( $product->id, '_amazon_condition_type', true );
+				// if ( ! $value ) $value = 'New';
+				break;
+			case 'condition-note':
+			case 'condition_note': // new items feed
+				$value = get_post_meta( $product->id, '_amazon_condition_note', true );
+				break;
+
+			/* FBA */
+			case 'fulfillment-center-id': // ListingLoader
+			case 'fulfillment_center_id': // Category Feed
+				if ( $fba_enabled ) {
+					$value = $item['fba_fcid'];
+				}
+				break;
+
+			/* variation columns */
+			case 'parent-sku':
+			case 'parent_sku':
+				if ( $item['parent_id'] ) {
+					$parent_product = get_product( $item['parent_id'] );
+					if ( $parent_product )	
+						$value = $parent_product->sku;
+				}
+				if ( $variations_mode == 'flat' ) $value = '';
+				break;
+			case 'parentage':
+			case 'parent_child':
+				if ( $product->product_type == 'variable' ) {
+					$value = 'parent';
+				} elseif ( $product->product_type == 'variation' ) {
+					$value = 'child';
+				}
+				if ( $variations_mode == 'flat' ) $value = '';
+				break;
+			case 'relationship-type':
+			case 'relationship_type':
+				if ( $product->product_type == 'variation' )
+					$value = 'Variation';
+				if ( $variations_mode == 'flat' ) $value = '';
+				break;
+			case 'variation-theme':
+			case 'variation_theme':
+				$value = str_replace('-', '', $item['vtheme'] );
+				$value = self::convertToEnglishAttributeLabel( $value );
+				if ( strtolower($value) == 'colour' )     $value = 'Color';
+				if ( strtolower($value) == 'colorsize' )  $value = 'SizeColor';
+				if ( strtolower($value) == 'coloursize' ) $value = 'SizeColor';
+				if ( $variations_mode == 'flat' )         $value = '';
+				if ( isset( $profile_fields[$column] ) && ! empty( $profile_fields[$column] ) ) $value = $profile_fields[$column];
+				break;
+
+			
+			default:
+				# code...
+				break;
+		}
+
+
+		// forced empty value (fulfillment_latency)
+		// (why is '[---]' == 0 true? should be false - be careful...)
+		if ( '[---]' === $value )
+			return '';
+
+		// process profile fields - if not empty
+		if ( ! isset( $profile_fields[$column] ) || empty( $profile_fields[$column] ) )
+			return $value;
+
+		// empty shortcode overrides default value
+		if ( '[---]' === $profile_fields[$column] )
+			return '';
+
+		// use profile value as it is - if $value is still empty (ie. there is no product level value for this column)
+		if ( empty($value) )
+			$value = $profile_fields[$column];
+
+		// find and parse all placeholders
+		if ( preg_match_all( '/\[([^\]]+)\]/', $value, $matches ) ) {
+			foreach ($matches[0] as $placeholder) {
+				// echo "<pre>processing ";print_r($placeholder);echo"</pre>";
+				wpla_logger_start_timer('parseProfileShortcode');
+				$value = self::parseProfileShortcode( $value, $placeholder, $item, $product, $post_id, $profile );
+				wpla_logger_end_timer('parseProfileShortcode');
+				// echo "<pre>";print_r($value);echo"</pre>";#die();
+			}
+		}
+
+		// handle variation attribute values
+		if ( in_array( $product->product_type, array('variation','variable') ) ) {
+			if ( ( strpos( $column, '_name') > 0 ) || ( strpos( $column, '_type') > 0 ) ) {
+				wpla_logger_start_timer('parseVariationAttributeColumn');
+				$value = self::parseVariationAttributeColumn( $value, $column, $item, $product );
+				wpla_logger_end_timer('parseVariationAttributeColumn');
+			}
+		}
+
+		wpla_logger_end_timer('parseProductColumn');
+		return $value;
+	} // parseProductColumn()
+
+	static public function parseVariationAttributeColumn( $value, $column, $item, $product ) {
+
+		$vtheme_array   = explode( '-', $item['vtheme'] );
+		$col_slug       = str_replace('_name', '', $column);
+		$col_slug       = str_replace('_type', '', $col_slug);
+		$attribute_name = false;
+
+		// filter attributes used in variation-theme - maybe this should be moved to parseProductColumn() above...
+		foreach ($vtheme_array as $vtheme_attribute) {
+			$vtheme_attribute = self::convertToEnglishAttributeLabel( $vtheme_attribute );
+			if ( $col_slug == strtolower($vtheme_attribute) ) 
+				$attribute_name = $vtheme_attribute;
+		}
+		if ( ! $attribute_name ) return $value;
+		// echo "<pre>attribute_name: ";print_r($attribute_name);echo"</pre>";#die();
+
+		// parent product should have empty attributes
+		if ( $product->product_type == 'variable' ) return '';
+
+		// find variation
+		// $variations = WPLA_ProductWrapper::getVariations( $product->id );
+		$variations = WPLA()->memcache->getProductVariations( $product->id );
+
+		foreach ($variations as $var) {
+			if ( $var['sku'] == $item['sku'] ) {
+				// find attribute value 
+				foreach ( $var['variation_attributes'] as $attribute_label => $attribute_value ) {
+					$translated_label = self::convertToEnglishAttributeLabel( $attribute_label );
+					if ( $translated_label == $attribute_name ) {
+						// $value = utf8_decode( $attribute_value ); // Amazon is supposed to use UTF, but de facto accepts only ISO-8859-1/15
+						$value = $attribute_value;
+					}
+				}
+				// // find attribute value - doesn't work for non-english attributes
+				// if ( isset( $var['variation_attributes'][$attribute_name] ) ) {
+				// 	$value = $var['variation_attributes'][$attribute_name];
+				// }
+			}
+		}
+
+		return $value;
+	} // parseVariationAttributeColumn()
+
+	static public function convertToEnglishAttributeLabel( $value ) {
+
+		// translate common attributes
+		$value = str_replace('Farbe',  		'Color', $value ); // amazon.de
+		$value = str_replace('Größe',  		'Size',  $value );
+		$value = str_replace('Grösse', 		'Size',  $value );
+		$value = str_replace('Colore', 		'Color', $value ); // amazon.it
+		$value = str_replace('Dimensione', 	'Size',  $value );
+		$value = str_replace('Misura', 		'Size',  $value );
+
+		// process variation attributes map
+		$variation_attribute_map = get_option( 'wpla_variation_attribute_map', array() );
+		if ( is_array($variation_attribute_map) ) {
+			foreach ( $variation_attribute_map as $woocom_attribute => $amazon_attribute ) {
+				$value = str_replace( $woocom_attribute, $amazon_attribute, $value );
+			}			
+		}
+
+		return $value;
+	} // convertToEnglishAttributeLabel()
+
+	static public function parseProfileShortcode( $original_value, $placeholder, $item, $product, $post_id, $profile ) {
+
+		switch ( $placeholder ) {
+			case '[product_sku]':
+				$value = $product->sku;
+				break;
+			
+			case '[amazon_product_id]':
+				$value = get_post_meta( $post_id, '_amazon_product_id', true );
+				break;
+			
+			case '[product_title]':
+				$value = $product->get_title();
+				if ( $product_value = get_post_meta( $product->id, '_amazon_title', true ) )
+					$value = $product_value;
+				if ( $product->product_type == 'variation' ) {
+					$value = $item['listing_title'];
+					if ( 'parent' == get_option('wpla_variation_title_mode') ) {
+						$value = $product->get_title();
+					}
+				}
+				$value = self::convertTitle( $value ); // fix some special characters
+				break;
+			
+			case '[product_price]':
+				// $value = $product->get_price();
+				$value = $product->regular_price;			// WC2.0
+				$value = $profile ? $profile->processProfilePrice( $value ) : $value;
+				$value = apply_filters( 'wpla_filter_product_price', $value, $post_id, $product, $item, $profile );
+				if ( ( $post_id != $product->id ) && ( $product_value = get_post_meta( $product->id, '_amazon_price', true ) ) ) {	// parent price
+					if ( $product_value > 0 ) $value = $product_value;
+				}
+				if ( $product_value = get_post_meta( $post_id, '_amazon_price', true ) ) {											// variation price
+					if ( $product_value > 0 ) $value = $product_value;
+				}
+				$value = $value ? round($value,2) : $value;
+				break;
+			
+			case '[product_sale_price]':
+				// $value = $product->get_sale_price(); // WC2.1+
+				$value = $product->sale_price;			// WC2.0
+				$value = $profile ? $profile->processProfilePrice( $value ) : $value;
+				$value = apply_filters( 'wpla_filter_sale_price', $value, $post_id, $product, $item, $profile );
+				$value = $value ? round($value,2) : $value;
+				break;
+
+			case '[product_sale_start]':
+				$date = get_post_meta( $post_id, '_sale_price_dates_from', true );
+				$value = $date ? date( 'Y-m-d', $date ) : '';
+				// if sale_price column is set but no start date, fill in 2010-01-01
+				$sale_price = WPLA()->memcache->getColumnValue( $product->sku, 'sale_price' );
+				if ( ! $value && $sale_price ) $value = '2010-01-01';
+				break;
+			case '[product_sale_end]':
+				$date = get_post_meta( $post_id, '_sale_price_dates_to', true );
+				$value = $date ? date( 'Y-m-d', $date ) : '';
+				// if sale_price column is set but no start date, fill in 2010-01-01
+				$sale_price = WPLA()->memcache->getColumnValue( $product->sku, 'sale_price' );
+				if ( ! $value && $sale_price ) $value = '2010-01-01';
+				break;
+			
+			case '[product_msrp]':
+				$value = '';
+				if ( $product_value = get_post_meta( $post_id, '_msrp_price', true ) )	// simple product
+					$value = $product_value;
+				if ( $product_value = get_post_meta( $post_id, '_msrp', true ) )	// variation
+					$value = $product_value;
+				$value = $value ? round($value,2) : $value;
+				break;
+
+			case '[product_content]':
+				$the_post = get_post( $product->id );
+				$value = $the_post->post_content;
+				if ( $product_value = trim( get_post_meta( $product->id, '_amazon_product_description', true ) ) ) {
+					$value = $product_value;					
+				}
+				$value = self::convertContent( $value );
+				break;
+			
+			case '[product_excerpt]':
+				$the_post = get_post( $product->id );
+				$value = $the_post->post_excerpt;
+				$value = self::convertContent( $value );
+				break;
+
+			case '[product_weight]':
+				$value = $product->get_weight();
+				$value = $value ? round($value,2) : $value;
+				break;
+			
+			case '[product_length]':
+				$value = $product->length;
+				break;
+			case '[product_width]':
+				$value = $product->width;
+				break;
+			case '[product_height]':
+				$value = $product->height;
+				break;
+			
+			case '[---]':
+				$value = '';
+				break;			
+
+			
+			default:
+
+				// check for attributes
+				if ( substr( $placeholder, 0, 11 ) == '[attribute_' ) {
+					wpla_logger_start_timer('processAttributeShortcodes');
+					$value = self::processAttributeShortcodes( $product->id, $placeholder );
+					wpla_logger_end_timer('processAttributeShortcodes');
+					// $value = utf8_decode( $value ); 						// convert WP UTF-8 to Amazon ISO...
+				// check for custom meta shortcodes
+				} elseif ( substr( $placeholder, 0, 5 ) == '[meta' ) {
+					wpla_logger_start_timer('processCustomMetaShortcodes');
+					$value = self::processCustomMetaShortcodes( $product->id, $placeholder, $post_id );
+					wpla_logger_end_timer('processCustomMetaShortcodes');
+					// $value = utf8_decode( $value ); 						// convert WP UTF-8 to Amazon ISO...
+				} else {
+
+					// unregognized shortcodes will use their value
+					$value = $placeholder;
+
+					// handle custom shortcodes
+					foreach (WPLA()->shortcodes as $key => $custom_shortcode) {
+						if ( $placeholder != "[$key]") continue;
+
+						if ( isset($custom_shortcode['callback']) && is_callable( $custom_shortcode['callback'] ) ) {
+
+							// handle callback shortcodes registered by wpla_register_profile_shortcode()
+							$value = call_user_func( $custom_shortcode['callback'], $post_id, $product, $item, $profile );
+
+						} elseif ( isset($custom_shortcode['content']) && $custom_shortcode['content'] ) {
+
+							// handle custom shortcodes created in advanced settings
+							$value = self::convertContent( $custom_shortcode['content'] );
+
+						} 
+					}
+
+				}
+				break;
+		}
+
+		// replace placeholder with value
+		$value = str_replace( $placeholder, $value, $original_value );
+
+		return $value;
+	} // parseProfileShortcode()
+
+	static public function convertTitle( $value ) {
+
+		// convert special / UTF-8 characters
+		// $value = htmlentities( $value, ENT_QUOTES, 'UTF-8', false );
+		// example: &#039; to '
+		$value = htmlspecialchars_decode( $value, ENT_QUOTES );
+
+		return $value;
+	} // convertTitle()
+
+	static public function convertContent( $value ) {
+
+		// convert UTF-8 characters
+		$value = htmlentities( $value, ENT_QUOTES, 'UTF-8', false );
+		$value = htmlspecialchars_decode( $value, ENT_QUOTES );
+		// $value = html_entity_decode( $value, ENT_QUOTES, 'UTF-8' );
+		// $value = utf8_decode( $value ); 						// convert WP UTF-8 to Amazon ISO...
+
+		// convert some stubborn UTF-8 characters
+		// $utf8_char = chr(226) . chr(151) . chr(143); // bullet point (dec)
+		$utf8_char = chr(0xE2) . chr(0x97) . chr(0x8F); // bullet point (hex)
+		$html_char = '&bull;';
+		$value     = str_replace($utf8_char, $html_char, $value);
+
+ 		// fixed whitespace pasted from ms word
+ 		// details: http://stackoverflow.com/questions/1431034/can-anyone-tell-me-what-this-ascii-character-is
+		$whitespace = chr(194).chr(160);
+		$value      = str_replace( $whitespace, ' ', $value );
+
+		// remove ALL links from post content by default
+ 		if ( 'default' == get_option( 'wpla_remove_links', 'default' ) ) {
+			$value = preg_replace('#<a.*?>(.*?)</a>#i', ' $1 ', $value );
+ 		}
+
+		// process shortcodes
+		$value = self::processShortcodesInContent( $value );
+
+		// clean HTML
+		$allowed_tags = get_option('wpla_allowed_html_tags','<b><i>');
+		$value = nl2br( strip_tags( $value, $allowed_tags ) ); 	// strip html tags and convert line breaks to <br>
+		$value = str_replace( array("\n","\r"), '', $value );	// remove line breaks to keep CSV intact
+		$value = str_replace( array("\t"),     ' ', $value );	// replace tabs       to keep CSV intact
+
+		// limit product_description to 2000 characters
+		if ( strlen($value) > 2000 ) $value = substr($value, 0, 2000);
+
+		return $value;
+	} // convertContent()
+
+	static public function processShortcodesInContent( $html_content ) {
+
+		// process shortcodes in main content
+		$process_shortcodes = get_option( 'wpla_process_shortcodes', 'off' );
+ 		if ( 'off' == $process_shortcodes ) {
+
+ 			// off - do nothing, except wpautop() for proper paragraphs
+	 		$html_content = wpautop( $html_content );
+
+ 		} elseif ( 'do_shortcode' == $process_shortcodes ) {
+
+			// process all wp shortcodes
+ 			$html_content = do_shortcode( $html_content );
+
+ 		} elseif ( 'remove_all' == $process_shortcodes ) {
+
+ 			// remove all shortcodes from product description
+ 			$post_content = $html_content;
+
+			// find and remove all placeholders
+			if ( preg_match_all( '/\[([^\]]+)\]/', $post_content, $matches ) ) {
+				foreach ($matches[0] as $placeholder) {
+			 		$post_content = str_replace( $placeholder, '', $post_content );
+				}
+			}
+
+			// insert content into template html
+	 		$html_content = wpautop( $post_content );
+
+ 		} elseif ( 'the_content' == $process_shortcodes ) {
+
+ 			// make sure, WooCommerce template functions are loaded (WC2.2)
+ 			if ( ! function_exists('woocommerce_product_loop_start') && version_compare( WC_VERSION, '2.2', '>=' ) ) {
+ 				// WC()->include_template_functions(); // won't work unless is_admin() == true
+				include_once( dirname( WC_PLUGIN_FILE) . '/includes/wc-template-functions.php' );
+ 			}
+
+ 			// apply the_content filter to make description look the same as in WP
+	 		$html_content = apply_filters('the_content', $html_content );
+
+ 		}
+
+		return $html_content;
+	} // processShortcodesInContent()
+
+	static public function convertImageUrl( $url ) {
+
+		// urlencode utf8 characters in image filename
+		$filename_before = basename( $url );
+		$filename_after  = rawurlencode( $filename_before );
+		$url = str_replace( $filename_before, $filename_after, $url );
+		$url = self::removeHttpsFromUrl( $url );
+
+		return $url;
+	} // convertImageUrl()
+
+	// Amazon doesn't accept image urls using https
+	static function removeHttpsFromUrl( $url ) {
+
+		// fix relative urls
+		if ( '/wp-content/' == substr( $url, 0, 12 ) ) {
+			$url = str_replace('/wp-content', content_url(), $url);
+		}
+
+		// fix https urls
+		$url = str_replace( 'https://', 'http://', $url );
+		$url = str_replace( ':443', '', $url );
+
+		return $url;
+	}
+
+	static public function processCustomMetaShortcodes( $post_id, $field_value, $real_post_id ) {
+
+		// custom meta shortcodes i.e. [meta_Name]
+		if ( preg_match_all("/\\[meta_(.*)\\]/uUsm", $field_value, $matches ) ) {
+
+			foreach ( $matches[1] as $meta_name ) {
+
+				$meta_value = get_post_meta( $post_id, $meta_name, true );
+
+				if ( ! $meta_value ) {
+					// try real post_id for single variation
+					$meta_value = get_post_meta( $real_post_id, $meta_name, true );
+				}
+				if ( ! $meta_value ) {
+					// try with _ prefix if nothing found - prevent user error
+					$meta_value = get_post_meta( $post_id, '_'.$meta_name, true );
+				}
+
+				$field_value = str_replace( '[meta_'.$meta_name.']', $meta_value,  $field_value );		
+			}
+
+		}
+
+		return $field_value;
+	} // processCustomMetaShortcodes()
+
+	static public function processAttributeShortcodes( $post_id, $field_value, $max_length = false ) {
+
+		if ( preg_match_all("/\\[attribute_(.*)\\]/uUsm", $field_value, $matches ) ) {
+
+			// global $wpla_logger;
+			// $wpla_logger->debug('processAttributeShortcodes() - product_attributes: '.print_r($product_attributes,1));
+			// $product_attributes = WPLA_ProductWrapper::getAttributes( $post_id );
+			// $wpla_logger->debug('called getAttributes() for post_id '.$post_id.' - field: '.$field_value);
+
+			// process attribute shortcodes i.e. [attribute_Brand]
+			$product_attributes = WPLA()->memcache->getProductAttributes( $post_id );
+
+			foreach ( $matches[1] as $attribute ) {
+
+				if ( isset( $product_attributes[ 'pa_'.$attribute ] )){
+					$attribute_value = $product_attributes[ 'pa_'.$attribute ];
+				} else {					
+					$attribute_value = '';
+				}
+				$processed_html = str_replace( '[attribute_'.$attribute.']', $attribute_value,  $field_value );
+
+				// check if string exceeds max_length after processing shortcode
+				// if ( $max_length && ( $this->mb_strlen( $processed_html ) > $max_length ) ) {
+				// 	$attribute_value = '';
+				// 	$processed_html = str_replace( '[attribute_'.$attribute.']', $attribute_value,  $field_value );
+				// }
+
+				$field_value = $processed_html;
+
+			}
+
+		}
+		return $field_value;
+	} // processAttributeShortcodes()
+
+
+
+	/**
+	 * Price and Quantity update feed
+	 */
+
+	// generate csv feed for updated products
+	static function buildPriceAndQuantityFeedData( $items, $account_id ) {
+		// echo "<pre>";print_r($items);echo"</pre>";#die();
+
+		// build csv
+		$columns = array( 
+			'sku', 
+			'price', 
+			'minimum-seller-allowed-price', 
+			'maximum-seller-allowed-price', 
+			'quantity', 
+			'leadtime-to-ship' 
+		);
+		$csv_header = join( "\t", $columns ) . "\n";
+		$csv_body = '';
+
+		$feed_currency_format = get_option('wpla_feed_currency_format');
+
+		foreach ( $items as $item ) {
+
+			// get WooCommerce product data
+			$product_id = $item['post_id'];
+			$product = get_product( $product_id );
+			if ( ! $product ) continue;
+			if ( ! $item['sku'] ) continue;
+			// echo "<pre>";print_r($product);echo"</pre>";#die();
+
+			// load profile fields
+			$profile  		= new WPLA_AmazonProfile( $item['profile_id'] );
+			$profile_fields = $profile ? maybe_unserialize( $profile->fields ) : array();
+
+			foreach ( $columns as $col ) {
+				$value = self::parseProductColumn( $col, $item, $product, $profile );
+				$value = self::convertCurrencyFormat( $value, $col, $feed_currency_format );
+				$value = apply_filters( 'wpla_filter_listing_feed_column', $value, $col, $item, $product, $profile, false );
+				$csv_body .= $value . "\t";
+			}
+			$csv_body .= "\n";
+
+			// $csv_body .= $item['sku'] . "\t";
+			// // $csv_body .= 'TEST_NO_SKU' . "\t";
+			// $csv_body .= $item['price'] . "\t";
+			// $csv_body .= "\t";
+			// $csv_body .= "\t";
+			// $csv_body .= $item['quantity'] . "\t";
+			// $csv_body .= "\t";
+			// $csv_body .= "\n"; // EOL
+		}
+
+		// check if any rows were created
+		if ( ! $csv_body ) return self::return_csv_object();
+
+		// return csv object
+		return self::return_csv_object( $csv_body, $csv_header );
+	} // buildPriceAndQuantityFeedData()
+
+
+	// convert prices to use decimal comma
+	static function convertCurrencyFormat( $price, $col, $feed_currency_format ) {
+
+		// do nothing unless force comma is enabled and this is a price column
+		if ( $feed_currency_format != 'force_comma' ) return $price;
+		if ( ! in_array( $col, array('price','minimum-seller-allowed-price','maximum-seller-allowed-price') ) ) return $price;
+
+		// convert to decimal comma
+		$price = str_replace( '.', ',', $price );
+
+		return $price;
+	} // buildPriceAndQuantityFeedData()
+
+
+	/**
+	 * Inventory Loader feed (for trashed listings)
+	 */
+
+	// generate csv feed for trashed products
+	static function buildInventoryLoaderFeedData( $items, $account_id ) {
+		// echo "<pre>";print_r($items);echo"</pre>";#die();
+
+		// build csv
+		$columns = array( 
+			'sku', 
+			'product-id', 
+			'product-id-type', 
+			'price', 
+			'minimum-seller-allowed-price', 
+			'maximum-seller-allowed-price', 
+			'item-condition', 
+			'quantity', 
+			'add-delete', 
+			'will-ship-internationally', 
+			'expedited-shipping', 
+			// 'standard-plus', 
+			'item-note', 
+			'fulfillment-center-id', 
+			// 'product-tax-code', 
+			// 'leadtime-to-ship'
+		);
+		$csv_header = join( "\t", $columns ) . "\n";
+		$csv_body = '';
+
+		foreach ( $items as $item ) {
+
+			// get WooCommerce product data
+			$product_id = $item['post_id'];
+			$product = get_product( $product_id );
+			if ( ! $product ) continue;
+			if ( ! $item['sku'] ) continue;
+			// echo "<pre>";print_r($product);echo"</pre>";#die();
+
+			// load profile fields
+			$profile  		= new WPLA_AmazonProfile( $item['profile_id'] );
+			$profile_fields = $profile ? maybe_unserialize( $profile->fields ) : array();
+
+			foreach ( $columns as $col ) {
+				$value = self::parseProductColumn( $col, $item, $product, $profile );
+				// $value = apply_filters( 'wpla_filter_listing_feed_column', $value, $col, $item, $product, $profile, false );
+				$csv_body .= $value . "\t";
+			}
+			$csv_body .= "\n";
+
+		}
+
+		// check if any rows were created
+		if ( ! $csv_body ) return self::return_csv_object();
+
+		// return csv object
+		return self::return_csv_object( $csv_body, $csv_header );
+	} // buildInventoryLoaderFeedData()
+
+
+
+	/**
+	 * Listing Loader update feed
+	 */
+
+	// generate csv feed for updated products
+	static function buildListingLoaderFeedData( $items, $account_id, $append_feed = false ) {
+		global $wpla_logger;
+		// echo "<pre>";print_r($items);echo"</pre>";#die();
+
+		// build csv
+		$columns = array( 
+			'sku', 				// required columns
+			'price', 
+			'quantity', 
+			'product-id', 
+			'product-id-type', 
+			'condition-type', 
+			'condition-note', 
+			'ASIN-hint', 		// optional columns
+			'title', 
+			'product-tax-code', 
+			'operation-type', 
+			'sale-price', 
+			'sale-start-date', 
+			'sale-end-date', 
+			'leadtime-to-ship', 
+			'launch-date', 
+			'is-giftwrap-available', 
+			'is-gift-message-available', 
+			'fulfillment-center-id', 
+			// 'main-offer-image', 
+			// 'offer-image1 - offer-image5', 
+		);
+
+		$template_name    = 'Offer';
+		$template_version = '1.4';
+		$csv_header       = 'TemplateType='. $template_name . "\t" . 'Version=' . $template_version . str_repeat("\t", sizeof($columns) - 2 ) . "\n";
+		$csv_header       .= join( "\t", $columns ) . "\n";
+		$csv_body         = '';
+
+		foreach ( $items as $item ) {
+
+			// get WooCommerce product data
+			$product_id = $item['post_id'];
+			$product = get_product( $product_id );
+			if ( ! $product ) continue;
+			if ( ! $item['sku'] ) continue;
+			// echo "<pre>";print_r($product);echo"</pre>";#die();
+			$wpla_logger->debug('processing ListingLoader item '.$item['sku'].' - ID '.$product_id);
+
+			// load profile fields
+			$profile  		= new WPLA_AmazonProfile( $item['profile_id'] );
+			$profile_fields = $profile ? maybe_unserialize( $profile->fields ) : array();
+
+			// reset row cache
+			WPLA()->memcache->clearColumnCache();
+
+			foreach ( $columns as $col ) {
+				$value = self::parseProductColumn( $col, $item, $product, $profile );
+				$value = apply_filters( 'wpla_filter_listing_feed_column', $value, $col, $item, $product, $profile, $template_name );
+				$value = str_replace( array("\t","\n","\r"), ' ', $value );	// make sure there are no tabs or line breaks in any field
+				$csv_body .= $value . "\t";
+				WPLA()->memcache->setColumnValue( $product->sku, $col, $value );
+			}
+			$csv_body .= "\n";
+
+		}
+
+		// check if any rows were created
+		if ( ! $csv_body ) return self::return_csv_object();
+
+		// only return body when appending feed
+		if ( $append_feed ) return self::return_csv_object( $csv_body, '', $template_name );
+
+		// return csv object
+		return self::return_csv_object( $csv_body, $csv_header, $template_name );
+
+	} // buildListingLoaderFeedData()
+
+
+
+
+
+
+
+	/**
+	 * Order Fulfillment feed
+	 */
+
+	// generate csv feed for shipped order
+	static function buildShippingFeedData( $post_id, $order_id, $account_id, $include_header = true ) {
+
+		// build csv
+		$columns = array( 
+			'order-id', 		// required
+			'order-item-id', 
+			'quantity', 
+			'ship-date', 		// required
+			'carrier-code', 
+			'carrier-name', 
+			'tracking-number', 
+			'ship-method'
+		);
+		$csv_header = join( "\t", $columns ) . "\n";
+		$csv_body = '';
+
+		foreach ( $columns as $col ) {
+			$value = self::parseOrderColumn( $col, $post_id );
+			$csv_body .= $value . "\t";
+		}
+		$csv_body .= "\n";
+
+		// check if header should be included
+		if ( $include_header && $csv_body )
+			return $csv_header . $csv_body;
+
+		return $csv_body;
+	} // buildShippingFeedData()
+
+
+	static function parseOrderColumn( $column, $post_id ) {
+		$value = '';
+
+		switch ( $column ) {
+
+			case 'order-id':
+				$value = get_post_meta( $post_id, '_wpla_amazon_order_id', true );
+				break;
+			
+			case 'ship-date':
+				// $value = get_post_meta( $post_id, '_wpla_date_shipped', true );
+				// $value .= ' 00:01:23'; // without this, amazon would use 07:00:00 UTC by default
+
+				$date = get_post_meta( $post_id, '_wpla_date_shipped', true );
+				$time = get_post_meta( $post_id, '_wpla_time_shipped', true );
+				$dt   = new DateTime( 'now', new DateTimeZone('UTC') );
+
+				if ( ! $date ) {
+					$date = $dt->format('Y-m-d'); // add current date in UTC
+				}
+				if ( ! $time ) {
+					$time = $dt->format('H:i:s'); // add current time in UTC
+					// $time .= '+00:00' 	      // UTC (works as well as 'Z')
+					$time .= 'Z'; 				  // Z stands for UTC timezone
+				}
+
+				$value = $date . ' ' . $time; 
+				break;
+			
+			case 'carrier-code':
+				$value = get_post_meta( $post_id, '_wpla_tracking_provider', true );
+				break;
+			
+			case 'carrier-name':
+				$value = get_post_meta( $post_id, '_wpla_tracking_service_name', true );
+				break;
+			
+			case 'tracking-number':
+				$value = get_post_meta( $post_id, '_wpla_tracking_number', true );
+				break;
+			
+			default:
+				# code...
+				break;
+		}
+
+		return $value;
+	} // parseOrderColumn()
+
+
+
+
+	/**
+	 * Flat File FBA Shipment Injection Fulfillment Feed	
+	 */
+
+	// generate csv feed for shipped order
+	static function buildFbaSubmissionFeedData( $post_id, $_order, $order_item, $listing, $account_id, $include_header = true ) {
+
+		// build csv
+		$columns = array( 
+			'MerchantFulfillmentOrderID', 		// required
+			'DisplayableOrderID', 				// required
+			'DisplayableOrderDate', 			// required
+			'MerchantSKU', 						// required
+			'Quantity', 						// required
+			'MerchantFulfillmentOrderItemID', 	// required
+			'GiftMessage', 
+			'DisplayableComment', 
+			'PerUnitDeclaredValue', 
+			'DisplayableOrderComment', 			// required
+			'DeliverySLA', 						// required
+			'AddressName', 						// required
+			'AddressFieldOne', 					// required
+			'AddressFieldTwo', 
+			'AddressFieldThree', 
+			'AddressCity', 						// required
+			'AddressCountryCode', 				// required
+			'AddressStateOrRegion', 			// required
+			'AddressPostalCode', 				// required
+			'AddressPhoneNumber', 
+			'NotificationEmail', 
+		);
+		$csv_header = join( "\t", $columns ) . "\n";
+		$csv_body = '';
+
+		foreach ( $columns as $col ) {
+			$value = self::parseFbaSubmissionColumn( $col, $post_id, $_order, $order_item, $listing );
+			$csv_body .= $value . "\t";
+		}
+		$csv_body .= "\n";
+
+		// check if header should be included
+		if ( $include_header && $csv_body )
+			return $csv_header . $csv_body;
+
+		return $csv_body;
+	} // buildFbaSubmissionFeedData()
+
+
+	static function parseFbaSubmissionColumn( $column, $post_id, $_order, $order_item, $listing ) {
+		$value = '';
+
+		switch ( $column ) {
+
+			case 'MerchantFulfillmentOrderID':
+				$value = $_order->id;
+				break;
+
+			case 'DisplayableOrderID':
+				$value = $_order->get_order_number();
+				break;
+			
+			case 'DisplayableOrderDate':
+				$value = $_order->order_date;
+				$value = str_replace( ' ', 'T', $value ); 
+				break;
+			
+			case 'MerchantSKU':
+				$value = $listing->sku;
+				break;
+			
+			case 'Quantity':
+				$value = $order_item['qty'];
+				break;
+			
+			case 'MerchantFulfillmentOrderItemID':
+				$value = $post_id; // or use order line item id
+				break;
+			
+			case 'PerUnitDeclaredValue':
+				$value = $order_item['line_total'];
+				break;
+			
+			case 'DisplayableOrderComment':
+				$value = get_post_meta( $_order->id, '_wpla_DisplayableOrderComment', true );
+				if ( empty( $value ) ) $value = get_option( 'wpla_fba_default_order_comment' );
+				if ( empty( $value ) ) $value = 'Thank you for your purchase.';
+				break;
+			
+			case 'DeliverySLA':
+				$value = get_post_meta( $_order->id, '_wpla_DeliverySLA', true );
+				if ( empty( $value ) ) $value = get_option( 'wpla_fba_default_delivery_sla' );
+				if ( empty( $value ) ) $value = 'Standard';
+				break;
+			
+			case 'AddressName':
+				$value = $_order->shipping_first_name . ' ' . $_order->shipping_last_name;
+				break;
+			
+			case 'AddressFieldOne':
+				$value = $_order->shipping_address_1;
+				break;
+			
+			case 'AddressFieldTwo':
+				$value = $_order->shipping_address_2;
+				break;
+			
+			case 'AddressFieldThree':
+				$value = $_order->shipping_company;
+				break;
+			
+			case 'AddressCity':
+				$value = $_order->shipping_city;
+				break;
+			
+			case 'AddressCountryCode':
+				$value = $_order->shipping_country;
+				break;
+			
+			case 'AddressStateOrRegion':
+				$value = $_order->shipping_state;
+				break;
+			
+			case 'AddressPostalCode':
+				$value = $_order->shipping_postcode;
+				break;
+			
+			case 'AddressPhoneNumber':
+				$value = get_post_meta( $_order->id, '_billing_phone', true );
+				break;
+			
+			case 'NotificationEmail':
+				// $value = get_post_meta( $_order->id, '_billing_email', true );
+				$value = get_post_meta( $_order->id, '_wpla_NotificationEmail', true );
+				if ( empty( $value ) && ( get_option('wpla_fba_default_notification') ) ) {
+					$value = get_post_meta( $_order->id, '_billing_email', true );
+				}
+				break;
+			
+			default:
+				# code...
+				break;
+		}
+
+		return $value;
+	} // parseFbaSubmissionColumn()
+
+
+
+
+
+
+} // class WPLA_FeedDataBuilder

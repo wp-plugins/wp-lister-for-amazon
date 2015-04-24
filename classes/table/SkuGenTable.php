@@ -29,6 +29,7 @@ class WPLA_SkuGenTable extends WP_List_Table {
 
     var $last_product_id         = 0;
     var $last_product_object     = array();
+    var $total_items;
 
     /** ************************************************************************
      * REQUIRED. Set up a constructor that references the parent constructor. We 

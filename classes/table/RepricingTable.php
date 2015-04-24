@@ -33,6 +33,7 @@ class WPLA_RepricingTable extends WPLA_ListingsTable {
     var $last_product_variations = array();
     var $last_profile_id         = 0;
     var $last_profile_object     = array();
+    var $total_items;
 
     /** ************************************************************************
      * REQUIRED. Set up a constructor that references the parent constructor. We 

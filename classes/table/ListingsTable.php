@@ -35,6 +35,7 @@ class WPLA_ListingsTable extends WP_List_Table {
     var $last_profile_object     = array();
     var $profiles                = array();
     var $templates               = array();
+    var $total_items;
 
     /** ************************************************************************
      * REQUIRED. Set up a constructor that references the parent constructor. We 
@@ -175,6 +176,7 @@ class WPLA_ListingsTable extends WP_List_Table {
         // add variations link
         $listing_title .= $this->generateVariationsHtmlLink( $item, null );
 
+        /*
         // show errors and warning on online and failed items
         if ( in_array( $item['status'], array( 'online', 'failed' ) ) ) {
 
@@ -205,24 +207,7 @@ class WPLA_ListingsTable extends WP_List_Table {
         //     if ( strlen($description) > 100 ) $description = substr( $description, 0, 100 ) . '...';
         //     $listing_title .= '<br><span style="color:silver">'.$description.'</span>';
         }
-
-
-        // show listing quality issues on online and changed items
-        if ( in_array( $item['status'], array( 'online', 'changed', 'prepared' ) ) ) {
-
-            $quality_info = maybe_unserialize( $item['quality_info'] );
-            if ( is_array( $quality_info ) ) {
-
-                $error_msg  = '<b>'.$quality_info['alert-type'].'</b>';
-                $error_msg .= '<br>'.$quality_info['explanation'].'';
-                $error_msg .= '<br>'.$quality_info['field-name'].': '.$quality_info['current-value'].' ';
-                $error_msg .= '<br>Status: '.$quality_info['alert-name'].' ('.$quality_info['status'].')';
-                $error_msg = WPLA_FeedValidator::convert_links( $error_msg );
-
-                $listing_title .= '<br><small style="color:darkred">'.$error_msg.'</small>';
-            }
-
-        }
+        */
 
 
         // disable some actions depending on status
@@ -244,7 +229,77 @@ class WPLA_ListingsTable extends WP_List_Table {
             /*$1%s*/ $listing_title,
             /*$2%s*/ $this->row_actions($actions)
         );
+    } // column_listing_title()
+
+
+    /**
+     * overwrite WP_List_Table::single_row to insert optional message row
+     */
+    public function single_row( $item ) {
+        echo '<tr>';
+        $this->single_row_columns( $item );
+        $this->displayMessageRow( $item );
+        echo '</tr>';
     }
+
+    // show errors and warnings
+    function displayMessageRow( $item ){
+        $listing_title = '';
+
+        // show errors and warning on online and failed items
+        if ( in_array( $item['status'], array( 'online', 'failed' ) ) ) {
+
+            $history = maybe_unserialize( $item['history'] );
+            $tips_errors   = array();
+            $tips_warnings = array();
+            if ( is_array( $history ) ) {
+                foreach ( $history['errors'] as $feed_error ) {
+                    $tips_errors[]   = WPLA_FeedValidator::formatAmazonFeedError( $feed_error );
+                }
+                foreach ( $history['warnings'] as $feed_error ) {
+                    $tips_warnings[] = WPLA_FeedValidator::formatAmazonFeedError( $feed_error );
+                }
+            }
+            if ( ! empty( $tips_errors ) ) {
+                $listing_title .= '<!br><small style="color:darkred">'.join('<br>',$tips_errors).'</small><br>';
+            }
+            if ( ! empty( $tips_warnings ) ) {
+                $listing_title .= '<small><!br><a href="#" onclick="jQuery(\'#warnings_container_'.$item['id'].'\').slideToggle();return false;">&raquo; '.''.sizeof($tips_warnings).' warning(s)'.'</a></small><br>';
+                $listing_title .= '<div id="warnings_container_'.$item['id'].'" style="display:none">';
+                $listing_title .= '<small>'.join('<br>',$tips_warnings).'</small>';
+                $listing_title .= '</div>';
+            }
+
+        }
+
+        // show listing quality issues on online and changed items
+        if ( in_array( $item['status'], array( 'online', 'changed', 'prepared' ) ) ) {
+
+            $quality_info = maybe_unserialize( $item['quality_info'] );
+            if ( is_array( $quality_info ) ) {
+
+                $error_msg  = '<b>'.$quality_info['alert-type'].'</b>';
+                $error_msg .= '<br>'.$quality_info['explanation'].'';
+                $error_msg .= '<br>'.$quality_info['field-name'].': '.$quality_info['current-value'].' ';
+                $error_msg .= '<br>Status: '.$quality_info['alert-name'].' ('.$quality_info['status'].')';
+                $error_msg = WPLA_FeedValidator::convert_links( $error_msg );
+
+                $listing_title .= '<small style="color:darkred">'.$error_msg.'</small><br>';
+            }
+
+        }
+
+        if ( empty($listing_title) ) return;
+
+        echo '</tr>';
+        echo '<tr>';
+        // echo '<td colspan="'.sizeof( $this->_column_headers[0] ).'">';
+        echo '<td>&nbsp;</td>';
+        echo '<td colspan="7">';
+        echo $listing_title;
+        echo '</td>';
+
+    } // displayMessageRow()
 
 
     function generateVariationsHtmlLink( $item, $profile_data ){

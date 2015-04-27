@@ -975,7 +975,7 @@ class WPLA_ListingsTable extends WP_List_Table {
         $current_stock_status     = ( ! empty($_REQUEST['stock_status']     ) ? $_REQUEST['stock_status']     : 'all');
         $current_fba_status       = ( ! empty($_REQUEST['fba_status']       ) ? $_REQUEST['fba_status']       : 'all');
         // $base_url = remove_query_arg( array( 'action', 'listing', 'listing_status' ) );
-        $base_url = esc_url( remove_query_arg( array( 'action', 'listing' ) ) );
+        $base_url = esc_url_raw( remove_query_arg( array( 'action', 'listing' ) ) );
 
         // handle search query
         if ( isset($_REQUEST['s']) && $_REQUEST['s'] ) {

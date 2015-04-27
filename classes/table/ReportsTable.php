@@ -376,7 +376,7 @@ class WPLA_ReportsTable extends WP_List_Table {
     function get_views(){
        $views    = array();
        $current  = ( !empty($_REQUEST['report_status']) ? $_REQUEST['report_status'] : 'all');
-       $base_url = esc_url( remove_query_arg( array( 'action', 'report', 'report_status' ) ) );
+       $base_url = esc_url_raw( remove_query_arg( array( 'action', 'report', 'report_status' ) ) );
 
        // get report status summary
        $summary = WPLA_AmazonReport::getStatusSummary();

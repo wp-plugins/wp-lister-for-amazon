@@ -279,7 +279,7 @@ class WPLA_RepricingTable extends WPLA_ListingsTable {
         $current_stock_status     = ( ! empty($_REQUEST['stock_status']     ) ? $_REQUEST['stock_status']     : 'all');
         $current_fba_status       = ( ! empty($_REQUEST['fba_status']       ) ? $_REQUEST['fba_status']       : 'all');
         // $base_url = remove_query_arg( array( 'action', 'listing', 'repricing_status' ) );
-        $base_url = esc_url( remove_query_arg( array( 'action', 'listing' ) ) );
+        $base_url = esc_url_raw( remove_query_arg( array( 'action', 'listing' ) ) );
 
         // handle search query
         if ( isset($_REQUEST['s']) && $_REQUEST['s'] ) {
@@ -366,7 +366,7 @@ class WPLA_RepricingTable extends WPLA_ListingsTable {
     function extra_tablenav( $which ) {
         if ( 'top' != $which ) return;
 
-        $base_url = esc_url( remove_query_arg( array( 'action' ) ) );
+        $base_url = esc_url_raw( remove_query_arg( array( 'action' ) ) );
         if ( isset( $_REQUEST['s'] ) )                  $base_url = add_query_arg( 's'               , $_REQUEST['s']               , $base_url );
         if ( isset( $_REQUEST['repricing_status'] ) )   $base_url = add_query_arg( 'repricing_status', $_REQUEST['repricing_status'], $base_url );
         if ( isset( $_REQUEST['stock_status'] ) )       $base_url = add_query_arg( 'stock_status'    , $_REQUEST['stock_status']    , $base_url );

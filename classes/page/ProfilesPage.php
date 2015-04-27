@@ -78,7 +78,7 @@ class WPLA_ProfilesPage extends WPLA_Page {
 
 		// handle delete action
 		if ( $this->requestAction() == 'wpla_delete_profile' ) {
-			$this->deleteProfiles( $_REQUEST['profile'] );
+			$this->deleteProfiles( $_REQUEST['amazon_profile'] );
 		}
 
 	}
@@ -257,7 +257,8 @@ class WPLA_ProfilesPage extends WPLA_Page {
 		$count = 0;
 
 		foreach ($profiles as $id) {
-
+			if ( ! $id ) continue;
+			
 			// check if there are listings using this profile
 			$lm = new WPLA_ListingsModel();
 			$listings = $lm->findAllListingsByColumn( $id, 'profile_id' );

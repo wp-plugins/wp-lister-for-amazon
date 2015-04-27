@@ -104,7 +104,7 @@ class WPLA_ProfilesTable extends WP_List_Table {
         $actions = array(
             'edit'      => sprintf('<a href="?page=%s&action=%s&profile=%s">%s</a>',$_REQUEST['page'],'edit',$item['profile_id'],__('Edit','wpla')),
             'duplicate' => sprintf('<a href="?page=%s&action=%s&profile=%s">%s</a>',$_REQUEST['page'],'wpla_duplicate_profile',$item['profile_id'],__('Duplicate','wpla')),
-            'delete'    => sprintf('<a href="?page=%s&action=%s&profile=%s">%s</a>',$_REQUEST['page'],'wpla_delete_profile',$item['profile_id'],__('Delete','wpla')),
+            'delete'    => sprintf('<a href="?page=%s&action=%s&amazon_profile=%s">%s</a>',$_REQUEST['page'],'wpla_delete_profile',$item['profile_id'],__('Delete','wpla')),
         );
 
         // make title link to edit page
@@ -217,7 +217,7 @@ class WPLA_ProfilesTable extends WP_List_Table {
      **************************************************************************/
     function get_bulk_actions() {
         $actions = array(
-            'delete'    => __('Delete selected profiles','wpla')
+            'wpla_delete_profile' => __('Delete selected profiles','wpla')
         );
         return $actions;
     }

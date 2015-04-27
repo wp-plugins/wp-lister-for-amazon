@@ -187,7 +187,7 @@ class WPLA_SkuGenTable extends WP_List_Table {
     function get_views(){
         $views    = array();
         $current  = ( !empty($_REQUEST['sku_status']) ? $_REQUEST['sku_status'] : 'all');
-        $base_url = esc_url( remove_query_arg( array( 'action', 'listing', 'sku_status' ) ) );
+        $base_url = esc_url_raw( remove_query_arg( array( 'action', 'listing', 'sku_status' ) ) );
 
         // handle search query
         if ( isset($_REQUEST['s']) && $_REQUEST['s'] ) {
@@ -229,7 +229,7 @@ class WPLA_SkuGenTable extends WP_List_Table {
 
     function extra_tablenav( $which ) {
         if ( 'top' != $which ) return;
-        $base_url = esc_url( remove_query_arg( array( 'action' ) ) );
+        $base_url = esc_url_raw( remove_query_arg( array( 'action' ) ) );
         $btn_url  = add_query_arg( 'action', 'wpla_generate_all_missing_skus', $base_url );
         ?>
         <div class="alignleft actions" style="">

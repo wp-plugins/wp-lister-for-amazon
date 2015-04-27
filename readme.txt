@@ -1,6 +1,6 @@
-=== WP-Lister for Amazon ===
+=== WP-Lister Light for Amazon ===
 Contributors: wp-lab
-Tags: ebay, woocommerce, products, export
+Tags: amazon, woocommerce, products, export
 Requires at least: 4.0
 Tested up to: 4.2
 Stable tag: trunk

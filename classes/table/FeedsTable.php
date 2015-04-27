@@ -444,7 +444,7 @@ class WPLA_FeedsTable extends WP_List_Table {
     function get_views(){
        $views    = array();
        $current  = ( !empty($_REQUEST['feed_status']) ? $_REQUEST['feed_status'] : 'all');
-       $base_url = esc_url( remove_query_arg( array( 'action', 'feed', 'feed_status' ) ) );
+       $base_url = esc_url_raw( remove_query_arg( array( 'action', 'feed', 'feed_status' ) ) );
 
        // get feed status summary
        $summary = WPLA_AmazonFeed::getStatusSummary();

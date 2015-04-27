@@ -16,7 +16,8 @@ class WPLA_WooBackendIntegration extends WPLA_Core {
 		add_action('manage_shop_order_posts_custom_column', array( &$this, 'wpla_woocommerce_custom_shop_order_columns' ), 3 );
 
 		// hook into save_post to mark listing as changed when a product is updated
-		add_action( 'save_post', array( &$this, 'wpla_on_woocommerce_product_quick_edit_save' ), 10, 2 );
+		add_action( 'save_post', array( &$this, 'wpla_on_woocommerce_product_quick_edit_save' ), 20, 2 );
+		add_action( 'save_post', array( &$this, 'wpla_on_woocommerce_product_bulk_edit_save' ), 20, 2 );
 
 		// show messages when listing was updated from edit product page
 		add_action( 'post_updated_messages', array( &$this, 'wpla_product_updated_messages' ), 20, 1 );
@@ -210,7 +211,7 @@ class WPLA_WooBackendIntegration extends WPLA_Core {
 
 		if ( !$_POST ) return $post_id;
 		if ( is_int( wp_is_post_revision( $post_id ) ) ) return;
-		if( is_int( wp_is_post_autosave( $post_id ) ) ) return;
+		if ( is_int( wp_is_post_autosave( $post_id ) ) ) return;
 		if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) return $post_id;
 		// if ( !isset($_POST['woocommerce_quick_edit_nonce']) || (isset($_POST['woocommerce_quick_edit_nonce']) && !wp_verify_nonce( $_POST['woocommerce_quick_edit_nonce'], 'woocommerce_quick_edit_nonce' ))) return $post_id;
 		if ( !current_user_can( 'edit_post', $post_id )) return $post_id;
@@ -228,7 +229,24 @@ class WPLA_WooBackendIntegration extends WPLA_Core {
 		// Clear transient
 		// $woocommerce->clear_product_transients( $post_id );
 	}
-	// add_action( 'save_post', 'wpla_on_woocommerce_product_quick_edit_save', 10, 2 );
+	// add_action( 'save_post', 'wpla_on_woocommerce_product_quick_edit_save', 20, 2 );
+
+	// hook into save_post to mark listing as changed when a product is updated via bulk update
+	function wpla_on_woocommerce_product_bulk_edit_save( $post_id, $post ) {
+
+		if ( is_int( wp_is_post_revision( $post_id ) ) ) return;
+		if ( is_int( wp_is_post_autosave( $post_id ) ) ) return;
+		if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) return $post_id;
+		if ( ! isset( $_REQUEST['woocommerce_bulk_edit_nonce'] ) || ! wp_verify_nonce( $_REQUEST['woocommerce_bulk_edit_nonce'], 'woocommerce_bulk_edit_nonce' ) ) return $post_id;
+		if ( ! current_user_can( 'edit_post', $post_id ) ) return $post_id;
+		if ( $post->post_type != 'product' ) return $post_id;
+
+		// $lm = new WPLA_ListingsModel();
+		// $lm->markItemAsModified( $post_id );
+		do_action( 'wpla_product_has_changed', $post_id );
+
+	}
+	// add_action( 'save_post', 'wpla_on_woocommerce_product_bulk_edit_save', 10, 2 );
 
 
 	// filter the products in admin based on amazon status
@@ -333,13 +351,13 @@ class WPLA_WooBackendIntegration extends WPLA_Core {
 		// On Amazon
 		// $class = ( isset( $wp_query->query['is_on_amazon'] ) && $wp_query->query['is_on_amazon'] == 'no' ) ? 'current' : '';
 		$class = ( isset( $_REQUEST['is_on_amazon'] ) && $_REQUEST['is_on_amazon'] == 'yes' ) ? 'current' : '';
-		$query_string = esc_url( remove_query_arg(array( 'is_on_amazon' )) );
+		$query_string = esc_url_raw( remove_query_arg(array( 'is_on_amazon' )) );
 		$query_string = add_query_arg( 'is_on_amazon', urlencode('yes'), $query_string );
 		$views['listed_on_amazon'] = '<a href="'. $query_string . '" class="' . $class . '">' . __('On Amazon', 'wpla') . '</a>';
 
 		// Not on Amazon
 		$class = ( isset( $_REQUEST['is_on_amazon'] ) && $_REQUEST['is_on_amazon'] == 'no' ) ? 'current' : '';
-		$query_string = esc_url( remove_query_arg(array( 'is_on_amazon' )) );
+		$query_string = esc_url_raw( remove_query_arg(array( 'is_on_amazon' )) );
 		$query_string = add_query_arg( 'is_on_amazon', urlencode('no'), $query_string );
 		$views['unlisted_on_amazon'] = '<a href="'. $query_string . '" class="' . $class . '">' . __('Not on Amazon', 'wpla') . '</a>';
 
@@ -946,13 +964,13 @@ class WPLA_WooBackendIntegration extends WPLA_Core {
 		// On Amazon
 		// $class = ( isset( $wp_query->query['is_from_amazon'] ) && $wp_query->query['is_from_amazon'] == 'no' ) ? 'current' : '';
 		$class = ( isset( $_REQUEST['is_from_amazon'] ) && $_REQUEST['is_from_amazon'] == 'yes' ) ? 'current' : '';
-		$query_string = esc_url( remove_query_arg(array( 'is_from_amazon' )) );
+		$query_string = esc_url_raw( remove_query_arg(array( 'is_from_amazon' )) );
 		$query_string = add_query_arg( 'is_from_amazon', urlencode('yes'), $query_string );
 		$views['from_amazon'] = '<a href="'. $query_string . '" class="' . $class . '">' . __('Placed on Amazon', 'wpla') . '</a>';
 
 		// Not on Amazon
 		$class = ( isset( $_REQUEST['is_from_amazon'] ) && $_REQUEST['is_from_amazon'] == 'no' ) ? 'current' : '';
-		$query_string = esc_url( remove_query_arg(array( 'is_from_amazon' )) );
+		$query_string = esc_url_raw( remove_query_arg(array( 'is_from_amazon' )) );
 		$query_string = add_query_arg( 'is_from_amazon', urlencode('no'), $query_string );
 		$views['not_from_amazon'] = '<a href="'. $query_string . '" class="' . $class . '">' . __('Not placed on Amazon', 'wpla') . '</a>';
 
@@ -964,7 +982,7 @@ class WPLA_WooBackendIntegration extends WPLA_Core {
 
 	// filter the orders in admin based on amazon status
 	// add_filter( 'parse_query', 'wpla_woocommerce_admin_order_filter_query' );
-	function wpla_woocommerce_admin_order_filter_query( $query ) {
+	function wpla_woocommerce_admin_order_filter_query_v1( $query ) {
 		global $typenow, $wp_query, $wpdb;
 
 	    if ( $typenow == 'shop_order' ) {
@@ -1001,7 +1019,41 @@ class WPLA_WooBackendIntegration extends WPLA_Core {
 
 		}
 
-	}
+	} // wpla_woocommerce_admin_order_filter_query_v1()
+
+
+	// filter the orders in admin based on ebay status
+	// add_filter( 'parse_query', 'wplister_woocommerce_admin_order_filter_query' );
+	function wpla_woocommerce_admin_order_filter_query( $query ) {
+		global $typenow, $wp_query, $wpdb;
+
+	    if ( $typenow == 'shop_order' ) {
+
+	    	// filter by ebay status
+	    	if ( ! empty( $_GET['is_from_amazon'] ) ) {
+
+		    	if ( $_GET['is_from_amazon'] == 'yes' ) {
+
+		        	$query->query_vars['meta_query'][] = array(
+						'key'     => '_wpla_amazon_order_id',
+						'compare' => 'EXISTS'
+					);
+
+		        } elseif ( $_GET['is_from_amazon'] == 'no' ) {
+
+		        	$query->query_vars['meta_query'][] = array(
+						'key'     => '_wpla_amazon_order_id',
+						'compare' => 'NOT EXISTS'
+					);
+
+		        }
+
+	        }
+
+		}
+
+	} // wpla_woocommerce_admin_order_filter_query()
+
 
 
 } // class WPLA_WooBackendIntegration

@@ -107,19 +107,38 @@ class WPLA_ListingsModel extends WPLA_Model {
 		} 
 
         // filter stock_status
+		$fallback_enabled = get_option('wpla_fba_enable_fallback');
 		$stock_status = isset($_REQUEST['stock_status']) ? esc_sql( $_REQUEST['stock_status'] ) : '';
-		if ( $stock_status == 'is_in_stock' ) {
+
+		// fallback enabled - either stock will make it in_stock (default)
+		if ( $stock_status == 'is_in_stock' && $fallback_enabled ) {
 			$where_sql .= "
 			AND (   quantity     > 0
 	  			 OR fba_quantity > 0 
 	  			) 
             ";
-		} elseif ( $stock_status == 'is_not_in_stock' ) {
+		} elseif ( $stock_status == 'is_not_in_stock' && $fallback_enabled ) {
 			$where_sql .= "
 			AND quantity < 1
 			AND ( fba_quantity < 1 OR fba_quantity IS NULL ) 
 			";
 		} 
+
+		// fallback disabled - check FBA and local stock separately
+		if ( $stock_status == 'is_in_stock' && ! $fallback_enabled ) {
+			$where_sql .= "
+			AND (   (     quantity > 0  AND ( fba_fcid = 'DEFAULT'    OR fba_fcid = '' OR fba_fcid IS NULL ) ) /* non-FBA */
+	  			 OR ( fba_quantity > 0  AND ( fba_fcid = 'AMAZON_NA'  OR fba_fcid = 'AMAZON_EU'            ) ) /*     FBA */
+	  			) 
+            ";
+		} elseif ( $stock_status == 'is_not_in_stock' && ! $fallback_enabled ) {
+			$where_sql .= "
+			AND (   (       quantity < 1                            AND ( fba_fcid = 'DEFAULT'    OR fba_fcid = '' OR fba_fcid IS NULL ) ) /* non-FBA */
+			     OR ( ( fba_quantity < 1 OR fba_quantity IS NULL )  AND ( fba_fcid = 'AMAZON_NA'  OR fba_fcid = 'AMAZON_EU'            ) ) /*     FBA */
+			    )
+			";
+		} 
+
 
         // filter fba_status
 		$fba_status = isset($_REQUEST['fba_status']) ? esc_sql( $_REQUEST['fba_status'] ) : '';

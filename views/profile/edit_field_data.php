@@ -109,8 +109,8 @@ $is_expert_mode      = $profile_editor_mode == 'expert' ? true : false;
 			if ( in_array( $field['field'], $internal_fields ) )
 				continue;
 
-			$is_preferred         = in_array( $field['required'], array('Preferred','Empfohlen') );
-			$is_maybe_required    = in_array( $field['required'], array('Required','Erforderlich','Obbligatorio','Obligatoire') );
+			$is_preferred         = in_array( $field['required'], array('Preferred','Empfohlen','Recomendado') ); // TODO: add FR + IT
+			$is_maybe_required    = in_array( $field['required'], array('Required','Erforderlich','Obbligatorio','Obligatoire','Obligatorio') );
 			$is_actually_required = $field['group_id'] == 'Ungrouped' ? false : $is_maybe_required; // required fields in "Ungrouped" are not actually required... (Shoes tpl)
 			$row_class1           = $is_preferred         ? 'wpla_preferred_row' : 'wpla_optional_row';
 			$row_class1           = $is_maybe_required    ? 'wpla_required_row'  : $row_class1;
@@ -213,12 +213,14 @@ $is_expert_mode      = $profile_editor_mode == 'expert' ? true : false;
 						case 'Erforderlich':	// DE
 						case 'Obbligatorio':	// IT
 						case 'Obligatoire':		// FR
+						case 'Obligatorio':		// ES
 							echo '<b>'.$field['required'].'</b>';
 							break;
 						
 						case 'Optional':
-						case 'Consigliato':
-						case 'Optionnel':
+						case 'Consigliato':		// IT
+						case 'Optionnel':		// FR
+						case 'Opcional':		// ES
 							echo '<span style="color:silver">Optional</span>';
 							break;
 						
@@ -256,11 +258,13 @@ $is_expert_mode      = $profile_editor_mode == 'expert' ? true : false;
 
 	var current_field;
 	var do_replace;
+	var prefer_keyword;
 
 	// open shortcode selector
 	function wpla_select_shortcode( fieldname ) {
-		current_field = fieldname;
-		do_replace = false;
+		current_field  = fieldname;
+		do_replace     = false;
+		prefer_keyword = false;
 
 		// item_type has a special selector
 		if ( fieldname == 'item_type')					// default BTG field
@@ -291,10 +295,33 @@ $is_expert_mode      = $profile_editor_mode == 'expert' ? true : false;
 		tb_remove();
 	}
 
+	// insert selected browse node id / keyword
+	function wpla_insert_selected_browse_node( node_id ) {
+		var inputField = jQuery('#tpl_col_'+current_field);
+
+		// item_type column should use keyword instead of browse node id
+		if ( prefer_keyword ) {
+			var keyword = node_id = jQuery('#wpla_node_id_'+node_id).data('keyword');
+			console.log('keyword: ',keyword);
+			if ( keyword ) node_id = keyword;
+		}
+
+		if ( do_replace ) {
+			inputField.val( node_id ); // replace
+		} else {
+			inputField.val( inputField.val() + node_id ); // append
+		}
+		tb_remove();
+	}
+
 	// open browse tree selector
 	function wpla_select_from_btg( fieldname ) {
 		current_field = fieldname;
 		do_replace = true;
+
+		// item_type column should use keyword instead of browse node id
+		if ( fieldname == 'item_type')
+			prefer_keyword = true;
 
 		var tbHeight = tb_getPageSize()[1] - 120;
 		var tbURL = "#TB_inline?height="+tbHeight+"&width=500&inlineId=amazon_categories_tree_wrapper"; 

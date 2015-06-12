@@ -4,7 +4,7 @@
 
 ?><html>
 <head>
-    <title>Transaction details</title>
+    <title>Amazon Order <?php echo $wpl_amazon_order['order_id'] ?></title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <style type="text/css">
         body,td,p { color:#2f2f2f; font:12px/16px "Open Sans",sans-serif; }
@@ -61,9 +61,18 @@
                 <?php if (isset($d->ShippingAddress->AddressLine2)): ?>
                 <?php echo $d->ShippingAddress->AddressLine2 ?> <br>
                 <?php endif; ?>
-                <?php echo @$d->ShippingAddress->PostalCode ?> 
-                <?php echo $d->ShippingAddress->City ?> <br>
+
+                <!-- US address format -->
+                <?php echo $d->ShippingAddress->City ?>, 
+                <?php echo @$d->ShippingAddress->StateOrRegion ?>
+                <?php echo @$d->ShippingAddress->PostalCode ?> <br>
                 <?php echo $d->ShippingAddress->CountryCode ?> <br>
+
+                <!-- EU address format -->
+                <!-- <?php echo @$d->ShippingAddress->PostalCode ?>  -->
+                <!-- <?php echo $d->ShippingAddress->City ?> <br> -->
+                <!-- <?php echo $d->ShippingAddress->CountryCode ?> <br> -->
+
                 <br>
             <?php endif; ?>
             <b>Shipping service:</b><br>

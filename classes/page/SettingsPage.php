@@ -146,6 +146,7 @@ class WPLA_SettingsPage extends WPLA_Page {
 			'fba_enabled'    				  => self::getOption( 'fba_enabled' ),
 			'fba_enable_fallback' 		      => self::getOption( 'fba_enable_fallback' ),
 			'fba_fulfillment_center_id' 	  => self::getOption( 'fba_fulfillment_center_id', 'AMAZON_NA' ),
+			'fba_report_schedule' 	  		  => self::getOption( 'fba_report_schedule', 'daily' ),
 
 	
 			'settings_url'				=> 'admin.php?page='.self::ParentMenuId.'-settings',
@@ -249,6 +250,7 @@ class WPLA_SettingsPage extends WPLA_Page {
 			'log_days_limit'			=> self::getOption( 'log_days_limit', 30 ),
 			'text_log_level'			=> self::getOption( 'log_level' ),
 			'option_log_to_db'			=> self::getOption( 'log_to_db' ),
+			'show_browse_node_ids'		=> self::getOption( 'show_browse_node_ids' ),
 
 			'settings_url'				=> 'admin.php?page='.self::ParentMenuId.'-settings',
 			'form_action'				=> 'admin.php?page='.self::ParentMenuId.'-settings'.'&tab=developer'
@@ -268,11 +270,12 @@ class WPLA_SettingsPage extends WPLA_Page {
 		// TODO: check nonce
 		if ( isset( $_POST['wpla_option_cron_schedule'] ) ) {
 
-			self::updateOption( 'cron_schedule',		$this->getValueFromPost( 'option_cron_schedule' ) );
-			self::updateOption( 'sync_inventory',		$this->getValueFromPost( 'option_sync_inventory' ) );
-			self::updateOption( 'create_orders',		$this->getValueFromPost( 'option_create_orders' ) );
-			self::updateOption( 'create_customers',		$this->getValueFromPost( 'option_create_customers' ) );
-			self::updateOption( 'new_order_status',		$this->getValueFromPost( 'option_new_order_status' ) );
+			self::updateOption( 'cron_schedule',					$this->getValueFromPost( 'option_cron_schedule' ) );
+			self::updateOption( 'sync_inventory',					$this->getValueFromPost( 'option_sync_inventory' ) );
+			self::updateOption( 'create_orders',					$this->getValueFromPost( 'option_create_orders' ) );
+			self::updateOption( 'create_customers',					$this->getValueFromPost( 'option_create_customers' ) );
+			self::updateOption( 'new_order_status',					$this->getValueFromPost( 'option_new_order_status' ) );
+			self::updateOption( 'shipped_order_status',				$this->getValueFromPost( 'option_shipped_order_status' ) );
 
 			self::updateOption( 'disable_new_order_emails', 		$this->getValueFromPost( 'disable_new_order_emails' ) );	
 			self::updateOption( 'disable_processing_order_emails', 	$this->getValueFromPost( 'disable_processing_order_emails' ) );
@@ -292,8 +295,10 @@ class WPLA_SettingsPage extends WPLA_Page {
 			self::updateOption( 'fba_default_order_comment', 		$this->getValueFromPost( 'fba_default_order_comment' ) );
 			self::updateOption( 'fba_default_notification', 		$this->getValueFromPost( 'fba_default_notification' ) );
 			self::updateOption( 'fba_fulfillment_center_id', 		$this->getValueFromPost( 'fba_fulfillment_center_id' ) );
+			self::updateOption( 'fba_report_schedule', 				$this->getValueFromPost( 'fba_report_schedule' ) );
 
 			$this->handleCronSettings( $this->getValueFromPost( 'option_cron_schedule' ) );
+			$this->handleFbaCronSettings( $this->getValueFromPost( 'fba_report_schedule' ) );
 			$this->showMessage( __('Settings saved.','wpla') );
 		}
 	}
@@ -552,6 +557,7 @@ class WPLA_SettingsPage extends WPLA_Page {
 			self::updateOption( 'feed_currency_format',	$this->getValueFromPost( 'feed_currency_format' ) );
 			self::updateOption( 'log_record_limit',		$this->getValueFromPost( 'log_record_limit' ) );
 			self::updateOption( 'log_days_limit',		$this->getValueFromPost( 'log_days_limit' ) );
+			self::updateOption( 'show_browse_node_ids',	$this->getValueFromPost( 'show_browse_node_ids' ) );
 	
 
 			$this->showMessage( __('Settings updated.','wpla') );
@@ -573,6 +579,19 @@ class WPLA_SettingsPage extends WPLA_Page {
 
 		if ( !wp_next_scheduled( 'wpla_update_schedule' ) ) {
 			wp_schedule_event( time(), $schedule, 'wpla_update_schedule' );
+		}
+        
+	}
+
+	protected function handleFbaCronSettings( $schedule ) {
+        $this->logger->info("handleFbaCronSettings( $schedule )");
+
+        // remove scheduled event
+	    $timestamp = wp_next_scheduled(  'wpla_fba_report_schedule' );
+    	wp_unschedule_event( $timestamp, 'wpla_fba_report_schedule' );
+
+		if ( !wp_next_scheduled( 'wpla_fba_report_schedule' ) ) {
+			wp_schedule_event( time(), $schedule, 'wpla_fba_report_schedule' );
 		}
         
 	}

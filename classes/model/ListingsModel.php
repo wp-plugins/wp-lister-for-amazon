@@ -187,8 +187,8 @@ class WPLA_ListingsModel extends WPLA_Model {
 					OR l.sku           LIKE '%".$search_query."%'
 					OR l.asin              = '".$search_query."'
 					OR l.status            = '".$search_query."'
-					OR l.post_id           = '".$search_query."'
-					OR l.parent_id         = '".$search_query."'
+					OR ( l.post_id         = '".$search_query."' AND l.post_id   <> 0 )
+					OR ( l.parent_id       = '".$search_query."' AND l.parent_id <> 0 )
 					 )
 			";
 		} 
@@ -400,7 +400,7 @@ class WPLA_ListingsModel extends WPLA_Model {
 		return $item;
 	}
 
-	function getStatusSummary() {
+	static function getStatusSummary() {
 		global $wpdb;
 		$table = $wpdb->prefix . self::TABLENAME;
 
@@ -461,7 +461,7 @@ class WPLA_ListingsModel extends WPLA_Model {
 		return $summary;
 	}
 
-	function getRepricingStatusSummary() {
+	static function getRepricingStatusSummary() {
 		global $wpdb;
 		$table = $wpdb->prefix . self::TABLENAME;
 
@@ -830,19 +830,21 @@ class WPLA_ListingsModel extends WPLA_Model {
 		$data['account_id'] = $account_id;
 		// $this->logger->debug('data: '.print_r($data,1) );
 
-		// check if ASIN already exists
-		if ( $item = $this->getItemByASIN( $data['asin'], false ) ) {
+		// check if SKU already exists
+		if ( $item = $this->getItemBySKU( $data['sku'], false ) ) {
 
-			// foreign ASINs should not be updated when they already exist
-			if ( $data['source'] != 'foreign_import') {
-				$wpdb->update( $this->tablename, $data, array( 'asin' => $data['asin'] ) );
-			}
+			// // foreign ASINs should not be updated when they already exist (disabled - SKUs should be updated)
+			// if ( $data['source'] != 'foreign_import') {
+			// 	$wpdb->update( $this->tablename, $data, array( 'sku' => $data['sku'] ) );
+			// }
+
+			// update found SKU
+			$wpdb->update( $this->tablename, $data, array( 'sku' => $data['sku'] ) );
 			$this->updated_count++;
 
 		} else {
 
 			$data['status'] = 'imported';
-			// $data['source'] = isset($csv['source']) ? $csv['source'] : 'imported';
 			$wpdb->insert( $this->tablename, $data );
 			$this->imported_count++;
 		}
@@ -1477,6 +1479,9 @@ class WPLA_ListingsModel extends WPLA_Model {
 		if ( $product_value = get_post_meta( $post_id, '_amazon_title', true ) )
 			$listing_title = $product_value;
 
+		// trim title to 500 characters - longer titles will break $wpdb->insert() on varchar(500) column
+		$listing_title = strlen( $listing_title ) < 500 ? $listing_title : $this->mb_substr( $listing_title, 0, 500 ); // Amazon titles can not be longer than 500 characters
+
 		// build listing item
 		$data = array();
 		$data['post_id']       = $post_id;
@@ -1499,12 +1504,14 @@ class WPLA_ListingsModel extends WPLA_Model {
 		}
 		
 		$this->logger->info('insert new listing '.$post_id.' - title: '.$data['listing_title']);
-		$this->logger->debug( print_r($post,1) );
+		// $this->logger->debug( print_r($post,1) );
+		$this->logger->debug( print_r($data,1) );
 		
 		// insert in listings table
 		$wpdb->insert( $this->tablename, $data );
 		echo $wpdb->last_error;
 
+		$this->logger->debug('insert_id: '.$wpdb->insert_id );
 		$this->logger->debug('sql: '.$wpdb->last_query );
 		$this->logger->debug( $wpdb->last_error );
 
@@ -1535,6 +1542,8 @@ class WPLA_ListingsModel extends WPLA_Model {
 			if ( ! $variable_product ) continue;
 			// echo "<pre>";print_r($var);echo"</pre>";#die();
 
+			// skip hidden variations
+			if ( get_post_meta( $variation_id, '_amazon_is_disabled', true ) == 'on' ) continue;
 
 			// compile variation-theme from attribute names
 			$attribute_names = array_keys( $variation_attributes );
@@ -1703,6 +1712,25 @@ class WPLA_ListingsModel extends WPLA_Model {
 
 	} // updateCustomListingTitle()
 
+	// get variation_theme for a particular product
+	static public function getVariationThemeForPostID( $post_id ) {
+
+		// find variation
+		$variations = WPLA()->memcache->getProductVariations( $post_id );
+		foreach ($variations as $var) {
+			// if ( $var['sku'] == $item['sku'] ) { // no need to check for a particular product
+
+				// compile variation-theme from attribute names
+				$variation_attributes = $var['variation_attributes'];
+				$attribute_names = array_keys( $variation_attributes );
+				$vtheme = join( '-', $attribute_names );
+
+				return $vtheme;
+			// }
+		}
+
+		return '';
+	} // getVariationThemeForPostID()
 
 
 	public function applyProfileToItem( $profile, $item ) {
@@ -1725,6 +1753,29 @@ class WPLA_ListingsModel extends WPLA_Model {
 		// apply profile price
 		$data['price'] = WPLA_ProductWrapper::getPrice( $post_id );
 		$data['price'] = $profile->processProfilePrice( $data['price'] );		
+
+
+		// update vtheme for child and parent variations
+		if ( in_array( $item->product_type, array( 'variation', 'variable' ) ) ) {
+			// $data['vtheme'] == $item->vtheme; ? // check for actual change
+
+			// check profile for variation_theme
+			$profile_fields = maybe_unserialize( $profile->fields );
+			if ( is_array($profile_fields) && isset($profile_fields['variation_theme']) && ! empty($profile_fields['variation_theme']) ) {
+
+				// use variation theme from profile
+				$data['vtheme'] = $profile_fields['variation_theme'];
+
+			} else {
+
+				// update variation theme from product (parent variation)
+				$parent_id = $item->parent_id ? $item->parent_id : $item->post_id;
+				$data['vtheme'] = self::getVariationThemeForPostID( $parent_id );
+
+			}
+
+		} // if variable product
+
 
 		// default new status is 'changed'
 		$data['status'] = 'changed';

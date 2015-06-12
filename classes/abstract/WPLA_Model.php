@@ -157,8 +157,9 @@ class WPLA_Model {
 	public function convertTimestampToLocalTime( $timestamp ) {
 
 		// set this to the time zone provided by the user
-		$tz = get_option('wpla_local_timezone');
-		if ( ! $tz ) $tz = 'Europe/London';
+		// $tz = get_option('wpla_local_timezone');
+		$tz = get_option('timezone_string');
+		if ( ! $tz ) $tz = wc_timezone_string(); // 'Europe/London'
 		 
 		// create the DateTimeZone object for later
 		$dtzone = new DateTimeZone($tz);
@@ -185,8 +186,9 @@ class WPLA_Model {
 		// $time = 'Tuesday, April 21, 2009 2:32:46 PM';
 		 
 		// set this to the time zone provided by the user
-		$tz = get_option('wpla_local_timezone');
-		if ( ! $tz ) $tz = 'Europe/London';
+		// $tz = get_option('wpla_local_timezone');
+		$tz = get_option('timezone_string');
+		if ( ! $tz ) $tz = wc_timezone_string(); // 'Europe/London'
 		 
 		// create the DateTimeZone object for later
 		$dtzone = new DateTimeZone($tz);

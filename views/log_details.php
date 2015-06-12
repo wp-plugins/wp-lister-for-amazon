@@ -6,7 +6,18 @@ $url = $wpl_row->request_url;
 $par = maybe_unserialize( $wpl_row->parameters );
 
 $response = maybe_unserialize( $wpl_row->response );
-if ( ! is_array( $response ) ) $response = htmlspecialchars( $response );
+if ( ! is_array( $response ) ) {
+    $response = htmlspecialchars( $response );  
+    
+    // echo "<pre>";print_r(substr( $response, 0, 14 ));echo"</pre>";die();
+    // ListMarketplaceParticipations response needs extra decoding
+    if ( substr( $response, 0, 14 ) == '&quot;&lt;?xml'  ) {
+        $response = str_replace( '\n', '<br>', $response );
+        $response = stripcslashes( $response );
+    }
+
+} 
+
 
 $result = json_decode( $wpl_row->result ) ? json_decode( $wpl_row->result ) : $wpl_row->result;
 if ( ! is_object( $result ) && ! is_array( $result ) ) $result = htmlspecialchars( $result );

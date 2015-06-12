@@ -147,6 +147,12 @@ class WPLA_Setup extends WPLA_Core {
 			wp_schedule_event( time(), 'daily', 'wpla_daily_schedule' );
 		}
 
+		// schedule FBA Shipment report request - if not set yet
+		if ( ! wp_next_scheduled( 'wpla_fba_report_schedule' ) ) {
+			$schedule = get_option( 'wpla_fba_report_schedule', 'daily' );
+			wp_schedule_event( time(), $schedule, 'wpla_fba_report_schedule' );
+		}
+
 	}
 
 	// check versions

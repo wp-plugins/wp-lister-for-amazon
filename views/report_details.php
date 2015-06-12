@@ -116,7 +116,9 @@
         </tbody>
     </table>
     <?php else : ?>
-        Report content hasn't been loaded yet.
+        <p>
+            <b>This report has no content - either it's empty or its content hasn't been loaded yet.</b>
+        </p>
     <?php endif; ?>
 
     <br>

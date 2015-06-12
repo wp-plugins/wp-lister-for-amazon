@@ -139,6 +139,10 @@ class WPLA_AccountsTable extends WP_List_Table {
             unset( $actions['delete_account'] );            
         }
 
+        if ( $item['is_reg_brand'] ) {
+            $title .= '<br><i style="color:silver">'.'Brand Registry / UPC exemption enabled'.'</i>';
+        }
+
         // if ( ! $item['line_count'] )        unset( $actions['process_amazon_account'] );
 
         //Return the title contents

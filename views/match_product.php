@@ -3,6 +3,16 @@
     $wpl_default_matcher_selection = get_option( 'wpla_default_matcher_selection', 'title' );
     if ( ! $wpl_query_select ) $wpl_query_select = $wpl_default_matcher_selection;
 
+    // // get market_url for default account
+    // $account_id = get_option('wpla_default_account_id');
+    // if ( $account_id ) {
+    //     $account    = new WPLA_AmazonAccount( $account_id );
+    //     $market     = new WPLA_AmazonMarket( $account->market_id );
+    //     $market_url = 'http://www.'.$market->url.'/dp/';
+    // } else {
+    //     $market_url = 'http://www.amazon.com/dp/';
+    // }
+
 ?><html>
 <head>
     <title>request details</title>
@@ -88,7 +98,7 @@
     <?php foreach ($wpl_products as $product ) : ?>
     
         <tr><td class="img">
-            <a href="http://www.amazon.com/dp/<?php echo $product->ASIN ?>/" title="Click on the image to open this product on Amazon" target="_blank">
+            <a href="http://www.<?php echo $wpl_market_url ?>/dp/<?php echo $product->ASIN ?>/" title="Click on the image to open this product on Amazon" target="_blank">
                 <img src="<?php echo $product->AttributeSets->ItemAttributes->SmallImage->URL ?>" />
             </a>
         </td><td class="info hover">

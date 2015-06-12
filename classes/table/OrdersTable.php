@@ -132,7 +132,7 @@ class WPLA_OrdersTable extends WP_List_Table {
                     $order_msg = '<br><small style="color:darkred;">Order #'.$order_post_id.' has been trashed.</small>';
                 } else {
                     $order_exists = true;
-                    $order_msg = '<br><small>Order #'.$order->get_order_number().' is '.$order->get_status().'.</small>';
+                    $order_msg = '<br><small>Order '.$order->get_order_number().' is '.$order->get_status().'.</small>';
                 }
 
             } else {
@@ -386,8 +386,7 @@ class WPLA_OrdersTable extends WP_List_Table {
        $base_url = esc_url_raw( remove_query_arg( array( 'action', 'order', 'order_status' ) ) );
 
        // get order status summary
-       $om = new WPLA_OrdersModel();
-       $summary = $om->getStatusSummary();
+       $summary = WPLA_OrdersModel::getStatusSummary();
 
        // All link
        $class = ($current == 'all' ? ' class="current"' :'');

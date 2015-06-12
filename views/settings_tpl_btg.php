@@ -48,6 +48,7 @@
 
 								<div id="major-publishing-actions">
 									<div id="publishing-action">
+										<a href="#" onclick="jQuery('.wpla_categories input').attr('checked',false);return false;" class="button button-secondary"><?php echo __('Deselect all','wpla'); ?></a>
 										<input type="hidden" name="action" value="save_wpla_tpl_btg_settings" >
 										<input type="submit" value="<?php echo __('Update','wpla'); ?>" id="save_settings" class="button-primary" name="save">
 									</div>
@@ -125,11 +126,15 @@
 								
 								<?php
 									$field_name = 'wpla_cat-'.$site_code.'-'.$category_name;
-									$checked = in_array( $site_id.$category_name, $wpl_active_templates ) ? 'checked' : '';
+									$category_file_name = $category_name == 'CE' ? 'ConsumerElectronics' : $category_name; // template name is ConsumerElectronics, but file name is CE :-(
+									$checked = in_array( $site_id.$category_file_name, $wpl_active_templates ) ? 'checked' : '';
 								?>
 								
 								<li style="float:left;width:49%;">
-									<input type="checkbox" name="<?php echo $field_name ?>" id="<?php echo $field_name ?>" <?php echo $checked ?> value="1">									<label for="<?php echo $field_name ?>"><?php echo $category['title'] ?></label>
+									<input type="checkbox" name="<?php echo $field_name ?>" id="<?php echo $field_name ?>" <?php echo $checked ?> value="1">
+									<label for="<?php echo $field_name ?>">
+										<?php echo $category['title'] ?>
+									</label>
 								</li>
 
 							<?php endforeach; ?>

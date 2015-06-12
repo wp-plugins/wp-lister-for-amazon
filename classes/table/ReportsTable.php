@@ -241,6 +241,14 @@ class WPLA_ReportsTable extends WP_List_Table {
                 $value = $item['ReportProcessingStatus'];
         }
 
+        // show green check mark if success == 'yes' (set by background feed processing only for now)
+        if ( $item['success'] ) {
+            $tip_msg = $item['success'] == 'yes' ? 'This report was processed automatically.' : $item['success'];
+            $img_url = WPLA_URL . '/img/icon-success-32x32.png';
+            $tip_msg = '&nbsp;&nbsp;<img src="'.$img_url.'" style="height:12px; padding:0;" class="tips" data-tip="'.$tip_msg.'"/>';
+            $value .= $tip_msg;
+        }
+
         $line_count = $item['line_count'];
         if ( $line_count ) {
             $line_count = ($line_count-1) . ' rows';

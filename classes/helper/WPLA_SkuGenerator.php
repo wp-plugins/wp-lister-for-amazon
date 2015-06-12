@@ -100,6 +100,8 @@ class WPLA_SkuGenerator {
         if ( $search_query ) {
             $where_sql .= "
                  AND ( al.listing_title LIKE '%".$search_query."%'
+                    OR p.post_title     LIKE '%".$search_query."%'
+                    OR pm.meta_value    LIKE '%".$search_query."%'
                     OR al.sku           LIKE '%".$search_query."%'
                     OR al.asin              = '".$search_query."'
                     OR al.status            = '".$search_query."'

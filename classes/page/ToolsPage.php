@@ -132,6 +132,16 @@ class WPLA_ToolsPage extends WPLA_Page {
 					$this->fixStalePostMetaRecords();
 				}
 
+				// wpla_fix_orphan_child_products
+				if ( $_REQUEST['action'] == 'wpla_fix_orphan_child_products') {				
+					$this->fixOrphanChildProducts();
+				}
+
+				// wpla_fix_deleted_products
+				if ( $_REQUEST['action'] == 'wpla_fix_deleted_products') {				
+					$this->fixDeletedProducts();
+				}
+
 				// wpla_remove_all_imported_products
 				if ( $_REQUEST['action'] == 'wpla_remove_all_imported_products') {				
 					$this->removeAllImportedProducts();
@@ -257,6 +267,123 @@ class WPLA_ToolsPage extends WPLA_Page {
 		}
 
 	} // findMissingProducts()
+
+
+
+	// clear wp_post table from child variations without parent product
+	public function fixOrphanChildProducts() {
+		global $wpdb;
+
+        $posts = $wpdb->get_results("
+            SELECT p1.ID, p1.post_title, p1.post_type, p1.post_modified
+            FROM {$wpdb->posts} p1
+            LEFT JOIN {$wpdb->posts} p2 ON p1.post_parent = p2.ID
+            WHERE p1.post_parent <> 0
+              AND p1.post_type <> 'attachment'
+              AND p2.ID IS NULL
+            ORDER BY p1.ID
+        ");
+        // echo "<pre>";print_r($posts);echo"</pre>";#die();
+
+		$mode  = isset($_REQUEST['mode']) ? $_REQUEST['mode'] : false;
+		if ( $mode == 'delete' ) {
+			foreach ( $posts as $post ) {
+				$wpdb->delete( $wpdb->posts, array( 'ID' => $post->ID ), array( '%d' ) );
+			}
+			wpla_show_message('Your posts table has been cleaned.');
+			return;
+		}
+
+		if ( ! empty($posts) ) {
+
+			$nonce      = wp_create_nonce('wpla_tools_page');
+			$btn_delete = '<a href="admin.php?page=wpla-tools&tab=developer&action=wpla_fix_orphan_child_products&mode=delete&_wpnonce='.$nonce.'" class="button button-small button-primary">'.'Clean posts table'.'</a>';
+			$buttons    = ' &nbsp; ' . $btn_delete;
+			wpla_show_message('There are '.sizeof($posts).' stale child records for non-existant posts in your wp_posts table.'.$buttons, 'error');
+
+
+			$table_html = '<table style="width:100%;">';
+			$table_html .= '<tr>';
+			$table_html .= '<th style="text-align:left">'.'ID'.'</th>';
+			$table_html .= '<th style="text-align:left">'.'Title'.'</th>';
+			$table_html .= '<th style="text-align:left">'.'Last Modified'.'</th>';
+			$table_html .= '<th style="text-align:left">'.'Post Type'.'</th>';
+			$table_html .= '</tr>';
+			foreach ( $posts as $post ) {
+				$table_html .= '<tr>';
+				$table_html .= '<td>'.$post->ID.'</td>';
+				$table_html .= '<td>'.$post->post_title.'</td>';
+				$table_html .= '<td>'.$post->post_modified.'</td>';
+				$table_html .= '<td>'.$post->post_type.'</td>';
+				$table_html .= '</tr>';
+			}
+			$table_html .= '</table>';
+
+			wpla_show_message( $table_html, 'error' );
+
+		} else {
+			wpla_show_message('Your posts table is clean - no orphaned variations were found.');
+		}
+
+	} // fixOrphanChildProducts()
+
+
+	// clear wp_amazon_listings table from listings where the WooCommerce product has been deleted
+	public function fixDeletedProducts() {
+		global $wpdb;
+
+        $items = $wpdb->get_results("
+            SELECT a.id, a.post_id, a.asin, a.sku, a.listing_title, a.*
+            FROM {$wpdb->prefix}amazon_listings a
+            LEFT JOIN {$wpdb->posts} p ON a.post_id = p.ID
+            WHERE a.post_id <> 0
+              AND p.ID IS NULL
+            ORDER BY a.post_id
+        ");
+        // echo "<pre>";print_r($items);echo"</pre>";#die();
+
+		$mode  = isset($_REQUEST['mode']) ? $_REQUEST['mode'] : false;
+		if ( $mode == 'delete' ) {
+			foreach ( $items as $item ) {
+				$wpdb->delete( $wpdb->prefix.'amazon_listings', array( 'ID' => $item->id ), array( '%d' ) );
+			}
+			wpla_show_message('Your listings table has been cleaned.');
+			return;
+		}
+
+		if ( ! empty($items) ) {
+
+			$nonce      = wp_create_nonce('wpla_tools_page');
+			$btn_delete = '<a href="admin.php?page=wpla-tools&tab=developer&action=wpla_fix_deleted_products&mode=delete&_wpnonce='.$nonce.'" class="button button-small button-primary">'.'Clean listings table'.'</a>';
+			$buttons    = ' &nbsp; ' . $btn_delete;
+			wpla_show_message('There are '.sizeof($items).' listing records for non-existant products in your listings table.'.$buttons, 'error');
+
+			$table_html = '<table style="width:100%;">';
+			$table_html .= '<tr>';
+			$table_html .= '<th style="text-align:left">'.'SKU'.'</th>';
+			$table_html .= '<th style="text-align:left">'.'ASIN'.'</th>';
+			$table_html .= '<th style="text-align:left">'.'Title'.'</th>';
+			$table_html .= '<th style="text-align:left">'.'Post ID'.'</th>';
+			$table_html .= '<th style="text-align:left">'.'Listing ID'.'</th>';
+			$table_html .= '</tr>';
+			foreach ( $items as $item ) {
+				$table_html .= '<tr>';
+				$table_html .= '<td><a href="admin.php?page=wpla&s='.$item->sku.'" target="_blank">'.$item->sku.'</a></td>';
+				$table_html .= '<td>'.$item->asin.'</td>';
+				$table_html .= '<td>'.$item->listing_title.'</td>';
+				$table_html .= '<td>'.$item->post_id.'</td>';
+				$table_html .= '<td>'.$item->id.'</td>';
+				$table_html .= '</tr>';
+			}
+			$table_html .= '</table>';
+
+			wpla_show_message( $table_html, 'error' );
+
+		} else {
+			wpla_show_message('Your listings table is clean - no missing products found.');
+		}
+
+	} // fixDeletedProducts()
 
 
 

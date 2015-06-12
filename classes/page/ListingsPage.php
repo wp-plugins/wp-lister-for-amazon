@@ -353,7 +353,7 @@ class WPLA_ListingsPage extends WPLA_Page {
 
         // get listing status summary
 		$listingsModel = new WPLA_ListingsModel();
-        $summary = $listingsModel->getStatusSummary();
+        $summary = WPLA_ListingsModel::getStatusSummary();
         $no_asin = $listingsModel->getAllOnlineWithoutASIN();
 
         // check for changed, matched and prepared items - and show message
@@ -559,28 +559,29 @@ class WPLA_ListingsPage extends WPLA_Page {
 		// show warning if duplicate products found
 		$listingsModel     = new WPLA_ListingsModel();
 		$duplicateProducts = $listingsModel->getAllDuplicateProducts();
-		$duplicateASINs    = $listingsModel->getAllDuplicateASINs();
+		// $duplicateASINs    = $listingsModel->getAllDuplicateASINs();
 		$duplicateSKUs     = $listingsModel->getAllDuplicateSKUs();
 		$msg               = '';
 
-		if ( ! empty($duplicateProducts) || ! empty($duplicateASINs) || ! empty($duplicateSKUs) ) {
+		// if ( ! empty($duplicateProducts) || ! empty($duplicateASINs) || ! empty($duplicateSKUs) ) {
+		if ( ! empty($duplicateProducts) || ! empty($duplicateSKUs) ) {
 
-			$duplicates_total = max( count($duplicateProducts), count($duplicateSKUs), count($duplicateASINs) );
+			$duplicates_total = max( count($duplicateProducts), count($duplicateSKUs) );
 			$msg .= '<p><b>' . sprintf( __('Warning: There are %s duplicate listings. Your action is required.','wpla'), $duplicates_total ) . '</b>';
 			$msg .= '&nbsp; <a href="#" onclick="jQuery(\'#wpla_dupe_details\').toggle();return false;" class="button button-small">'.__('Show duplicates','wpla').'</a></p>';
 
 
 			$msg .= '<div id="wpla_dupe_details" style="display:none"><p>';
-			$msg .= __('To list on Amazon it is important for each product to have a unique SKU and ASIN.','wpla');
+			$msg .= __('To list on Amazon it is important for each product to have a unique SKU.','wpla');
 			$msg .= ' ';
 			$msg .= __('Additionally, there can be only one listing per product per account.','wpla');
 			$msg .= '<br>';
 			$msg .= '<br>';
-			$msg .= __('Please keep only one listing and remove unwanted duplicates.','wpla');
+			$msg .= __('Please keep only one listing and remove all other duplicates from the database.','wpla');
 			$msg .= '<br><br>';
 
 			$msg .= $this->renderDupeTable( $duplicateSKUs, 'sku' );
-			$msg .= $this->renderDupeTable( $duplicateASINs, 'asin' );
+			// $msg .= $this->renderDupeTable( $duplicateASINs, 'asin' );
 			$msg .= $this->renderDupeTable( $duplicateProducts, 'post_id' );
 
 			// $msg .= __('If you are not planning to use the inventory sync, you can hide this warning in settings.','wpla');
@@ -603,19 +604,42 @@ class WPLA_ListingsPage extends WPLA_Page {
 
 			$account_title = WPLA_AmazonAccount::getAccountTitle( $dupe->account_id );
 
-			$msg .= '<b>'.__('Listings for','wpla').' '.$column.' '.$dupe->$column.' ('.$account_title.'):</b>';
+			$msg .= '<b>'.__('Listings for','wpla').' '.strtoupper($column).' '.$dupe->$column.' ('.$account_title.'):</b>';
 			$msg .= '<br>';
 
 			$duplicateListings = $listingsModel->findAllListingsByColumn( $dupe->$column, $column, $dupe->account_id );
 			
-			foreach ($duplicateListings as $listing) {
+			$msg .= '<table style="width:100%">';
+			foreach ( $duplicateListings as $listing ) {
+
 				$color = $listing->status == 'archived' ? 'silver' : '';
+
+				// check if WooCommerce SKU matches Amazon SKU
+				$woo_sku   = get_post_meta( $listing->post_id, '_sku', true );
+				$sku_label = $listing->sku == $woo_sku ? $woo_sku : '<span style="color:darkred">'.$woo_sku.' / '.$listing->sku.'</span>';
+
+				$msg .= '<tr><td style="width:40%;">';					
 				$msg .= '<span style="color:'.$color.'">';					
-				$msg .= '&nbsp;&bull;&nbsp;';					
-				$msg .= ''.$listing->listing_title.'';					
-				if ($listing->asin) $msg .= ' (#'.$listing->asin.')';
-				$msg .= ' &ndash; <i>'.$listing->status.'</i>';					
-				$msg .= '<br>';
+				$msg .= $listing->listing_title;
+				$msg .= '</span>';
+
+				$msg .= '</td><td style="width:10%;">';
+				$msg .= '<i style="color:silver">'.$listing->product_type.'</i>';					
+
+				$msg .= '</td><td style="width:10%;">';
+				$msg .= '<a href="admin.php?page=wpla&s='.$listing->sku.'" title="SKU" target="_blank">';
+				$msg .= $sku_label.'</a>';
+
+				$msg .= '</td><td style="width:10%;">';
+				$msg .= '<a href="admin.php?page=wpla&s='.$listing->asin.'" title="ASIN" target="_blank">';
+				$msg .= $listing->asin.'</a>';
+
+				$msg .= '</td><td style="width:10%;">';
+				$msg .= '<a href="admin.php?page=wpla&s='.$listing->post_id.'" title="Product ID" target="_blank">';
+				$msg .= 'ID '.$listing->post_id.'</a>';
+
+				$msg .= '</td><td style="width:10%;">';
+				$msg .= '<i>'.$listing->status.'</i>';					
 
 				// if ( in_array( $listing->status, array( 'prepared', 'verified', 'ended', 'sold' ) ) ) {
 				// 	$archive_link = sprintf('<a class="archive button button-small" href="?page=%s&action=%s&listing=%s">%s</a>',$page,'archive',$listing->id,__('Click to move to archive','wpla'));
@@ -623,12 +647,13 @@ class WPLA_ListingsPage extends WPLA_Page {
 				// 	$msg .= '<br>';
 				// }
 
-				$delete_link = sprintf('<a class="delete button button-small button-secondary" href="?page=%s&action=%s&listing=%s">%s</a>',$page,'delete',$listing->id,__('Click to remove this listing','wpla'));
-				$msg .= '&nbsp;&nbsp;&nbsp;&nbsp;'.$delete_link;
-				$msg .= '<br>';
+				$msg .= '</td><td align="right" style="width:10%;">';
+				$delete_btn = sprintf('<a class="delete button button-small button-secondary" href="?page=%s&action=%s&listing=%s">%s</a>',$page,'delete',$listing->id,__('Remove from database','wpla'));
+				$msg .= $delete_btn;
 
-				$msg .= '</span>';
+				$msg .= '</td></tr>';
 			}
+			$msg .= '</table>';
 			$msg .= '<br>';
 
 		}

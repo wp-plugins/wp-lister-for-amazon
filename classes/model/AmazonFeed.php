@@ -371,7 +371,7 @@ class WPLA_AmazonFeed {
 	} // loadSubmissionResult()
 
 	function processSubmissionResult() {
-		WPLA()->logger->info('processSubmissionResult()');
+		WPLA()->logger->info('processSubmissionResult() - feed '.$this->id);
 		if ( ! $this->id ) return;
 		if ( ! $this->results ) return;
 
@@ -456,7 +456,7 @@ class WPLA_AmazonFeed {
 
 				$listing_data['status']  = 'online';
 				$listing_data['history'] = '';
-				$lm->updateWhere( array( 'sku' => $row_sku, 'account_id' => $this->account_id ), $listing_data );				
+				$lm->updateWhere( array( 'sku' => $row_sku, 'account_id' => $this->account_id ), $listing_data );
 				WPLA()->logger->info('changed status to online: '.$row_sku);
 				continue;
 
@@ -788,6 +788,7 @@ class WPLA_AmazonFeed {
 	} // processOrderFbaResults()
 
 	static public function processFeedsSubmissionList( $feeds, $account ) {
+		WPLA()->logger->info( 'processFeedsSubmissionList() - processing '.sizeof($feeds).' feeds for account '.$account->id) ;
 
 		$feeds_in_progress = 0;
 
@@ -797,6 +798,12 @@ class WPLA_AmazonFeed {
 			$existing_record = WPLA_AmazonFeed::getFeedBySubmissionId( $feed->FeedSubmissionId );
 			if ( $existing_record ) {
 
+				// skip existing feed if it was submitted using another "account" (different marketplace using the same account)
+				if ( $existing_record->account_id != $account->id ) {
+					WPLA()->logger->info('skipped existing feed '.$existing_record->id.' for account '.$existing_record->account_id);
+					continue;
+				}
+
 				$new_feed = new WPLA_AmazonFeed( $existing_record->id );
 
 				$new_feed->FeedSubmissionId        = $feed->FeedSubmissionId;
@@ -804,7 +811,6 @@ class WPLA_AmazonFeed {
 				$new_feed->FeedProcessingStatus    = $feed->FeedProcessingStatus;
 				$new_feed->SubmittedDate           = $feed->SubmittedDate;
 				$new_feed->CompletedProcessingDate = isset( $feed->CompletedProcessingDate ) ? $feed->CompletedProcessingDate : '';
-				$new_feed->account_id              = $account->id;
 				// $new_feed->results                 = maybe_serialize( $feed );
 
 				// save new record

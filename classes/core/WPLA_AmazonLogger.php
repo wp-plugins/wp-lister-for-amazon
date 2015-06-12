@@ -9,13 +9,18 @@ class WPLA_AmazonLogger {
     protected $callname = '';
     protected $success = false;
     protected $id = 0;
+    protected $enabled = null;
 	
     function __construct( $beautfyXml = false, $destination = 'db' )
     {
         global $wpdb;
 
-        $this->debugXmlBeautify = $beautfyXml;
+        $this->debugXmlBeautify    = $beautfyXml;
         $this->debugLogDestination = $destination;
+        $this->enabled             = get_option('wpla_log_to_db');
+
+        // do nothing if logging is disabled
+        if ( ! $this->enabled ) return;
 
         // get current user id
         $user = wp_get_current_user();
@@ -35,6 +40,9 @@ class WPLA_AmazonLogger {
     function updateLog( $data )
     {
         global $wpdb;
+
+        // do nothing if logging is disabled
+        if ( ! $this->enabled ) return;
 
         // truncate response if too long for sql
         if ( isset( $data['response'] ) ) {
@@ -59,7 +67,9 @@ class WPLA_AmazonLogger {
     
     function log($msg, $subject = null)
     {
-        global $wpdb;
+        // do nothing if logging is disabled
+        if ( ! $this->enabled ) return;
+
         $data = array();
 
         // extract Ack status from response
@@ -72,6 +82,7 @@ class WPLA_AmazonLogger {
                 $data['success'] = $this->success;
             }
         }
+
         // extract call name from request url
         if ( $subject == 'RequestUrl' ) {
             if ( preg_match("/callname=(.*)&/U", $msg, $matches) ) {

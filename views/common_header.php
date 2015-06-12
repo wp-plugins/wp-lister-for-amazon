@@ -52,6 +52,24 @@
 				return false;
 			});
 
+			// btn_process_selected_report_rows
+			jQuery('#btn_process_selected_report_rows').click( function(event) {
+
+		        // create array of selected SKUs
+		        var selected_skus = [];
+		        jQuery(".check-column input:checked[name='row[]']").each( function(index, checkbox) {
+		             selected_skus.push( checkbox.value );
+		        });
+
+				var params = { 
+					report_id : jQuery(this).attr('data-id'), 
+					sku_list  : selected_skus
+				};
+
+				WPLA.JobRunner.runJob( 'processRowsFromAmazonReport', 'Processing selected rows...', params );
+				return false;
+			});
+
 			// .row-actions .process_amazon_report a
 			// jQuery('.row-actions .process_amazon_report a').click( function(event) {
 			// 	var params = { item_id : jQuery(this).attr('data-id') };

@@ -201,12 +201,12 @@
 							</select>
 
 							<label for="wpl-dismiss_imported_products_notice" class="text_label">
-								<?php echo __('Imported products notice','wpla') ?>
-                                <?php wpla_tooltip('If you dismissed this message you can enable it here again - but it will always show when you filter for "Imported" listings.') ?>
+								<?php echo __('Importe Queue reminder','wpla') ?>
+                                <?php wpla_tooltip('Select whether you want to see a reminder message prompting you to import items witing in the import queue.<br><br>It will always show when you view the <i>Import Queue</i> on the listings page.') ?>
 							</label>
 							<select id="wpl-dismiss_imported_products_notice" name="wpla_dismiss_imported_products_notice" class=" required-entry select">
-								<option value="0" <?php if ( $wpl_dismiss_imported_products_notice != '1' ): ?>selected="selected"<?php endif; ?>><?php echo __('Always show when there are listings to be imported','wpla'); ?></option>
-								<option value="1" <?php if ( $wpl_dismiss_imported_products_notice == '1' ): ?>selected="selected"<?php endif; ?>><?php echo __('Only show when viewing imported listings','wpla'); ?></option>
+								<option value="0" <?php if ( $wpl_dismiss_imported_products_notice != '1' ): ?>selected="selected"<?php endif; ?>><?php echo __('Always show when there are items queued for import','wpla'); ?></option>
+								<option value="1" <?php if ( $wpl_dismiss_imported_products_notice == '1' ): ?>selected="selected"<?php endif; ?>><?php echo __('Only show when visiting the Import Queue','wpla'); ?></option>
 							</select>
 
 							<label for="wpl-enable_missing_details_warning" class="text_label">

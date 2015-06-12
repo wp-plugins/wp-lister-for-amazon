@@ -1007,9 +1007,9 @@ class WPLA_FeedTemplateIndex {
 					'Baby' => array(
 						'title' => 'Baby',
 						'templates' => array(
-							'Flat_File_Baby_ca-Template.csv',
-							'Flat_File_Baby_ca-DataDefinitions.csv',	
-							'Flat_File_Baby_ca-ValidValues.csv',								
+							'Flat.File.Baby.ca-Template.csv',
+							'Flat.File.Baby.ca-DataDefinitions.csv',	
+							'Flat.File.Baby.ca-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'ca_baby-products_browse_tree_guide.csv',
@@ -1020,9 +1020,9 @@ class WPLA_FeedTemplateIndex {
 					'Beauty' => array(
 						'title' => 'Beauty',
 						'templates' => array(
-							'Flat_File_Beauty_ca-Template.csv',
-							'Flat_File_Beauty_ca-DataDefinitions.csv',	
-							'Flat_File_Beauty_ca-ValidValues.csv',								
+							'Flat.File.Beauty.ca-Template.csv',
+							'Flat.File.Beauty.ca-DataDefinitions.csv',	
+							'Flat.File.Beauty.ca-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'ca_beauty_browse_tree_guide.csv',
@@ -1033,9 +1033,9 @@ class WPLA_FeedTemplateIndex {
 					'Computers' => array(
 						'title' => 'Computers & Accessories',
 						'templates' => array(
-							'Flat_File_Computers_ca-Template.csv',
-							'Flat_File_Computers_ca-DataDefinitions.csv',	
-							'Flat_File_Computers_ca-ValidValues.csv',								
+							'Flat.File.Computers.ca-Template.csv',
+							'Flat.File.Computers.ca-DataDefinitions.csv',	
+							'Flat.File.Computers.ca-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'ca_ce_browse_tree_guide.csv',
@@ -1046,9 +1046,9 @@ class WPLA_FeedTemplateIndex {
 					'FoodAndBeverages' => array(
 						'title' => 'Grocery & Beverages',
 						'templates' => array(
-							'Flat_File_FoodAndBeverages_ca-Template.csv',
-							'Flat_File_FoodAndBeverages_ca-DataDefinitions.csv',	
-							'Flat_File_FoodAndBeverages_ca-ValidValues.csv',								
+							'Flat.File.FoodAndBeverages.ca-Template.csv',
+							'Flat.File.FoodAndBeverages.ca-DataDefinitions.csv',	
+							'Flat.File.FoodAndBeverages.ca-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'ca_grocery_browse_tree_guide.csv',
@@ -1059,9 +1059,9 @@ class WPLA_FeedTemplateIndex {
 					'Home' => array(
 						'title' => 'Home & Garden',
 						'templates' => array(
-							'Flat_File_Home_ca-Template.csv',
-							'Flat_File_Home_ca-DataDefinitions.csv',	
-							'Flat_File_Home_ca-ValidValues.csv',								
+							'Flat.File.Home.ca-Template.csv',
+							'Flat.File.Home.ca-DataDefinitions.csv',	
+							'Flat.File.Home.ca-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'ca_garden_browse_tree_guide.csv',
@@ -1073,9 +1073,9 @@ class WPLA_FeedTemplateIndex {
 					'Toys' => array(
 						'title' => 'Toys',
 						'templates' => array(
-							'Flat_File_Toys_ca-Template.csv',
-							'Flat_File_Toys_ca-DataDefinitions.csv',	
-							'Flat_File_Toys_ca-ValidValues.csv',								
+							'Flat.File.Toys.ca-Template.csv',
+							'Flat.File.Toys.ca-DataDefinitions.csv',	
+							'Flat.File.Toys.ca-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'ca_toys_browse_tree_guide.csv',
@@ -1086,9 +1086,9 @@ class WPLA_FeedTemplateIndex {
 					'Jewelry' => array(
 						'title' => 'Jewelry',
 						'templates' => array(
-							'Flat_File_Jewelry_ca-Template.csv',
-							'Flat_File_Jewelry_ca-DataDefinitions.csv',	
-							'Flat_File_Jewelry_ca-ValidValues.csv',								
+							'Flat.File.Jewelry.ca-Template.csv',
+							'Flat.File.Jewelry.ca-DataDefinitions.csv',	
+							'Flat.File.Jewelry.ca-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'ca_jewelry_browse_tree_guide.csv',
@@ -1099,12 +1099,26 @@ class WPLA_FeedTemplateIndex {
 					'Watches' => array(
 						'title' => 'Watches',
 						'templates' => array(
-							'Flat_File_Watches_ca-Template.csv',
-							'Flat_File_Watches_ca-DataDefinitions.csv',	
-							'Flat_File_Watches_ca-ValidValues.csv',								
+							'Flat.File.Watches.ca-Template.csv',
+							'Flat.File.Watches.ca-DataDefinitions.csv',	
+							'Flat.File.Watches.ca-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'ca_watches_browse_tree_guide.csv',
+						),
+					),
+
+
+					// Sports & Outdoors
+					'Sports' => array(
+						'title' => 'Sports & Outdoors',
+						'templates' => array(
+							'Flat.File.Sports.ca-Template.csv',
+							'Flat.File.Sports.ca-DataDefinitions.csv',	
+							'Flat.File.Sports.ca-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'ca_sports_browse_tree_guide.csv',
 						),
 					),
 
@@ -1135,9 +1149,9 @@ class WPLA_FeedTemplateIndex {
 					'Beauty' => array(
 						'title' => 'Beauty',
 						'templates' => array(
-							'Flat_File_Beauty_de-Template.csv',
-							'Flat_File_Beauty_de-Data.csv',	
-							'Flat_File_Beauty_de-Values.csv',								
+							'Flat.File.Beauty.de-Template.csv',
+							'Flat.File.Beauty.de-DataDefinitions.csv',	
+							'Flat.File.Beauty.de-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'de_beauty_browse_tree_guide.csv',
@@ -1148,9 +1162,9 @@ class WPLA_FeedTemplateIndex {
 					'Clothing' => array(
 						'title' => 'Bekleidung & Accessories',
 						'templates' => array(
-							'Flat_File_Clothing_de-Template.csv',
-							'Flat_File_Clothing_de-Data.csv',	
-							'Flat_File_Clothing_de-Values.csv',								
+							'Flat.File.Clothing.de-Template.csv',
+							'Flat.File.Clothing.de-DataDefinitions.csv',	
+							'Flat.File.Clothing.de-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'de_apparel_browse_tree_guide.csv',
@@ -1161,9 +1175,9 @@ class WPLA_FeedTemplateIndex {
 					'Lighting' => array(
 						'title' => 'Beleuchtung',
 						'templates' => array(
-							'Flat_File_Lighting_de-Template.csv',
-							'Flat_File_Lighting_de-Data.csv',	
-							'Flat_File_Lighting_de-Values.csv',								
+							'Flat.File.Lighting.de-Template.csv',
+							'Flat.File.Lighting.de-DataDefinitions.csv',	
+							'Flat.File.Lighting.de-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'de_lighting_browse_tree_guide.csv',
@@ -1174,9 +1188,9 @@ class WPLA_FeedTemplateIndex {
 					'HomeImprovement' => array(
 						'title' => 'Baumarkt',
 						'templates' => array(
-							'Flat_File_HomeImprovement_de-Template.csv',
-							'Flat_File_HomeImprovement_de-Data.csv',	
-							'Flat_File_HomeImprovement_de-Values.csv',								
+							'Flat.File.HomeImprovement.de-Template.csv',
+							'Flat.File.HomeImprovement.de-DataDefinitions.csv',	
+							'Flat.File.HomeImprovement.de-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'de_tools-sgp_browse_tree_guide.csv',
@@ -1187,9 +1201,9 @@ class WPLA_FeedTemplateIndex {
 					'Computers' => array(
 						'title' => 'Computer & Zubehör',
 						'templates' => array(
-							'Flat_File_Computers_de-Template.csv',
-							'Flat_File_Computers_de-Data.csv',	
-							'Flat_File_Computers_de-Values.csv',								
+							'Flat.File.Computers.de-Template.csv',
+							'Flat.File.Computers.de-DataDefinitions.csv',	
+							'Flat.File.Computers.de-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'de_computers_browse_tree_guide.csv',
@@ -1200,9 +1214,9 @@ class WPLA_FeedTemplateIndex {
 					'Health' => array(
 						'title' => 'Drogerie & Körperpflege',
 						'templates' => array(
-							'Flat_File_Health_de-Template.csv',
-							'Flat_File_Health_de-Data.csv',	
-							'Flat_File_Health_de-Values.csv',								
+							'Flat.File.Health.de-Template.csv',
+							'Flat.File.Health.de-DataDefinitions.csv',	
+							'Flat.File.Health.de-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'de_drugstore_browse_tree_guide.csv',
@@ -1213,9 +1227,9 @@ class WPLA_FeedTemplateIndex {
 					'ConsumerElectronics' => array(
 						'title' => 'Elektronik & Foto',
 						'templates' => array(
-							'Flat_File_ConsumerElectronics_de-Template.csv',
-							'Flat_File_ConsumerElectronics_de-Data.csv',	
-							'Flat_File_ConsumerElectronics_de-Values.csv',								
+							'Flat.File.ConsumerElectronics.de-Template.csv',
+							'Flat.File.ConsumerElectronics.de-DataDefinitions.csv',	
+							'Flat.File.ConsumerElectronics.de-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'de_ce_browse_tree_guide.csv',
@@ -1226,9 +1240,9 @@ class WPLA_FeedTemplateIndex {
 					'Home' => array(
 						'title' => 'Haus & Garten',
 						'templates' => array(
-							'Flat_File_Home_de-Template.csv',
-							'Flat_File_Home_de-Data.csv',	
-							'Flat_File_Home_de-Values.csv',								
+							'Flat.File.Home.de-Template.csv',
+							'Flat.File.Home.de-DataDefinitions.csv',	
+							'Flat.File.Home.de-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'de_garden_browse_tree_guide.csv',
@@ -1240,9 +1254,9 @@ class WPLA_FeedTemplateIndex {
 					'FoodAndBeverages' => array(
 						'title' => 'Lebensmittel & Getränke',
 						'templates' => array(
-							'Flat_File_FoodAndBeverages_de-Template.csv',
-							'Flat_File_FoodAndBeverages_de-Data.csv',	
-							'Flat_File_FoodAndBeverages_de-Values.csv',								
+							'Flat.File.FoodAndBeverages.de-Template.csv',
+							'Flat.File.FoodAndBeverages.de-DataDefinitions.csv',	
+							'Flat.File.FoodAndBeverages.de-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'de_food_browse_tree_guide.csv',
@@ -1253,9 +1267,9 @@ class WPLA_FeedTemplateIndex {
 					'ToysBaby' => array(
 						'title' => 'Spielzeug & Baby',
 						'templates' => array(
-							'Flat_File_ToysBaby_de-Template.csv',
-							'Flat_File_ToysBaby_de-Data.csv',	
-							'Flat_File_ToysBaby_de-Values.csv',								
+							'Flat.File.ToysBaby.de-Template.csv',
+							'Flat.File.ToysBaby.de-DataDefinitions.csv',	
+							'Flat.File.ToysBaby.de-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'de_baby_browse_tree_guide.csv',
@@ -1267,9 +1281,9 @@ class WPLA_FeedTemplateIndex {
 					'Jewelry' => array(
 						'title' => 'Schmuck',
 						'templates' => array(
-							'Flat_File_Jewelry_de-Template.csv',
-							'Flat_File_Jewelry_de-Data.csv',	
-							'Flat_File_Jewelry_de-Values.csv',								
+							'Flat.File.Jewelry.de-Template.csv',
+							'Flat.File.Jewelry.de-DataDefinitions.csv',	
+							'Flat.File.Jewelry.de-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'de_jewelry_browse_tree_guide.csv',
@@ -1280,9 +1294,9 @@ class WPLA_FeedTemplateIndex {
 					'Watches' => array(
 						'title' => 'Uhren',
 						'templates' => array(
-							'Flat_File_Watches_de-Template.csv',
-							'Flat_File_Watches_de-Data.csv',	
-							'Flat_File_Watches_de-Values.csv',								
+							'Flat.File.Watches.de-Template.csv',
+							'Flat.File.Watches.de-DataDefinitions.csv',	
+							'Flat.File.Watches.de-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'de_watches_browse_tree_guide.csv',
@@ -1315,9 +1329,9 @@ class WPLA_FeedTemplateIndex {
 					'Home' => array(
 						'title' => 'Casa e giardino',
 						'templates' => array(
-							'Flat_File_Home_it-Template.csv',
-							'Flat_File_Home_it-Data.csv',	
-							'Flat_File_Home_it-Values.csv',								
+							'Flat.File.Home.it-Template.csv',
+							'Flat.File.Home.it-DataDefinitions.csv',	
+							'Flat.File.Home.it-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'it_garden_browse_tree_guide.csv',
@@ -1329,9 +1343,9 @@ class WPLA_FeedTemplateIndex {
 					'Computers' => array(
 						'title' => 'Computers',
 						'templates' => array(
-							'Flat_File_Computers_it-Template.csv',
-							'Flat_File_Computers_it-Data.csv',	
-							'Flat_File_Computers_it-Values.csv',								
+							'Flat.File.Computers.it-Template.csv',
+							'Flat.File.Computers.it-DataDefinitions.csv',	
+							'Flat.File.Computers.it-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'it_computers_browse_tree_guide.csv',
@@ -1342,9 +1356,9 @@ class WPLA_FeedTemplateIndex {
 					'CE' => array(
 						'title' => 'Elettronica di consumo e accessori',
 						'templates' => array(
-							'Flat_File_CE_it-Template.csv',
-							'Flat_File_CE_it-Data.csv',	
-							'Flat_File_CE_it-Values.csv',								
+							'Flat.File.CE.it-Template.csv',
+							'Flat.File.CE.it-DataDefinitions.csv',	
+							'Flat.File.CE.it-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'it_electronics_browse_tree_guide.csv',
@@ -1355,9 +1369,9 @@ class WPLA_FeedTemplateIndex {
 					'Tools' => array(
 						'title' => 'Fai da te',
 						'templates' => array(
-							'Flat_File_Tools_it-Template.csv',
-							'Flat_File_Tools_it-Data.csv',	
-							'Flat_File_Tools_it-Values.csv',								
+							'Flat.File.Tools.it-Template.csv',
+							'Flat.File.Tools.it-DataDefinitions.csv',	
+							'Flat.File.Tools.it-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'it_tools_browse_tree_guide.csv',
@@ -1368,9 +1382,9 @@ class WPLA_FeedTemplateIndex {
 					'Jewelry' => array(
 						'title' => 'Gioielli',
 						'templates' => array(
-							'Flat_File_Jewelry_it-Template.csv',
-							'Flat_File_Jewelry_it-Data.csv',	
-							'Flat_File_Jewelry_it-Values.csv',								
+							'Flat.File.Jewelry.it-Template.csv',
+							'Flat.File.Jewelry.it-DataDefinitions.csv',	
+							'Flat.File.Jewelry.it-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'it_jewelry_browse_tree_guide.csv',
@@ -1381,9 +1395,9 @@ class WPLA_FeedTemplateIndex {
 					'Watches' => array(
 						'title' => 'Orologi',
 						'templates' => array(
-							'Flat_File_Watches_it-Template.csv',
-							'Flat_File_Watches_it-Data.csv',	
-							'Flat_File_Watches_it-Values.csv',								
+							'Flat.File.Watches.it-Template.csv',
+							'Flat.File.Watches.it-DataDefinitions.csv',	
+							'Flat.File.Watches.it-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'it_watches_browse_tree_guide.csv',
@@ -1394,9 +1408,9 @@ class WPLA_FeedTemplateIndex {
 					'Shoes' => array(
 						'title' => 'Scarpe e borse',
 						'templates' => array(
-							'Flat_File_Shoes_it-Template.csv',
-							'Flat_File_Shoes_it-Data.csv',	
-							'Flat_File_Shoes_it-Values.csv',								
+							'Flat.File.Shoes.it-Template.csv',
+							'Flat.File.Shoes.it-DataDefinitions.csv',	
+							'Flat.File.Shoes.it-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'it_shoes_browse_tree_guide.csv',
@@ -1430,9 +1444,9 @@ class WPLA_FeedTemplateIndex {
 					'Home' => array(
 						'title' => 'Hogar y Cocina',
 						'templates' => array(
-							'Flat_File_Home_es-Template.csv',
-							'Flat_File_Home_es-Data.csv',	
-							'Flat_File_Home_es-Values.csv',								
+							'Flat.File.Home.es-Template.csv',
+							'Flat.File.Home.es-DataDefinitions.csv',	
+							'Flat.File.Home.es-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'es_kitchen_browse_tree_guide.csv',
@@ -1443,9 +1457,9 @@ class WPLA_FeedTemplateIndex {
 					'Computers' => array(
 						'title' => 'Informática',
 						'templates' => array(
-							'Flat_File_Computers_es-Template.csv',
-							'Flat_File_Computers_es-Data.csv',	
-							'Flat_File_Computers_es-Values.csv',								
+							'Flat.File.Computers.es-Template.csv',
+							'Flat.File.Computers.es-DataDefinitions.csv',	
+							'Flat.File.Computers.es-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'es_computers_browse_tree_guide.csv',
@@ -1456,9 +1470,9 @@ class WPLA_FeedTemplateIndex {
 					'CE' => array(
 						'title' => 'Electrónica y accesorios de electrónica',
 						'templates' => array(
-							'Flat_File_CE_es-Template.csv',
-							'Flat_File_CE_es-Data.csv',	
-							'Flat_File_CE_es-Values.csv',								
+							'Flat.File.CE.es-Template.csv',
+							'Flat.File.CE.es-DataDefinitions.csv',	
+							'Flat.File.CE.es-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'es_electronics_browse_tree_guide.csv',
@@ -1469,9 +1483,9 @@ class WPLA_FeedTemplateIndex {
 					'Tools' => array(
 						'title' => 'Bricolaje y Herramientas',
 						'templates' => array(
-							'Flat_File_Tools_es-Template.csv',
-							'Flat_File_Tools_es-Data.csv',	
-							'Flat_File_Tools_es-Values.csv',								
+							'Flat.File.Tools.es-Template.csv',
+							'Flat.File.Tools.es-DataDefinitions.csv',	
+							'Flat.File.Tools.es-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'es_tools_browse_tree_guide.csv',
@@ -1482,9 +1496,9 @@ class WPLA_FeedTemplateIndex {
 					'Jewelry' => array(
 						'title' => 'Joyería',
 						'templates' => array(
-							'Flat_File_Jewelry_es-Template.csv',
-							'Flat_File_Jewelry_es-Data.csv',	
-							'Flat_File_Jewelry_es-Values.csv',								
+							'Flat.File.Jewelry.es-Template.csv',
+							'Flat.File.Jewelry.es-DataDefinitions.csv',	
+							'Flat.File.Jewelry.es-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'es_jewelry_browse_tree_guide.csv',
@@ -1495,9 +1509,9 @@ class WPLA_FeedTemplateIndex {
 					'Watches' => array(
 						'title' => 'Relojes',
 						'templates' => array(
-							'Flat_File_Watches_es-Template.csv',
-							'Flat_File_Watches_es-Data.csv',	
-							'Flat_File_Watches_es-Values.csv',								
+							'Flat.File.Watches.es-Template.csv',
+							'Flat.File.Watches.es-DataDefinitions.csv',	
+							'Flat.File.Watches.es-ValidValues.csv',								
 						),
 						'btguides' => array(
 							'es_watches_browse_tree_guide.csv',

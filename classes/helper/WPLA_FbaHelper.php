@@ -49,7 +49,7 @@ class WPLA_FbaHelper {
 
     // check if an order can be fulfilled via FBA
     // parameter: $post - a wp post object or post_id of an order
-    static public function orderCanBeFulfilledViaFBA( $post ) {
+    static public function orderCanBeFulfilledViaFBA( $post, $is_cron = false ) {
 
         // make sure we have a wp post object
         if ( is_numeric($post) ) $post = get_post( $post );
@@ -70,7 +70,9 @@ class WPLA_FbaHelper {
             return __('This order has been fulfilled by Amazon.', 'wpla');
         }
         if ( $submission_status == 'failed' ) {
-            return __('<b>There was a problem submitting this order to be fulfilled by Amazon!</b>', 'wpla');
+            // failed submissions can be submitted again - but only manually for now 
+            // (automatic resubmittion will require proper error handling for Error 560001: Delivery SLA is not available for destination address - and fallback to Standard shipping)
+            if ( $is_cron ) return __('There was a problem submitting this order to be fulfilled by Amazon!', 'wpla');
         }
 
         // skip cancelled and pending orders
@@ -131,7 +133,8 @@ class WPLA_FbaHelper {
 
 
         if ( empty( $items_available_on_fba ) ) {
-            $msg  = __('This order can not be fulfilled by Amazon.', 'wpla');
+            $msg  = __('This order can not be fulfilled by Amazon.', 'wpla') . ' '; 
+            $msg .= __('The purchased item(s) are currently not available on FBA.', 'wpla');
             return $msg;         
         }
 

@@ -46,14 +46,20 @@ WPLA.JobRunner = function () {
             nonce: 'TODO'
         };
 
-        if ( extra_params && extra_params.item_id ) {
-            params.item_id = extra_params.item_id;
-        }
-        if ( extra_params && extra_params.item_ids ) {
-            params.item_ids = extra_params.item_ids;
+        // include optional extra parameters
+        if ( extra_params ) {
+            params = jQuery.extend( params, extra_params );
         }
 
-        var jqxhr = jQuery.getJSON( ajaxurl, params )
+        // if ( extra_params && extra_params.item_id ) {
+        //     params.item_id = extra_params.item_id;
+        // }
+        // if ( extra_params && extra_params.item_ids ) {
+        //     params.item_ids = extra_params.item_ids;
+        // }
+
+        // var jqxhr = jQuery.getJSON( ajaxurl, params )
+        var jqxhr = jQuery.post( ajaxurl, params, null, 'json' )
         .success( function( response ) { 
 
             // set global queue
@@ -62,7 +68,7 @@ WPLA.JobRunner = function () {
             self.jobsQueueActive = true;
             self.currentTask = 0;
 
-            if ( self.jobsQueue.length > 0 ) {
+            if ( jQuery.isArray(self.jobsQueue) && ( self.jobsQueue.length > 0 ) ) {
                 // run first task
                 self.runTask( self.jobsQueue[ self.currentTask ] );
             } else {
@@ -77,8 +83,8 @@ WPLA.JobRunner = function () {
 
         })
         .error( function(e,xhr,error) { 
-            jQuery('#wpla_jobs_log').append( "There was a problem fetching the job list.<br>" );
-            jQuery('#wpla_jobs_log').append( "The server responded: " + e.responseText + "<br>" );
+            jQuery('#wpla_jobs_log').append( "There was a problem fetching the job list. " );
+            jQuery('#wpla_jobs_log').append( "The server responded:<hr>" + self.escapeHtml( e.responseText ) + "<hr>" );
             jQuery('#wpla_jobs_window .btn_close').show();
             jQuery('#wpla_jobs_window .btn_cancel').hide();
             // alert( "There was a problem fetching the job list. The server responded:\n\n" + e.responseText ); 
@@ -248,16 +254,20 @@ WPLA.JobRunner = function () {
                 var statusIconURL = wpla_url + "img/icon-success.png";
                 var errors_label  = response.errors.length == 1 ? 'warning' : 'warnings';
                 var errors_label  = response.errors.length == 1 ? 'message' : 'messages';
-            } else {
-                var statusIconURL = wpla_url + "img/icon-error.png";                
+            } else if ( response.errors ) {
+                var statusIconURL = wpla_url + "img/icon-error.png";                                
                 var errors_label  = response.errors.length == 1 ? 'error' : 'errors';
+            } else {
+                var statusIconURL = wpla_url + "img/icon-error.png";                                
+                console.log( 'server returned: ',response );
+                // jQuery('#wpla_jobs_log').append( 'The server returned: '.response );
             }
 
             // update row status
             currentLogRow.find('.logRowStatus').html( '<img src="'+statusIconURL+'" />' );
 
             // handle errors
-            if ( response.errors.length > 0 ) {
+            if ( response.errors && response.errors.length > 0 ) {
 
                 // create show details button
                 var taskDetailsBtn = '<a href="#" onclick="jQuery(\'#taskDetails_'+self.currentTask+'\').slideToggle(300);return false;" class="" style="">'+response.errors.length + ' '+errors_label+'</a>';
@@ -396,7 +406,7 @@ WPLA.JobRunner = function () {
             jQuery('#wpla_jobs_message').html('&nbsp;');
             // jQuery('#wpla_jobs_window .btn_close').show();
 
-            if ( self.jobsQueue.length > 0 ) {
+            if ( jQuery.isArray(self.jobsQueue) && ( self.jobsQueue.length > 0 ) ) {
                 // jQuery('#wpla_jobs_footer_msg').html( 'All ' + self.jobsQueue.length + ' tasks have been completed.' );
                 // jQuery('#wpla_jobs_footer_msg').html( 'All {0} tasks have been completed.'.format( self.jobsQueue.length ) );
                 jQuery('#wpla_jobs_footer_msg').html( wpla_JobRunner_i18n.msg_all_completed.format( self.jobsQueue.length ) );
@@ -466,6 +476,16 @@ WPLA.JobRunner = function () {
 
     }
 
+    // js equivalent of htmlspecialchars()
+    var escapeHtml = function ( text ) {
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
     var updateProgressBar = function ( value ) {
         // jQuery("#wpla_progressbar").progressbar({ value: value });
         jQuery("#wpla_progressbar").animate_progressbar( value * 100, 500 );
@@ -480,6 +500,7 @@ WPLA.JobRunner = function () {
         nextTask: nextTask,
         completeJob: completeJob,
         updateProgressBar: updateProgressBar,
+        escapeHtml: escapeHtml,
         showWindow: showWindow
     }
 }();
@@ -516,6 +537,7 @@ WPLA.JobRunner = function () {
 if (!String.prototype.format) {
     String.prototype.format = function() {
         var args = arguments;
+        if (typeof this.replace !== 'function') return false;
         return this.replace(/{(\d+)}/g, function(match, number) { 
             return typeof args[number] != 'undefined'
                 ? args[number]

@@ -136,11 +136,11 @@ class WPLA_OrdersImporter {
 			$quantity_purchased = $details['qty_purchased'];
 
 			// handle non-FBA quantity
-			if ( isset( $details['quantity'] ) && isset( $details['asin'] ) ) {
+			if ( isset( $details['quantity'] ) && isset( $details['sku'] ) ) {
 
 				// get listing item
 				$lm = new WPLA_ListingsModel();
-				$listing = $lm->getItemByASIN( $asin );
+				$listing = $lm->getItemBySKU( $details['sku'] );
 
 				// update quantity for FBA orders
 				$quantity      = $listing->quantity      + $quantity_purchased;
@@ -151,17 +151,17 @@ class WPLA_OrdersImporter {
 						'quantity'  => $quantity,
 						'quantity_sold' => $quantity_sold 
 					), 
-					array( 'asin' => $asin ) 
+					array( 'sku' => $details['sku'] ) 
 				);
 
 			}
 
 			// handle FBA quantity
-			if ( isset( $details['fba_quantity'] ) && isset( $details['asin'] ) ) {
+			if ( isset( $details['fba_quantity'] ) && isset( $details['sku'] ) ) {
 
 				// get listing item
 				$lm = new WPLA_ListingsModel();
-				$listing = $lm->getItemByASIN( $asin );
+				$listing = $lm->getItemBySKU( $details['sku'] );
 
 				// update quantity for FBA orders
 				$fba_quantity  = $listing->fba_quantity  + $quantity_purchased;
@@ -172,7 +172,7 @@ class WPLA_OrdersImporter {
 						'fba_quantity'  => $fba_quantity,
 						'quantity_sold' => $quantity_sold 
 					), 
-					array( 'asin' => $asin ) 
+					array( 'sku' => $details['sku'] ) 
 				);
 
 			}
@@ -214,7 +214,6 @@ class WPLA_OrdersImporter {
 		
 		// get listing item
 		$lm = new WPLA_ListingsModel();
-		// $listing = $lm->getItemByASIN( $asin );
 		$listing = $lm->getItemBySKU( $sku );
 
 		// skip if this listing does not exist in WP-Lister

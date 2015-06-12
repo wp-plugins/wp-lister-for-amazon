@@ -347,7 +347,7 @@ class WPLA_Toolbar  {
 			}
 
 			// View in WP-Lister
-			$url = 'admin.php?page=wpla&s='.$post_id;
+			$url = admin_url( 'admin.php?page=wpla&s='.$post_id );
 			$args = array(
 				'id'    => 'wpla_view_on_listings_page',
 				'title' => __('View item in WP-Lister', 'wpla'),
@@ -360,7 +360,7 @@ class WPLA_Toolbar  {
 		} else { // no listings
 
 			// match product option
-			$tb_url = 'admin-ajax.php?action=wpla_show_product_matches&id='.$post_id.'&width=640&height=420';
+			$tb_url = admin_url( 'admin-ajax.php?action=wpla_show_product_matches&id='.$post_id.'&width=640&height=420' );
 			// echo '<a href="'.$tb_url.'" class="thickbox" title="Match product on Amazon"><img src="'.WPLA_URL.'/img/search3.png" alt="match" /></a>';
 			$onclick = 'tb_show("'.__('Match on Amazon','wpla').'", "'.$tb_url.'");return false;';
 

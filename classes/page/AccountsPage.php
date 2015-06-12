@@ -176,6 +176,7 @@ class WPLA_AccountsPage extends WPLA_Page {
 			$account->access_key_id  = trim( $_POST['wpla_access_key_id'] );
 			// $account->secret_key     = trim( $_POST['wpla_secret_key'] );
 			$account->active         = trim( $_POST['wpla_account_is_active'] );
+			$account->is_reg_brand   = trim( $_POST['wpla_account_is_reg_brand'] );
 			$account->update();
 
 			// update allowed markets

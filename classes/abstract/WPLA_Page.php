@@ -87,7 +87,7 @@ class WPLA_Page extends WPLA_Core {
 	}  
 	function change_admin_footer_version( $version ) {
 		// $plugin_name = 'WP-Lister Pro for Amazon';  
-		$plugin_name  = WPLA_LIGHT ? 'WP-Lister for Amazon' : 'WP-Lister Pro for Amazon';  
+		$plugin_name  = WPLA_LIGHT ? 'WP-Lister Light for Amazon' : 'WP-Lister Pro for Amazon';  
 		$plugin_name .= ' ' . $this->get_plugin_version();
 		$network_activated = get_option('wplister_is_network_activated') == 1 ? true : false;
 		if ( $network_activated ) $plugin_name .= 'n';

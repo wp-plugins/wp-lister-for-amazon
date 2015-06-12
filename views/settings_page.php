@@ -233,6 +233,19 @@
 							</p>
 
 
+							<label for="wpl-fba_report_schedule" class="fba_option text_label">
+								<?php echo __('Request FBA shipment report','wpla') ?>
+                                <?php wpla_tooltip('If you use multi-channel fulfillment with eBay orders, you should set it to the minimum of 6 hours.') ?>
+							</label>
+							<select id="wpl-fba_report_schedule" name="wpla_fba_report_schedule" class="fba_option required-entry select">
+								<option value="daily"        <?php if ( $wpl_fba_report_schedule == 'daily'        ): ?>selected="selected"<?php endif; ?>><?php echo __('Daily','wpla') ?> (default)</option>
+								<option value="twelve_hours" <?php if ( $wpl_fba_report_schedule == 'twelve_hours' ): ?>selected="selected"<?php endif; ?>><?php echo __('Every 12 hours','wpla') ?></option>
+								<option value="six_hours"    <?php if ( $wpl_fba_report_schedule == 'six_hours'    ): ?>selected="selected"<?php endif; ?>><?php echo __('Every 6 hours','wpla') ?></option>
+							</select>
+							<p class="desc fba_option" style="display: block;">
+								<?php echo __('Select how often WP-Lister should request an FBA Shipment Report from Amazon.','wpla'); ?>
+							</p>
+
 						</div>
 					</div>
 

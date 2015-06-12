@@ -15,6 +15,11 @@
 		/*border-bottom: 1px solid #555;*/
 	}
 
+	/* tooltip icons should not float right on this page */
+	img.help_tip {
+		float: none;
+	}
+
 	a.right,
 	input.button {
 		float: right;
@@ -40,9 +45,11 @@
 						<p>
 							<?php echo __('To import products which are not already in your inventory on Amazon, enter the ASINs of the products to import below.','wpla'); ?>
 						</p>
+						<!--
 						<p>
 							<?php echo sprintf( __('These products will be added to your default account %s.','wpla'), '<b>'.$wpl_default_account_title.'</b>' ); ?>
 						</p>
+						-->
 
 						<form method="post" action="<?php echo $wpl_form_action; ?>&mode=asin&step=2">
 							<?php wp_nonce_field( 'wpla_import_page' ); ?>
@@ -51,7 +58,20 @@
 							<textarea name="wpla_asin_list" style="width:100%;height:230px;"><?php echo @$_REQUEST['wpla_asin_list'] ?></textarea>
 
 							<p>
+	
+								<select name="wpla_import_account_id">
+									<option>&mdash; select your account &mdash;</option>
+									<?php $all_accounts = WPLA_AmazonAccount::getAll( true ); ?>
+									<?php $default_account_id = get_option('wpla_default_account_id'); ?>
+									<?php foreach ( $all_accounts as $account ) : ?>
+										<option value="<?php echo $account->id ?>"
+										<?php if ( $account->id == $default_account_id ) echo 'selected' ?>
+											><?php echo $account->title ?> (<?php echo $account->market_code ?>)</option>
+									<?php endforeach; ?>
+								</select>
+
 								<input type="submit" value="<?php echo __('Import ASINs','wpla'); ?>" name="submit" class="button">
+
 							</p>
 
 						</form>
@@ -145,16 +165,28 @@
 							<input type="submit" value="<?php echo __('Save Options','wpla'); ?>" name="submit" class="button">
 
 							<input type="checkbox" name="wpla_reports_update_woo_stock" id="wpla_reports_update_woo_stock" value="1" <?php if ($wpl_reports_update_woo_stock) echo 'checked' ?> />
-							<label for="wpla_reports_update_woo_stock" class="text_label"><?php echo __('Update stock levels','wpla'); ?></label><br>
+							<label for="wpla_reports_update_woo_stock" class="text_label">
+								<?php echo __('Update stock levels','wpla'); ?>
+                                <?php wpla_tooltip('Tick this box to update stock levels in WooCommerce when processing an inventory report.<br>(not applicable for FBA items)') ?>
+							</label><br>
 
 							<input type="checkbox" name="wpla_reports_update_woo_price" id="wpla_reports_update_woo_price" value="1" <?php if ($wpl_reports_update_woo_price) echo 'checked' ?> />
-							<label for="wpla_reports_update_woo_price" class="text_label"><?php echo __('Update product prices','wpla'); ?></label><br>
+							<label for="wpla_reports_update_woo_price" class="text_label">
+								<?php echo __('Update product prices','wpla'); ?>
+                                <?php wpla_tooltip('Tick this box to update product prices in WooCommerce when processing an inventory report.') ?>
+							</label><br>
 
 							<input type="checkbox" name="wpla_reports_update_woo_condition" id="wpla_reports_update_woo_condition" value="1" <?php if ($wpl_reports_update_woo_condition) echo 'checked' ?> />
-							<label for="wpla_reports_update_woo_condition" class="text_label"><?php echo __('Update item conditions','wpla'); ?></label><br>
+							<label for="wpla_reports_update_woo_condition" class="text_label">
+								<?php echo __('Update item conditions','wpla'); ?>
+                                <?php wpla_tooltip('Tick this box if you want your item conditions to be updated from your inventory report.<br><br>This should only be required if you manually change an existing SKU from "new" to "used" (or vice versa) manually on Seller Central.') ?>
+							</label><br>
 
 							<input type="checkbox" name="wpla_import_creates_all_variations" id="wpla_import_creates_all_variations" value="1" <?php if ($wpl_import_creates_all_variations) echo 'checked' ?> />
-							<label for="wpla_import_creates_all_variations" class="text_label"><?php echo __('Create all variations','wpla'); ?></label><br>
+							<label for="wpla_import_creates_all_variations" class="text_label">
+								<?php echo __('Create all variations','wpla'); ?>
+                                <?php wpla_tooltip('When importing variable products, by default only variations which exist in your inventory report are created in WooCommerce.<br><br>Tick this box if you want to create <i>all</i> variations available on Amazon.<br>(backup your database first!)') ?>
+							</label><br>
 
 						</form>
 						<br style="clear:both;"/>

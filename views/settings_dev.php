@@ -97,6 +97,9 @@
                                 <?php wpla_tooltip('Select how long log records should be kept. Older records are removed automatically. The default is 30 days.') ?>
 							</label>
 							<select id="wpl-option-log_days_limit" name="wpla_log_days_limit" class=" required-entry select">
+								<option value="1"  <?php if ( $wpl_log_days_limit == '1' ):  ?>selected="selected"<?php endif; ?>>1 day</option>
+								<option value="2"  <?php if ( $wpl_log_days_limit == '2' ):  ?>selected="selected"<?php endif; ?>>2 days</option>
+								<option value="3"  <?php if ( $wpl_log_days_limit == '3' ):  ?>selected="selected"<?php endif; ?>>3 days</option>
 								<option value="7"  <?php if ( $wpl_log_days_limit == '7' ):  ?>selected="selected"<?php endif; ?>>7 days</option>
 								<option value="14"  <?php if ( $wpl_log_days_limit == '14' ):  ?>selected="selected"<?php endif; ?>>14 days</option>
 								<option value="30"  <?php if ( $wpl_log_days_limit == '30' ):  ?>selected="selected"<?php endif; ?>>30 days</option>
@@ -173,6 +176,15 @@
 					<div class="postbox" id="DeveloperToolBox" style="display:block;">
 						<h3 class="hndle"><span><?php echo __('Debug options','wpla') ?></span></h3>
 						<div class="inside">
+
+							<label for="wpl-show_browse_node_ids" class="text_label"><?php echo __('Show browse node ID','wpla'); ?>:</label>
+							<select id="wpl-show_browse_node_ids" name="wpla_show_browse_node_ids" title="Logging" class=" required-entry select">
+								<option value="0" <?php if ( $wpl_show_browse_node_ids != '1' ): ?>selected="selected"<?php endif; ?>><?php echo __('No','wpla'); ?> (Default)</option>
+								<option value="1" <?php if ( $wpl_show_browse_node_ids == '1' ): ?>selected="selected"<?php endif; ?>><?php echo __('Yes','wpla'); ?></option>
+							</select>
+							<p class="desc" style="display: block;">
+								<?php echo __('Show browse node IDs when selecting a category.','wpla'); ?>
+							</p>
 
 							<label for="wpl-text-log_level" class="text_label"><?php echo __('Log to logfile','wpla'); ?>:</label>
 							<select id="wpl-text-log_level" name="wpla_text_log_level" title="Logging" class=" required-entry select">

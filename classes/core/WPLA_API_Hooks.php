@@ -17,10 +17,13 @@ class WPLA_API_Hooks {
 		add_action( 'wpla_product_has_changed', array( &$this, 'wpla_product_has_changed' ), 10, 1 );
 
 		// create new prepared listing from product and profile
-		// add_action( 'wpla_prepare_listing', array( &$this, 'wpla_prepare_listing' ), 10, 2 );
+		add_action( 'wpla_prepare_listing', array( &$this, 'wpla_prepare_listing' ), 10, 2 );
 
 		// process inventory changes from WP-Lister for eBay
 		add_action('wplister_inventory_status_changed', array( &$this, 'wplister_inventory_status_changed'), 10, 1 );
+
+		// process product updates triggered via the WooCommerce REST API
+		add_action( 'woocommerce_api_edit_product', 			array( &$this, 'wpla_product_has_changed' ), 20, 1 ); 			// WC REST API					PUT /wc-api/v2/products/1234 
 
 		// handle ajax requests from third party CSV import plugins
 		add_action( 'wp_ajax_woo-product-importer-ajax',      	array( &$this, 'handle_third_party_ajax_csv_import' ), 1, 1 );	// Woo Product Importer 		https://github.com/dgrundel/woo-product-importer
@@ -45,6 +48,19 @@ class WPLA_API_Hooks {
 		$lm->markItemAsModified( $post_id );
 
 	}
+
+	// create new prepared listing(s) from product(s) and apply profile
+	function wpla_prepare_listing( $product_ids, $profile_id ) {
+
+		// accept both single post_id and array of post_ids
+		if ( ! is_array( $product_ids ) )
+			$product_ids = array( $product_ids );
+
+		// prepare new listing(s) from product(s)
+		$lm = new WPLA_ListingsModel();
+		$response = $lm->prepareListings( $product_ids, $profile_id );
+
+	} // wpla_prepare_listing()
 
 
 	// process inventory changes from WP-Lister for eBay

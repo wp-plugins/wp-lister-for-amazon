@@ -13,7 +13,7 @@ class WPLA_WooBackendIntegration extends WPLA_Core {
 
 		// custom column for orders table
 		add_filter('manage_edit-shop_order_columns', array( &$this, 'wpla_woocommerce_edit_shop_order_columns' ), 11 );
-		add_action('manage_shop_order_posts_custom_column', array( &$this, 'wpla_woocommerce_custom_shop_order_columns' ), 3 );
+		add_action('manage_shop_order_posts_custom_column', array( &$this, 'wpla_woocommerce_custom_shop_order_columns' ), 11 );
 
 		// hook into save_post to mark listing as changed when a product is updated
 		add_action( 'save_post', array( &$this, 'wpla_on_woocommerce_product_quick_edit_save' ), 20, 2 );
@@ -896,6 +896,7 @@ class WPLA_WooBackendIntegration extends WPLA_Core {
 			case 'wpl_order_src' :
 
 				$amazon_order_id = get_post_meta( $post->ID, '_wpla_amazon_order_id', true );
+				$tagged_as_fba   = false;
 
 				if ( $amazon_order_id ) {
 
@@ -912,7 +913,8 @@ class WPLA_WooBackendIntegration extends WPLA_Core {
 			        if ( $order ) {
 			        	$order_details = json_decode( $order->details );
 				        if ( is_object( $order_details ) && ( $order_details->FulfillmentChannel == 'AFN' ) ) {
-							echo '<small style="font-size:10px;">'.'FBA'.'</small>';
+							echo '&nbsp;<small style="font-size:10px;color:silver">'.'FBA'.'</small>';
+							$tagged_as_fba = true;
 				        }
 			        }
 
@@ -934,6 +936,7 @@ class WPLA_WooBackendIntegration extends WPLA_Core {
 
 				// show FBA submission status if it exists - for non-amazon orders as well
 		        if ( $submission_status = get_post_meta( $post->ID, '_wpla_fba_submission_status', true ) ) {
+					if ( ! $tagged_as_fba ) echo '<small style="font-size:10px;">'.'FBA'.'</small>&nbsp;';
 			        if ( $submission_status == 'success' ) {
 						echo '<img src="'.WPLA_URL.'img/icon-success-32x32.png" style="width:12px;vertical-align:middle;padding:0;" class="tips" data-tip="This order was successfully submitted to be fulfilled by Amazon." />';		
 			        } elseif ( $submission_status == 'shipped' ) {

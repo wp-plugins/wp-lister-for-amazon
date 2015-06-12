@@ -67,6 +67,8 @@
 				<option value="28" >28 <?php echo __('days','wpla'); ?></option>
 				<option value="60" >60 <?php echo __('days','wpla'); ?></option>
 				<option value="90" >90 <?php echo __('days','wpla'); ?></option>
+				<option value="180">180 <?php echo __('days','wpla'); ?></option>
+				<option value="365">365 <?php echo __('days','wpla'); ?></option>
 			</select>
 		</div>
 	</form>

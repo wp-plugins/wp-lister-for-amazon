@@ -295,9 +295,10 @@ class WPLA_ListingsTable extends WP_List_Table {
         echo '<tr>';
         // echo '<td colspan="'.sizeof( $this->_column_headers[0] ).'">';
         echo '<td>&nbsp;</td>';
-        echo '<td colspan="7">';
+        echo '<td class="wpla_auto_width_column" colspan="7">';
         echo $listing_title;
         echo '</td>';
+        echo '<td>&nbsp;</td>';
 
     } // displayMessageRow()
 
@@ -413,7 +414,9 @@ class WPLA_ListingsTable extends WP_List_Table {
             return $qty;
         // unless there is no stock left in FBA
         } elseif ( $fba_enabled  ) {
-            $qty  = $item['quantity'] . ' / <span style="color:#dd3d36">' . $item['fba_quantity'].'</span>';
+            $fba_enable_fallback = get_option( 'wpla_fba_enable_fallback', 0 );
+            $qty  = $fba_enable_fallback ? $item['quantity'] : '<span style="color:silver">' . $item['quantity'].'</span>'; // show woo qty in gray if fallback is disabled
+            $qty .= ' / <span style="color:#dd3d36">' . $item['fba_quantity'].'</span>';
             $qty .= '<br><span style="color:silver; font-size:0.8em;">' . $item['fba_fcid'].'</span>';            
             return $qty;
         }
@@ -511,6 +514,20 @@ class WPLA_ListingsTable extends WP_List_Table {
         if ( $item['loffer_price'] ) {
             // $loffer_price_link = sprintf('<a href="#" onclick="wpla_use_loffer_price(%3$s);return false;" style="color:%1$s">%2$s</a>', $loffer_price_color, $loffer_price, $item['id'] );
             $loffer_price_link = sprintf('<a href="#" data-id="%3$s" style="color:%1$s">%2$s</a>', $loffer_price_color, $loffer_price, $item['id'] );
+
+            $loffer_data = maybe_unserialize( $item['loffer_data'] );
+            $ListingsConsidered = null;
+            if ( is_array($loffer_data) ) {
+                foreach ($loffer_data as $price) {
+                    if ( $price->LandedPrice == $item['loffer_price'] ) {
+                        $ListingsConsidered = isset($price->NumberOfOfferListingsConsidered) ? $price->NumberOfOfferListingsConsidered : null;
+                    }
+                }
+                if ( $ListingsConsidered > 1 ) {
+                    $loffer_price_link .= '&nbsp;<span style="color:silver">('.$ListingsConsidered.')</span>';
+                }
+            }
+
         } else {
             $loffer_price_link = sprintf('<span style="color:%1$s">%2$s</span>', $loffer_price_color, $loffer_price );
         }
@@ -670,7 +687,7 @@ class WPLA_ListingsTable extends WP_List_Table {
                 break;
             case 'imported':
                 $color = 'orange';
-                $value = __('imported','wpla');
+                $value = __('queued','wpla');
 				break;
             case 'selected':
                 $color = 'orange';
@@ -992,8 +1009,7 @@ class WPLA_ListingsTable extends WP_List_Table {
 
 
         // get listing status summary
-        $lm = new WPLA_ListingsModel();
-        $summary = $lm->getStatusSummary();
+        $summary = WPLA_ListingsModel::getStatusSummary();
 
         // All link
         $class = ($current_listing_status == 'all' ? ' class="current"' :'');
@@ -1071,11 +1087,11 @@ class WPLA_ListingsTable extends WP_List_Table {
            $views['trashed'] .= '<span class="count">('.$summary->trashed.')</span>';       
         }
 
-        // imported link
+        // imported link (Import Queue)
         if ( isset($summary->imported) ) {
            $imported_url = add_query_arg( 'listing_status', 'imported', $base_url );
            $class = ($current_listing_status == 'imported' ? ' class="current"' :'');
-           $views['imported'] = "<a href='{$imported_url}' {$class} >".__('Imported','wpla')."</a>";
+           $views['imported'] = "<a href='{$imported_url}' {$class} >".__('Import Queue','wpla')."</a>";
            $views['imported'] .= '<span class="count">('.$summary->imported.')</span>';       
         }
 

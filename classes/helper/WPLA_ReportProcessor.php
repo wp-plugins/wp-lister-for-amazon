@@ -11,11 +11,24 @@ class WPLA_ReportProcessor {
         // process rows
         foreach ($rows as $row) {
 
-            // check for order ID
+            // check for MCF order ID
             $order_id               = str_replace( '#','', $row['merchant-order-id'] );
             $order_item_id          = $row['merchant-order-item-id'];
+            $is_mcf_order           = true;
+            // if ( empty( $order_id ) ) continue;
+            // if ( empty( $order_item_id ) ) continue;
+
+            // no merchant-order-id means this order was placed on Amazon - find WooCommerce order by reference
+            if ( empty( $order_id ) ) {
+
+                $amazon_order_id = $row['amazon-order-id'];
+                $is_mcf_order    = false;
+
+                $om    = new WPLA_OrdersModel();
+                $order = $om->getOrderByOrderID( $amazon_order_id );
+                if ( $order ) $order_id = $order->post_id;
+            };
             if ( empty( $order_id ) ) continue;
-            if ( empty( $order_item_id ) ) continue;
 
             // get WooCommerce order
             $_order = wc_get_order( $order_id );
@@ -44,10 +57,23 @@ class WPLA_ReportProcessor {
             update_post_meta( $order_id, '_custom_tracking_provider',        $carrier );
             update_post_meta( $order_id, '_tracking_provider',               '' ); // known providers - would require mapping ('usps' <=> 'USPS')
 
+            $wc_orders_processed++;
+
+            // skip further processing for non-MCF orders - no need to to update orders placed on Amazon
+            if ( ! $is_mcf_order ) continue;
+
             // complete order
             $_order->update_status( 'completed' );
 
-            $wc_orders_processed++;
+            // notify WPLE - mark order as shipped on eBay
+            $args = array();
+            $args['TrackingNumber']  = $tracking_number;
+            $args['TrackingCarrier'] = $carrier;
+            $args['ShippedTime']     = $shipment_date;
+            // $args['FeedbackText']    = 'Thank You...';
+
+            do_action( 'wple_complete_sale_on_ebay', $order_id, $args );
+
         }
 
         // build response

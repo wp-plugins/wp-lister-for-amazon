@@ -28,6 +28,7 @@ class WPLA_ProductsImporter {
 		}
 		if ( ! $listing ) return false;
 		$listing_id = $listing['id'];
+		$this->logger->info('--- createProductFromAmazonListing() - ID: '.$listing['id'].' / ASIN '.$listing['asin'] );
 
 		$account = WPLA_AmazonAccount::getAccount( $listing['account_id'] );
 		if ( ! $account ) return false;
@@ -51,7 +52,7 @@ class WPLA_ProductsImporter {
 			return false;
 		}
 
-		// first check if product already exists...
+		// first check if product already exists in WooCommerce...
 		$post_id = WPLA_ProductBuilder::getProductIdBySKU( $listing['sku'] );
 		if ( $post_id ) {
 			$this->logger->info('found existing product by SKU '.$listing['sku'].' - post_id: '.$post_id );
@@ -74,7 +75,8 @@ class WPLA_ProductsImporter {
 			}
 
 		} else {
-			// SKU does not exist...
+			// SKU does not exist in WC...
+			$this->logger->info('no WC product found for SKU '.$listing['sku'].' - type: '.$result->product->variation_type );
 
 			// process child variation - fetch parent item instead
 			if ( $result->success && $result->product->variation_type == 'child' ) {
@@ -109,7 +111,7 @@ class WPLA_ProductsImporter {
 				$listing         = $lm->getItem( $listing_id );
 			}
 
-		} // SKU does not exist
+		} // SKU does not exist in WC
 
 
 		// import product...
@@ -217,6 +219,8 @@ class WPLA_ProductsImporter {
 
 
 	public function parseVariationChildNodes( $product_node, $parent_listing, $account ) {
+		$this->logger->info( "parseVariationChildNodes()" );
+
 		if ( !    isset( $product_node->Relationships->VariationChild ) ) return $product_node;
 		// if ( ! is_array( $product_node->Relationships->VariationChild ) ) return $product_node;
 
@@ -267,6 +271,7 @@ class WPLA_ProductsImporter {
 			}
 
 			// check if this variation exist in listing table
+			// (using getItemByASIN() does no harm here - parseVariationChildNodes() is only called when no SKU was found)
 			if ( $var_item = $lm->getItemByASIN( $newvar->asin ) ) {
 
 				// use SKU, price and quantity from listing (usually imported from report)
@@ -362,14 +367,18 @@ class WPLA_ProductsImporter {
 
 
 	public function fixNewVariationListings( $variations, $parent_listing ) {
+		$this->logger->info( "fixNewVariationListings()" );
+
 		$lm = new WPLA_ListingsModel();
 
 		// get post_id of parent which has been created by now
-		$parent_listing = $lm->getItemByASIN( $parent_listing->asin );
+		// $parent_listing = $lm->getItemByASIN( $parent_listing->asin );
+		$parent_listing = $lm->getItemBySKU( $parent_listing->sku );
 
 		// catch Invalid argument error
 		if ( ! is_array($variations) ) {
-			$this->logger->error( "no variations found for parent variable ASIN {$parent_listing->asin}");
+			$this->logger->error( "no variations found for parent variable ASIN {$parent_listing->asin} (not checked)");
+			$this->logger->error( "no variations found for parent variable SKU  {$parent_listing->sku}");
 			$this->logger->error( 'variations:'.print_r($variations,1));
 			// echo 'Error: no variations found for variable ASIN '.$parent_listing->asin.'<br>';
 			// echo "<pre>variations: ";print_r($variations);echo"</pre>";#die();
@@ -378,13 +387,17 @@ class WPLA_ProductsImporter {
 
 		foreach ($variations as $var) {
 			$post_id = WPLA_ProductBuilder::getProductIdBySKU( $var->sku );
-			if ( ! $post_id ) continue;
+			if ( ! $post_id ) {
+				$this->logger->warn( "fixing SKU {$var->sku} ... no product found for this SKU!!" );
+				continue;	
+			} 
 
 			$data = array(
-				'post_id' => $post_id,
+				'post_id'   => $post_id,
 				'parent_id' => $parent_listing->post_id,
 			);
 			$lm->updateListing( $var->listing_id, $data );
+			$this->logger->info( "fixed SKU {$var->sku} - post_id: $post_id" );
 		}
 
 	} // fixNewVariationListings()

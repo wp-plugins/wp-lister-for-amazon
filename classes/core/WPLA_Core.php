@@ -37,7 +37,7 @@ class WPLA_Core {
 		$this->logger = &$wpla_logger;
 		$this->app_name = apply_filters( 'wpla_app_name', 'Amazon' );
 
-		add_action( 'init', 				array( &$this, 'onWpInit' ), 1 );
+		add_action( 'init', 				array( &$this, 'onWpInit' ), 5 ); // minimum priority is 5 (or saving profile will throw an error when fetching variation attributes)
 		add_action( 'admin_init', 			array( &$this, 'onWpAdminInit' ) );
 
 		$this->config();

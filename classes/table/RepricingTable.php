@@ -296,8 +296,7 @@ class WPLA_RepricingTable extends WPLA_ListingsTable {
 
 
         // get listing status summary
-        $lm = new WPLA_ListingsModel();
-        $summary = $lm->getRepricingStatusSummary();
+        $summary = WPLA_ListingsModel::getRepricingStatusSummary();
 
         // All link
         $class = ($current_repricing_status == 'all' ? ' class="current"' :'');

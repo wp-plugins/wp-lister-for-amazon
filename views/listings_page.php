@@ -196,6 +196,9 @@
 			})
 
 
+			// adjust width of extra table rows (inline errors and warnings)
+			var column_count = jQuery('#the-list tr:first td').length;
+			jQuery('#the-list .wpla_auto_width_column').attr( 'colspan', column_count - 2 ); // 1 col left and right padding
 
 			// init tooltips
 			jQuery(".wide_error_tip").tipTip({

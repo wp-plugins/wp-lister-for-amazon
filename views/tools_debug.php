@@ -89,6 +89,22 @@
 
 						<form method="post" action="<?php echo $wpl_form_action; ?>">
 								<?php wp_nonce_field( 'wpla_tools_page' ); ?>
+								<input type="hidden" name="action" value="wpla_fix_orphan_child_products" />
+								<input type="submit" value="<?php echo __('Fix orphaned child products','wpla'); ?>" name="submit" class="button">
+								<p><?php echo __('Clear wp_post table from child variations without parent product.','wpla'); ?></p>
+						</form>
+						<br style="clear:both;"/>
+
+						<form method="post" action="<?php echo $wpl_form_action; ?>">
+								<?php wp_nonce_field( 'wpla_tools_page' ); ?>
+								<input type="hidden" name="action" value="wpla_fix_deleted_products" />
+								<input type="submit" value="<?php echo __('Remove listings without product','wpla'); ?>" name="submit" class="button">
+								<p><?php echo __('Clear wp_amazon_listings table from listings where the WooCommerce product has been deleted.','wpla'); ?></p>
+						</form>
+						<br style="clear:both;"/>
+
+						<form method="post" action="<?php echo $wpl_form_action; ?>">
+								<?php wp_nonce_field( 'wpla_tools_page' ); ?>
 								<input type="hidden" name="action" value="wpla_remove_all_imported_products" />
 								<input type="submit" value="<?php echo __('Remove all imported products','wpla'); ?>" name="submit" class="button">
 								<p>

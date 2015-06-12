@@ -114,12 +114,14 @@ class WPLA_ImportPage extends WPLA_Page {
 	public function displayPreviewImportPage( $step ) {
 
 		// analyse report content
-		$report    = new WPLA_AmazonReport( $_REQUEST['report_id'] );
-		$account   = new WPLA_AmazonAccount( $report->account_id );
-		$summary   = WPLA_ImportHelper::analyzeReportForPreview( $report );
+		$report         = new WPLA_AmazonReport( $_REQUEST['report_id'] );
+		$account        = new WPLA_AmazonAccount( $report->account_id );
+		$report_summary = WPLA_ImportHelper::analyzeReportForPreview( $report );
+		$status_summary = WPLA_ListingsModel::getStatusSummary();
 
 		// skip step 3 if no products are to be imported
-		if ( $step == 3 && count($summary->products_to_import) == 0 ) {
+		// if ( $step == 3 && count($report_summary->products_to_import) == 0 ) {
+		if ( $step == 3 && intval(@$status_summary->imported) == 0 ) {
 			return $this->displayFinishedImportPage();
 		}
 
@@ -127,7 +129,8 @@ class WPLA_ImportPage extends WPLA_Page {
 			'plugin_url'                   => self::$PLUGIN_URL,
 			'message'                      => $this->message,		
 			'step'                         => $step,
-			'summary'                      => $summary,
+			'report_summary'               => $report_summary,
+			'status_summary'               => $status_summary,
 			'account'                      => $account,
 			'report_id'                    => $report->id,
 			'data_rows'                    => $report->get_data_rows(), // TODO: use cache
@@ -208,7 +211,10 @@ class WPLA_ImportPage extends WPLA_Page {
 		}
 
 		$lm = new WPLA_ListingsModel();
-		$default_account_id = get_option( 'wpla_default_account_id', 1 );
+		$import_account_id = $_REQUEST['wpla_import_account_id'];
+		if ( ! $import_account_id ) {
+			$import_account_id = get_option( 'wpla_default_account_id', 1 );
+		}
 
 		$asin_array = explode("\n", $asin_list);
 		foreach ($asin_array as $ASIN) {
@@ -227,7 +233,7 @@ class WPLA_ImportPage extends WPLA_Page {
 			$row['price']               = 0;
 			$row['source']              = 'foreign_import';
 
-			$lm->updateItemFromReportCSV( $row, $default_account_id );				
+			$lm->updateItemFromReportCSV( $row, $import_account_id );				
 			// $this->showMessage('Product '.$ASIN.' was prepared for import.');			
 		}
 		if ( $lm->imported_count )

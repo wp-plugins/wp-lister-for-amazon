@@ -31,6 +31,9 @@ class WPLA_AjaxHandler extends WPLA_Core {
 		add_action('wp_ajax_wpla_load_template_data_for_profile', array( &$this, 'ajax_wpla_load_template_data_for_profile' ) );
 		add_action('wp_ajax_wpla_load_template_data_for_product', array( &$this, 'ajax_wpla_load_template_data_for_product' ) );
 
+		// import preview
+		add_action('wp_ajax_wpla_get_import_preview_table',       array( &$this, 'ajax_wpla_get_import_preview_table' ) );
+
 		// apply lowest price
 		add_action('wp_ajax_wpla_use_lowest_price',   array( &$this, 'ajax_wpla_use_lowest_price' ) );
 		add_action('wp_ajax_wpla_apply_lowest_price', array( &$this, 'ajax_wpla_apply_lowest_price' ) );
@@ -44,6 +47,22 @@ class WPLA_AjaxHandler extends WPLA_Core {
 
 	}
 	
+
+	// load import preview table
+	public function ajax_wpla_get_import_preview_table() {
+
+		$query = $_REQUEST['query'];
+
+		// analyse report content
+		$report    = new WPLA_AmazonReport( $_REQUEST['report_id'] );
+		$account   = new WPLA_AmazonAccount( $report->account_id );
+		$summary   = WPLA_ImportHelper::analyzeReportForPreview( $report );
+
+		WPLA_ImportHelper::render_import_preview_table( $report->get_data_rows(), $summary, $query );
+
+		exit();
+	} // ajax_wpla_get_import_preview_table()
+
 
 	// show pricing details for listing
 	public function ajax_wpla_view_pricing_info() {
@@ -662,30 +681,56 @@ class WPLA_AjaxHandler extends WPLA_Core {
 
 		$path = $_POST["dir"];	// example: /0/20081/37903/ - /0/ means root
 		$parent_node_id = basename( $path );
-		$categories = $this->getChildrenOfCategory( $parent_node_id );		
+		$categories = $this->getChildrenOfCategory( $parent_node_id );
 		// echo "<pre>";print_r($categories);echo"</pre>";#die();
 		// $categories = apply_filters( 'wpla_get_amazon_categories_node', $categories, $parent_node_id, $path );
 
+		$show_node_ids = get_option( 'wpla_show_browse_node_ids' );
+
 		if( count($categories) > 0 ) { 
-			echo "<ul class=\"jqueryFileTree\" style=\"display: none;\">";
-			// All dirs
+			echo "<ul class=\"jqueryFileTree\" style=\"display: none;\">"."\n";
+
+			// first show all folders
 			foreach( $categories as $cat ) {
 				if ( $cat['leaf'] == '0' ) {
+
+					$node_id    = $cat['node_id'];
+					$node_label = $cat['node_name'];
+					$node_slug  = $_POST['dir'] . $cat['node_id'];
+					$keyword    = $cat['keyword'];
+
 					if ( $path == '/0/' ) {
-						$cat['node_name'] .= ' ('. WPLA_AmazonMarket::getMarketCode( $cat['site_id'] ) .')';
+						$node_label .= ' ('. WPLA_AmazonMarket::getMarketCode( $cat['site_id'] ) .')';
+					} elseif ( $show_node_ids ) {
+						$node_label .= ' ('.$cat['node_id'].')';
+						if ( $keyword ) $node_label .= ' ('.$keyword.')';
 					}
-					echo '<li class="directory collapsed"><a href="#" rel="' 
-						. ($_POST['dir'] . $cat['node_id']) . '/">'. ($cat['node_name']) . '</a></li>';
+
+					echo '<li class="directory collapsed"><a href="#" id="wpla_node_id_'.$node_id.'" rel="' 
+						. $node_slug . '/" data-keyword="'.$keyword.'" >'. $node_label . '</a></li>'."\n";
 				}
 			}
-			// All files
+
+			// then show all leaf nodes
 			foreach( $categories as $cat ) {
 				if ( $cat['leaf'] == '1' ) {
-					$ext = 'txt';
-					echo '<li class="file ext_txt"><a href="#" rel="' 
-						. ($_POST['dir'] . $cat['keyword']) . '">' . ($cat['node_name']) . '</a></li>';
+
+					$node_id    = $cat['node_id'];
+					$node_label = $cat['node_name'];
+					// $node_slug  = $_POST['dir'] . $cat['keyword'];
+					$node_slug  = $cat['node_id'] ? $_POST['dir'] . $cat['node_id'] : $_POST['dir'] . $cat['keyword'];
+					$keyword    = $cat['keyword'];
+
+					if ( $show_node_ids ) {
+						$node_label .= ' ('.$cat['node_id'].')';
+						if ( $keyword ) $node_label .= ' ('.$keyword.')';
+					}
+
+					echo '<li class="file ext_txt"><a href="#" id="wpla_node_id_'.$node_id.'" rel="' 
+						. $node_slug . '" data-keyword="'.$keyword.'" >' . $node_label . '</a></li>'."\n";
 				}
 			}
+
 			echo "</ul>";	
 		}
 		exit();	
@@ -884,6 +929,15 @@ class WPLA_AjaxHandler extends WPLA_Core {
 				$this->returnJSON( $response );
 				exit();
 			
+			// process single row (SKU) Merchant or FBA Report - and create / update listings
+			case 'processSingleSkuFromReport':
+				
+				// process report page - both Merchant and FBA reports
+				$response = WPLA_ImportHelper::ajax_processReportPage( $job, $task, true );
+				
+				$this->returnJSON( $response );
+				exit();
+			
 			
 			default:
 				// echo "unknown task";
@@ -969,6 +1023,24 @@ class WPLA_AjaxHandler extends WPLA_Core {
 				$this->returnJSON( $response );
 				exit();
 		
+			case 'processRowsFromAmazonReport':
+				
+				$id   = $_REQUEST['report_id'];
+				$skus = $_REQUEST['sku_list'];
+
+				foreach ( $skus as $sku ) {
+		        	$items[] = array(
+						'id'       => $id,
+						'sku'      => $sku,
+						'title'    => 'Processing SKU '.$sku
+		        	);
+		        }
+
+		        // create job from items and send response
+		        $response = $this->_create_bulk_listing_job( 'processSingleSkuFromReport', $items, $jobname );
+				$this->returnJSON( $response );
+				exit();
+		
 		
 			case 'fetchProductDescription':
 				
@@ -999,6 +1071,7 @@ class WPLA_AjaxHandler extends WPLA_Core {
 				'displayName' => isset( $item['listing_title'] ) ? $item['listing_title'] : $item['title'], 
 				'id'          => $item['id'] 
 			);
+			if ( isset( $item['sku']      ) ) $task['sku']      = $item['sku'];
 			if ( isset( $item['page']     ) ) $task['page']     = $item['page'];
 			if ( isset( $item['to_row']   ) ) $task['to_row']   = $item['to_row'];
 			if ( isset( $item['from_row'] ) ) $task['from_row'] = $item['from_row'];

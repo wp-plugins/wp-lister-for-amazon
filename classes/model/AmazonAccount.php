@@ -48,6 +48,7 @@ class WPLA_AmazonAccount {
 			'market_code',
 			'allowed_markets',
 			'active',
+			'is_reg_brand',
 			'config',
 			'sync_orders',
 			'sync_products',
@@ -193,7 +194,7 @@ class WPLA_AmazonAccount {
 		$items = $wpdb->get_results("
 			SELECT *
 			FROM $table
-			ORDER BY $orderby $order
+			ORDER BY active desc, $orderby $order
             LIMIT $offset, $per_page
 		", ARRAY_A);
 

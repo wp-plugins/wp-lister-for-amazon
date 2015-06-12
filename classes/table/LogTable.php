@@ -337,7 +337,7 @@ class WPLA_LogTable extends WP_List_Table {
        $base_url = esc_url_raw( remove_query_arg( array( 'action', 'log', 'log_status' ) ) );
 
        // get status summary
-       $summary = $this->getStatusSummary();
+       $summary = self::getStatusSummary();
 
        // All link
        $class = ($current == 'all' ? ' class="current"' :'');
@@ -374,7 +374,7 @@ class WPLA_LogTable extends WP_List_Table {
        return $views;
     }    
         
-    function getStatusSummary() {
+    static function getStatusSummary() {
         global $wpdb;
         $result = $wpdb->get_results("
             SELECT success as status, count(*) as total

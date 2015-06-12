@@ -7,6 +7,9 @@
  */
 
 class WPLA_OrdersModel extends WPLA_Model {
+
+	const TABLENAME = 'amazon_orders';
+
 	var $_session;
 	var $_cs;
 
@@ -30,7 +33,7 @@ class WPLA_OrdersModel extends WPLA_Model {
 		$this->logger = &$wpla_logger;
 
 		global $wpdb;
-		$this->tablename = $wpdb->prefix . 'amazon_orders';
+		$this->tablename = $wpdb->prefix . self::TABLENAME;
 	}
 
 
@@ -157,11 +160,13 @@ class WPLA_OrdersModel extends WPLA_Model {
 
 	}
 
-	function getStatusSummary() {
+	static function getStatusSummary() {
 		global $wpdb;
+		$table = $wpdb->prefix . self::TABLENAME;
+
 		$result = $wpdb->get_results("
 			SELECT status, count(*) as total
-			FROM $this->tablename
+			FROM $table
 			GROUP BY status
 		");
 
@@ -174,7 +179,7 @@ class WPLA_OrdersModel extends WPLA_Model {
 		// count total items as well
 		$total_items = $wpdb->get_var("
 			SELECT COUNT( id ) AS total_items
-			FROM $this->tablename
+			FROM $table
 		");
 		$summary->total_items = $total_items;
 

@@ -115,10 +115,8 @@ class WPLA_ProductWrapper {
 		$product = self::getProduct( $post_id );
 		if ( ! $product ) return array();
 		
-		$attribute_taxnomies = $product->get_attributes();
-		
-		// global $wpla_logger;
-		// $wpla_logger->debug('attribute_taxnomies: '.print_r($attribute_taxnomies,1));
+		$attribute_taxnomies = $product->get_attributes();	
+		// WPLA()->logger->info("attribute_taxnomies ($post_id): ".print_r($attribute_taxnomies,1));
 
 		foreach ($attribute_taxnomies as $attribute) {
 
@@ -126,7 +124,8 @@ class WPLA_ProductWrapper {
 
 				// handle taxonomy attributes
 				$terms = wp_get_post_terms( $post_id, $attribute['name'] );
-				// $wpla_logger->debug('terms: '.print_r($terms,1));
+				// WPLA()->logger->info('terms: '.print_r($terms,1));
+
 				if ( is_wp_error($terms) ) {
 					// echo "post id: $post_id <br>";
 					// echo "attribute name: " . $attribute['name']."<br>";
@@ -600,8 +599,11 @@ class WPLA_ProductWrapper {
 	// get WooCommerce product object (private)
 	static function getProduct( $post_id, $is_variation = false ) {
 
+		// use wc_get_product() on WC 2.1+
+		if ( function_exists('wc_get_product') ) {
+			return wc_get_product( $post_id );
 		// use get_product() on WC 2.0+
-		if ( function_exists('get_product') ) {
+		} elseif ( function_exists('get_product') ) {
 			return get_product( $post_id );
 		} else {
 			// instantiate WC_Product on WC 1.x
@@ -623,6 +625,30 @@ class WPLA_ProductWrapper {
 		}
 
 	}	
+	
+	
+	// get WooCommerce attribute value
+	static function getAttributeValueFromSlug( $taxonomy_name, $value ) {
+
+		$taxonomy = str_replace('attribute_', '', $taxonomy_name); // attribute_pa_color -> pa_color
+		$term     = get_term_by('slug', $value, $taxonomy );
+		// echo "<pre>key  : ";print_r($taxonomy_name);echo"</pre>";
+		// echo "<pre>term : ";print_r($term);echo"</pre>";
+		// echo "<pre>value: ";print_r($value);echo"</pre>";
+
+		// try to fetch term by name - required for values like "0" or "000"
+		if ( ! $term ) {
+			$term = get_term_by('name', $value, $taxonomy );
+		}
+
+		if ( $term ) {
+			// handle proper attribute taxonomies
+			// $value = html_entity_decode( $term->name, ENT_QUOTES, 'UTF-8' ); // US Shoe Size (Men&#039;s) => US Shoe Size (Men's)
+			$value = $term->name;
+		}
+
+		return $value;
+	} // getAttributeValue()
 	
 	
 }

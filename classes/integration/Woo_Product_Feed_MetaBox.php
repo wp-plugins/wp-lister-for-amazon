@@ -252,7 +252,7 @@ class WPLA_Product_Feed_MetaBox {
 					// console.log('cat_id: ',cat_id);
 
 					// insert shortcode / value
-					wpla_insert_shortcode( cat_id );
+					wpla_insert_selected_browse_node( cat_id );
 
 			        // update fields
 			        // jQuery('#amazon_category_id_'+wpla_selecting_cat).attr( 'value', cat_id );

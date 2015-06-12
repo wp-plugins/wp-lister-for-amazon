@@ -102,7 +102,7 @@ class WPLA_Product_MetaBox {
 			'id' 			=> 'wpl_amazon_title',
 			'label' 		=> __('Listing title', 'wpla'),
 			'placeholder' 	=> 'Custom listing title',
-			'description' 	=> __('Leave empty to generate title from product name.','wpla'),
+			'description' 	=> __('Leave empty to generate title from product name.<br>Maximum length: 500 characters','wpla'),
 			'desc_tip'		=>  true,
 			'custom_attributes' => array( 'maxlength' => 500 ),
 			'value'			=> get_post_meta( $post->ID, '_amazon_title', true )
@@ -493,6 +493,7 @@ class WPLA_Product_MetaBox {
 		$_amazon_price         = get_post_meta( $variation_post_id, '_amazon_price'       	, true );
 		$_amazon_minimum_price = get_post_meta( $variation_post_id, '_amazon_minimum_price' , true );
 		$_amazon_maximum_price = get_post_meta( $variation_post_id, '_amazon_maximum_price' , true );
+		$_amazon_is_disabled   = get_post_meta( $variation_post_id, '_amazon_is_disabled'   , true );
 		$_amazon_asin          = get_post_meta( $variation_post_id, '_wpla_asin'  			, true );
 
         ?>
@@ -554,7 +555,15 @@ class WPLA_Product_MetaBox {
                     <input type="text" name="variable_amazon_price[<?php echo $loop; ?>]" class="" value="<?php echo $_amazon_price ?>" />
                 </p>
                 <p class="form-row form-row-last">
-                	&nbsp;
+                    <label>
+                        <?php _e('Amazon Visibility', 'wpla'); ?>
+                        <a class="tips" data-tip="Tick the checkbox below to omit this particular variation when this product is listed on Amazon.<br><br>Note: Ticking the box will not remove an existing listing for this variation!" href="#">[?]</a>
+                    </label> 
+                	<label>
+                		<input type="checkbox" class="checkbox" name="variable_amazon_is_disabled[<?php echo $loop; ?>]" style="margin-top:5px;"
+                			<?php if ( $_amazon_is_disabled ) echo 'checked="checked"' ?> >
+                		<?php _e('Hide on Amazon', 'wpla'); ?>
+                	</label>
                 </p>
             </div>
             <?php endif; ?>
@@ -595,6 +604,7 @@ class WPLA_Product_MetaBox {
 		$variable_amazon_price         = isset( $_POST['variable_amazon_price']         ) ? $_POST['variable_amazon_price']         : '';
 		$variable_amazon_minimum_price = isset( $_POST['variable_amazon_minimum_price'] ) ? $_POST['variable_amazon_minimum_price'] : '';
 		$variable_amazon_maximum_price = isset( $_POST['variable_amazon_maximum_price'] ) ? $_POST['variable_amazon_maximum_price'] : '';
+		$variable_amazon_is_disabled   = isset( $_POST['variable_amazon_is_disabled']   ) ? $_POST['variable_amazon_is_disabled']   : '';
 
 		// convert decimal comma for all price fields
 		$variable_amazon_price         = str_replace( ',', '.', $variable_amazon_price         );
@@ -621,6 +631,7 @@ class WPLA_Product_MetaBox {
             update_post_meta( $variation_id, '_amazon_price', 			isset( $variable_amazon_price[$i]         ) ? trim( $variable_amazon_price[$i]         ) : '' );
             update_post_meta( $variation_id, '_amazon_minimum_price', 	isset( $variable_amazon_minimum_price[$i] ) ? trim( $variable_amazon_minimum_price[$i] ) : '' );
             update_post_meta( $variation_id, '_amazon_maximum_price', 	isset( $variable_amazon_maximum_price[$i] ) ? trim( $variable_amazon_maximum_price[$i] ) : '' );
+            update_post_meta( $variation_id, '_amazon_is_disabled', 	isset( $variable_amazon_is_disabled[$i]   ) ? $variable_amazon_is_disabled[$i]           : '' );
 
             // if ( $variable_amazon_product_id[$i] !== 'parent' )
             //     update_post_meta( $variation_id, '_amazon_product_id', $variable_amazon_product_id[$i] );
@@ -684,6 +695,9 @@ class WPLA_Product_MetaBox {
 				if ( $lm->getItemByASIN( $asin, false ) ) continue;
 				if ( $lm->getItemByPostID( $variation_id ) ) continue;
 
+				// skip hidden variations
+				if ( get_post_meta( $variation_id, '_amazon_is_disabled', true ) == 'on' ) continue;
+
         		// insert matched listing
 				$success = $lm->insertMatchedProduct( $variation_id, $asin, $default_account_id );
 
@@ -704,16 +718,22 @@ class WPLA_Product_MetaBox {
 		$parent_listing = $lm->getItemByPostID( $post_id );
 		if ( $parent_listing ) {
 
+			// get account from parent listing
+			$account = WPLA_AmazonAccount::getAccount( $parent_listing->account_id );
+			if ( ! $account ) return;
+
         	foreach ( $all_variations_with_SKU as $variation_id => $sku ) {
 
         		// check if this SKU / ID already exist - skip if it does
 				if ( $lm->getItemBySKU( $sku, false ) ) continue;
 				if ( $lm->getItemByPostID( $variation_id ) ) continue;
 
-				// check if this variation has a UPC/EAN set - skip if empty
-				// TODO: make this an option (brand registry)
+				// check if this variation has a UPC/EAN set - skip if empty (unless brand registry is enabled)
 				$_amazon_product_id = get_post_meta( $variation_id, '_amazon_product_id', true );
-				if ( ! $_amazon_product_id ) continue;
+				if ( ! $_amazon_product_id && ! $account->is_reg_brand ) continue;
+
+				// skip hidden variations
+				if ( get_post_meta( $variation_id, '_amazon_is_disabled', true ) == 'on' ) continue;
 
         		// insert variation listing
 				$success = $lm->insertMissingVariation( $variation_id, $sku, $parent_listing );
@@ -745,6 +765,7 @@ class WPLA_Product_MetaBox {
 		delete_post_meta( $new_id, '_amazon_price' 			);
 		delete_post_meta( $new_id, '_amazon_minimum_price' 	);
 		delete_post_meta( $new_id, '_amazon_maximum_price' 	);
+		delete_post_meta( $new_id, '_amazon_is_disabled' 	);
 		delete_post_meta( $new_id, '_amazon_product_id' 	);
 		delete_post_meta( $new_id, '_amazon_id_type' 		);
 		delete_post_meta( $new_id, '_wpla_asin'				);

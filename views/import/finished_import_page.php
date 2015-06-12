@@ -35,11 +35,15 @@
 							<?php endif; ?>
 						</p>
                         <p>
+                            <a href="admin.php?page=wpla-import" class="button button-small">
+                                <?php echo __('Run another Import','wpla'); ?>
+                            </a>
+                            &nbsp;&nbsp;&nbsp;
                             <a href="admin.php?page=wpla" class="button button-small">
                                 <?php echo __('View Listings','wpla'); ?>
                             </a>
                             &nbsp;&nbsp;&nbsp;
-                            <a href="edit.php?post_type=product" class="button button-small">
+                            <a href="edit.php?post_type=product" class="button button-small button-primary">
                                 <?php echo __('View Products','wpla'); ?>
                             </a>
                         </p>

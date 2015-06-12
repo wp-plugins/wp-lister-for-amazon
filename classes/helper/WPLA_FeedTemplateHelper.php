@@ -140,6 +140,7 @@ class WPLA_FeedTemplateHelper extends WPLA_Core {
 		if (strpos($feed_type, '.')) list( $feed_type, $dummy ) = explode('.',$feed_type);	// remove .de (if present)
 		if (strpos($feed_type, '_')) list( $feed_type, $dummy ) = explode('_',$feed_type);	// remove _de (if present)
 		if ( $feed_type == 'ListingLoader') $feed_type = 'Offer';
+		if ( $feed_type == 'CE')            $feed_type = 'ConsumerElectronics';
 		$this->logger->info("detected type: {$feed_type}");
 
 		switch ($mode) {

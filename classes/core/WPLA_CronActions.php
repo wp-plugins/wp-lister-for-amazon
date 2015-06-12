@@ -16,6 +16,7 @@ class WPLA_CronActions {
 		// add main cron handler
 		add_action('wpla_update_schedule', 		array( &$this, 'cron_update_schedule' ) );
 		add_action('wpla_daily_schedule', 		array( &$this, 'cron_daily_schedule' ) );
+		add_action('wpla_fba_report_schedule', 	array( &$this, 'cron_fba_report_schedule' ) );
 
  		// handle external cron calls
 		add_action('wp_ajax_wplister_run_scheduled_tasks', array( &$this, 'cron_update_schedule' ) );
@@ -104,9 +105,9 @@ class WPLA_CronActions {
 		if ( get_option( 'wpla_autofetch_inventory_report' ) )
 			do_action('wpla_request_daily_inventory_report');
 
-		// request FBA shipments report
-		if ( get_option( 'wpla_fba_autosubmit_orders' ) )
-			do_action('wpla_request_daily_fba_shipments_report');
+		// // request FBA shipments report
+		// if ( get_option( 'wpla_fba_autosubmit_orders' ) )
+		// 	do_action('wpla_request_daily_fba_shipments_report');
 
 		// request daily listing quality report
 		if ( get_option( 'wpla_autofetch_listing_quality_feeds', 1 ) )
@@ -119,6 +120,20 @@ class WPLA_CronActions {
 		update_option( 'wpla_daily_cron_last_run', time() );
 
         $this->logger->info("*** WP-CRON: cron_daily_schedule() finished");
+	}
+
+	// run FBA report schedule - called by wp_cron
+	public function cron_fba_report_schedule() {
+        $this->logger->info("*** WP-CRON: cron_fba_report_schedule()");
+
+		// request FBA shipments report
+		if ( get_option( 'wpla_fba_enabled' ) )
+			do_action('wpla_request_daily_fba_shipments_report');
+
+		// store timestamp
+		update_option( 'wpla_fba_report_cron_last_run', time() );
+
+        $this->logger->info("*** WP-CRON: cron_fba_report_schedule() finished");
 	}
 
 
@@ -646,6 +661,14 @@ class WPLA_CronActions {
 		$schedules['thirty_min'] = array(
 			'interval' => 60 * 30,
 			'display' => 'Once every thirty minutes'
+		);
+		$schedules['six_hours'] = array(
+			'interval' => 60 * 60 * 6,
+			'display' => 'Once every six hours'
+		);
+		$schedules['twelve_hours'] = array(
+			'interval' => 60 * 60 * 12,
+			'display' => 'Once every twelve hours'
 		);
 		return $schedules;
 	}

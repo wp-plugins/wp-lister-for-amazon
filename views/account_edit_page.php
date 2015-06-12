@@ -100,6 +100,15 @@
 								<option value="0" <?php if ( $wpl_account->active == 0 ) echo 'selected' ?> ><?php echo __('Inactive','wpla'); ?></option>
 							</select>
 	
+							<label for="wpl-account_is_reg_brand" class="text_label">
+								<?php echo __('Brand Registry','wpla'); ?>
+                                <?php wpla_tooltip('If you registered your brand with Amazon, you are allowed to create new catalog products without providing a UPC/EAN.') ?>
+							</label>
+							<select id="wpl-account_is_reg_brand" name="wpla_account_is_reg_brand" title="Type" class=" required-entry select">
+								<option value="0" <?php if ( $wpl_account->is_reg_brand == 0 ) echo 'selected' ?> ><?php echo __('No','wpla'); ?></option>
+								<option value="1" <?php if ( $wpl_account->is_reg_brand == 1 ) echo 'selected' ?> ><?php echo __('Yes, this account is registered as a brand with Amazon.','wpla'); ?></option>
+							</select>
+	
 						</div>
 					</div>
 

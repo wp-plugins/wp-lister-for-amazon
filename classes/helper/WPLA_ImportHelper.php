@@ -106,7 +106,7 @@ class WPLA_ImportHelper {
 
 
 	// process single report page - called from WPLA_AjaxHandler
-	public static function ajax_processReportPage( $job, $task ) {
+	public static function ajax_processReportPage( $job, $task, $single_sku_mode = false ) {
 
 		// init
 		$report = new WPLA_AmazonReport( $task['id'] );
@@ -116,10 +116,26 @@ class WPLA_ImportHelper {
 		// get CSV data
         $rows = $report->get_data_rows();
 
-		// slice rows array according to limits
-		$from_row = $task['from_row'];
-		$to_row   = $task['to_row'];
-		$rows     = array_slice( $rows, $from_row - 1, $to_row - $from_row + 1, true );
+        if ( $single_sku_mode ) {
+
+			// slice single row with matching SKU
+			$selected_rows = array();
+			foreach ( $rows as $row ) {
+				if ( $row['seller-sku'] == $task['sku'] ) {
+					$selected_rows[] = $row;
+				}
+			}
+			$rows = $selected_rows;
+
+        } else {
+
+			// slice rows array according to limits
+			$from_row = $task['from_row'];
+			$to_row   = $task['to_row'];
+			$rows     = array_slice( $rows, $from_row - 1, $to_row - $from_row + 1, true );
+
+        }
+
 
 		// _GET_AFN_INVENTORY_DATA_
        	if ( $report->ReportType == '_GET_AFN_INVENTORY_DATA_' ) {
@@ -168,7 +184,7 @@ class WPLA_ImportHelper {
 		//
 		// debug
 		//
-		$msg  = ''.$lm->imported_count.' listings were imported and '.$lm->updated_count.' listings were updated.<br>';
+		$msg  = ''.$lm->imported_count.' items were added to the import queue and '.$lm->updated_count.' existing listings were updated.<br>';
 		$msg  = "<div class='updated'><p>$msg</p></div>";
 
 		// send debug data as error...
@@ -204,6 +220,22 @@ class WPLA_ImportHelper {
 		// get default fulfillment center ID
 		$fba_default_fcid = get_option( 'wpla_fba_fulfillment_center_id', 'AMAZON_NA' );
 
+
+		// if fallback is enabled, clear FBA data before processing first page
+		$account_id          = $report->account_id;
+		$fba_enable_fallback = get_option( 'wpla_fba_enable_fallback', 0 );
+
+		if ( $task['from_row'] == 1 && $fba_enable_fallback ) {
+	
+			// reset FBA info for all items using this account
+			$update_data = array(
+				'fba_quantity' => null,
+				'fba_fcid'     => null,
+			);
+			$listingsModel->updateWhere( array( 'account_id' => $account_id ), $update_data );
+		}
+
+
         // process rows
 		foreach ($rows as $row) {
 
@@ -215,9 +247,17 @@ class WPLA_ImportHelper {
 				continue;
 			} 
 
-			$asin         = $row['asin'];
-			$sku          = $row['seller-sku'];
-			$fba_quantity = $row['Quantity Available'];
+			$asin          = $row['asin'];
+			$sku           = $row['seller-sku'];
+			$fba_quantity  = $row['Quantity Available'];
+			$fba_condition = $row['Warehouse-Condition-code'];
+
+			// skip rows if condition is UNSELLABLE
+			if ( $fba_condition == 'UNSELLABLE' ) continue;
+
+			// if fallback enabled, skip rows with zero quantity
+			if ( $fba_quantity == 0 && $fba_enable_fallback ) continue;
+			
 
 			$update_data = array(
 				'fba_quantity' => $fba_quantity,
@@ -230,24 +270,36 @@ class WPLA_ImportHelper {
 
 			// update quantity in WooCommerce - only if current stock level is less than FBA quantity
 			if ( $listing_item = $listingsModel->getItemBySKU( $sku ) ) {
+
 				$post_id = $listing_item->post_id;
 				if ( $post_id ) {
+
+					// update stock level - if lower than FBA
 					$woo_stock = get_post_meta( $post_id, '_stock', true );
 					if ( $woo_stock < $fba_quantity ) {
 						update_post_meta( $post_id, '_stock', $fba_quantity );
 
-						// update out of stock attribute
-						if ( $fba_quantity > 0 ) {
-							update_post_meta( $post_id, '_stock_status', 'instock' );
-						} else {
-							update_post_meta( $post_id, '_stock_status', 'outofstock' );
-						}
+						// // update out of stock attribute
+						// if ( $fba_quantity > 0 ) {
+						// 	update_post_meta( $post_id, '_stock_status', 'instock' );
+						// } else {
+						// 	update_post_meta( $post_id, '_stock_status', 'outofstock' );
+						// }
 
 					}
-				}
-			}
 
-		}
+					// update stock status - if required
+					$woo_stock_status = get_post_meta( $post_id, '_stock_status', true );
+					$new_stock_status = $fba_quantity > 0 ? 'instock' : 'outofstock';
+					if ( $new_stock_status != $woo_stock_status ) {
+						update_post_meta( $post_id, '_stock_status', $new_stock_status );
+					}
+
+				} // if $post_id
+
+			} // if $listing_item
+
+		} // foreach report row
 
 		// build response
 		$response = new stdClass();
@@ -333,6 +385,16 @@ class WPLA_ImportHelper {
 
 		return $amazon_condition_type;		
 	}
+
+
+	// render import preview table
+	public static function render_import_preview_table( $wpl_rows, $wpl_report_summary, $wpl_query = false ) {
+	    if ( ! is_array($wpl_rows) || ( ! sizeof($wpl_rows) ) ) return; 
+	    $row_count = 0;
+
+	    include( WPLA_PATH . '/views/import/preview_import_table.php');
+
+	} // render_import_preview_table()
 
 
 } // class WPLA_ImportHelper

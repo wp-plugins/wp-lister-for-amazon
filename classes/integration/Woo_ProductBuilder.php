@@ -75,23 +75,34 @@ class WPLA_ProductBuilder {
 	} // updateProducts()
 
 
-	public function importSingleProduct( $item, $product_node = null ) {
+	public function importSingleProduct( $item, $product_node ) {
+		$this->logger->info( "* importSingleProduct() - SKU ".$item['sku'] .' - type: '.$product_node->variation_type );
+
 		$lm = new WPLA_ListingsModel();
 
-		// check if product already exists
-		$this->last_insert_id = $this->getProductIdByOriginalId( $item['asin'] );
-		if ( $this->last_insert_id ) $this->logger->info('found existing product by ASIN '.$item['asin'].' - post_id: '.$this->last_insert_id );
+		// // check if product already exists by ASIN (disabled)
+		// $this->last_insert_id = $this->getProductIdByOriginalId( $item['asin'] );
+		// if ( $this->last_insert_id ) $this->logger->info('found existing product by ASIN '.$item['asin'].' - post_id: '.$this->last_insert_id );
 
-		if ( ! $this->last_insert_id ) {
+		// if ( ! $this->last_insert_id ) {
 
-			$this->last_insert_id = self::getProductIdBySKU( $item['sku'] );
+		// 	$this->last_insert_id = self::getProductIdBySKU( $item['sku'] );
+		// 	if ( $this->last_insert_id ) {
+		// 		update_post_meta( $this->last_insert_id, '_wpla_asin', $item['asin'] );
+		// 		$this->logger->info('found existing product by SKU '.$item['sku'].'- post_id: '.$this->last_insert_id );	
+		// 	} 
 
-			if ( $this->last_insert_id ) {
-				update_post_meta( $this->last_insert_id, '_wpla_asin', $item['asin'] );
-				$this->logger->info('found existing product by SKU '.$item['sku'].'- post_id: '.$this->last_insert_id );	
-			} 
+		// }
 
-		}
+
+		// check if product already exists - by SKU
+		$this->last_insert_id = self::getProductIdBySKU( $item['sku'] );
+
+		// if a product exists, update ASIN
+		if ( $this->last_insert_id ) {
+			update_post_meta( $this->last_insert_id, '_wpla_asin', $item['asin'] );
+			$this->logger->info('Found existing product by SKU '.$item['sku'].' - post_id: '.$this->last_insert_id );	
+		} 
 
 
 		// if no product exists, import			
@@ -100,7 +111,32 @@ class WPLA_ProductBuilder {
 			$data = $this->mapAmazonListingToWoo( $item, $product_node );
 			$this->last_insert_id = $this->addProduct( $data );
 
-		}
+		} else {
+
+			// if a parent variation was found, import missing child variations
+			if ( 'parent' == $product_node->variation_type ) {
+
+				$data    = $this->mapAmazonListingToWoo( $item, $product_node );
+				$post_id = $this->last_insert_id;
+
+				// add each variation
+				foreach ( $data['variations'] as $variation ) {
+
+					// skip existing SKUs					
+					if ( $variation_id = self::getProductIdBySKU( $variation->sku ) ) {
+						$this->logger->info('skipped existing variation '.$variation->sku.' - parent_id: '.$post_id );	
+						continue;
+					}
+
+					// create child variation
+					$this->addVariation( $post_id, $variation, $data );
+					$this->logger->info('ADDED missing variation '.$variation->sku.' - parent_id: '.$post_id );	
+				}
+
+			} // is parent variation
+
+		} // product exists
+
 
 		// update listing with new post_id
 		$lm->updateListing( $item['id'], array(
@@ -1639,7 +1675,7 @@ class WPLA_ProductBuilder {
 		);
 		if ( empty($post_status) ) return false;
 
-		// $this->logger->info( "getProductIdBySKU( $sku ) : " . $woocommerce_product_id );
+		// WPLA()->logger->info( "getProductIdBySKU( $sku ) : " . $woocommerce_product_id );
 		return $woocommerce_product_id;
 	}
 

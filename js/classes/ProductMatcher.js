@@ -59,6 +59,9 @@ WPLA.ProductMatcher = function () {
                 var column_html = '<a href="'+response.url+'" title="View on Amazon" target="_blank"><img src="'+wpla_ProductMatcher_i18n.WPLA_URL+'/img/amazon-16x16.png" alt="yes" /></a>';
                 jQuery('tr#post-'+post_id+' .column-listed_on_amazon').html( column_html );
 
+                // update ASIN field for simple product
+                jQuery('#wpla-amazon-advanced #wpl_amazon_asin').attr('value',asin);
+
                 // or update ASIN field for single variation
                 if ( window.wpla_matching_asin_field_id ) {
                     console.log( "updating ASIN field with: ", asin ); 

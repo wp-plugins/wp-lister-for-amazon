@@ -228,7 +228,7 @@ class WPLA_FeedValidator {
 
     // check if a number is a valid SKU (only letters and numbers)
     static function isValidSKU( $value ) {
-		if ( preg_match( '/[^a-z_\-0-9]/i', $value ) ) {
+		if ( preg_match( '/[^a-z_\-\.0-9]/i', $value ) ) {
 			return false;
 		}
     	return true;

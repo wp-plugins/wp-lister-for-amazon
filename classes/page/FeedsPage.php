@@ -187,8 +187,7 @@ class WPLA_FeedsPage extends WPLA_Page {
 	public function showNotifications() {
 
         // get listing status summary
-		$listingsModel = new WPLA_ListingsModel();
-        $summary = $listingsModel->getStatusSummary();
+        $summary = WPLA_ListingsModel::getStatusSummary();
         
         // check for prepared items and display info
         if ( isset($summary->prepared) ) {

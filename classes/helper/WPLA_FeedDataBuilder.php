@@ -7,8 +7,8 @@ class WPLA_FeedDataBuilder {
 	public $result;
 
 	public function __construct() {
-		global $wpla_logger;
-		$this->logger = &$wpla_logger;
+		// global $wpla_logger;
+		// $this->logger = &$wpla_logger;
 	}
 
 	/**
@@ -27,19 +27,16 @@ class WPLA_FeedDataBuilder {
 
 	// generate csv feed for prepared products
 	static function buildNewProductsFeedData( $items, $account_id, $profile, $append_feed = false ) {
-		global $wpla_logger;
+
 		if ( ! $profile || ! $profile->id ) {
-			// $wpla_logger->info('no profile found, falling back to ListingLoader (Offer) - profile: '.print_r($profile,1));
-			$wpla_logger->info('no profile found, falling back to ListingLoader (Offer)');
+			WPLA()->logger->info('no profile found, falling back to ListingLoader (Offer)');
 			return self::buildListingLoaderFeedData( $items, $account_id, $append_feed );
-			// return '';
 		}
 
 		$template = new WPLA_AmazonFeedTemplate( $profile->tpl_id );
 		if ( ! $template || ! $template->id ) {
-			$wpla_logger->info('no template, falling back to ListingLoader (Offer) - tpl_id: '.$profile->tpl_id);
+			WPLA()->logger->info('no template, falling back to ListingLoader (Offer) - tpl_id: '.$profile->tpl_id);
 			return self::buildListingLoaderFeedData( $items, $account_id, $append_feed );
-			// return '';
 		}
 
 		$columns = $template->getFieldNames();
@@ -52,11 +49,11 @@ class WPLA_FeedDataBuilder {
 		// echo "<pre>";print_r($profile_fields);echo"</pre>";#die();
 
 		if ( ! $columns ) {
-			$wpla_logger->error('no columns found in template - tpl_id: '.$profile->tpl_id);
-			$wpla_logger->info('profile: '.print_r($profile,1));
-			$wpla_logger->info('template: '.print_r($template,1));
-			$wpla_logger->info('columns: '.print_r($columns,1));
-			$wpla_logger->info('items: '.print_r($items,1));
+			WPLA()->logger->error('no columns found in template - tpl_id: '.$profile->tpl_id);
+			WPLA()->logger->info('profile: '.print_r($profile,1));
+			WPLA()->logger->info('template: '.print_r($template,1));
+			WPLA()->logger->info('columns: '.print_r($columns,1));
+			WPLA()->logger->info('items: '.print_r($items,1));
 			return '';
 		}
 
@@ -91,8 +88,7 @@ class WPLA_FeedDataBuilder {
 			$product = get_product( $product_id );
 			if ( ! $product ) continue;
 			if ( ! $item['sku'] ) continue;
-			// echo "<pre>";print_r($product);echo"</pre>";#die();
-			$wpla_logger->debug('processing item '.$item['sku'].' - ID '.$product_id);
+			WPLA()->logger->debug('processing item '.$item['sku'].' - ID '.$product_id);
 
 			// reset row cache
 			WPLA()->memcache->clearColumnCache();
@@ -108,7 +104,6 @@ class WPLA_FeedDataBuilder {
 			$csv_body .= "\n";
 
 		}
-		// echo "<pre>";print_r($csv);echo"</pre>";die();
 
 		// check if any rows were created
 		if ( ! $csv_body ) return self::return_csv_object();
@@ -120,6 +115,7 @@ class WPLA_FeedDataBuilder {
 		return self::return_csv_object( $csv_body, $csv_header, $template->name );
 
 	} // buildNewProductsFeedData()
+
 
 	static function parseProductColumn( $column, $item, $product, $profile ) {
 		wpla_logger_start_timer('parseProductColumn');
@@ -200,6 +196,12 @@ class WPLA_FeedDataBuilder {
 				$value = $profile ? $profile->processProfilePrice( $value ) : $value;
 				$value = apply_filters( 'wpla_filter_sale_price', $value, $post_id, $product, $item, $profile );
 				$value = $value ? round($value,2) : $value;
+
+				// make sure sale_price is not higher than standard_price / price - Amazon might silently ignore price updates otherwise
+				$standard_price = WPLA()->memcache->getColumnValue( $product->sku, 'standard_price' );
+				$standard_price = $standard_price ? $standard_price : WPLA()->memcache->getColumnValue( $product->sku, 'price' );
+				if ( $standard_price && ( $value > $standard_price ) ) $value = '';
+
 				break;
 
 			case 'sale_from_date':	// new items feed
@@ -424,6 +426,15 @@ class WPLA_FeedDataBuilder {
 				break;
 		}
 
+		// handle variation attribute values / attribute columns
+		if ( in_array( $product->product_type, array('variation','variable') ) ) {
+			// if ( ( strpos( $column, '_name') > 0 ) || ( strpos( $column, '_type') > 0 ) ) {
+			if ( substr( $column, -5 ) == '_name' || substr( $column, -5 ) == '_type' ) {
+				wpla_logger_start_timer('parseVariationAttributeColumn');
+				$value = self::parseVariationAttributeColumn( $value, $column, $item, $product );
+				wpla_logger_end_timer('parseVariationAttributeColumn');
+			}
+		}
 
 		// forced empty value (fulfillment_latency)
 		// (why is '[---]' == 0 true? should be false - be careful...)
@@ -453,22 +464,23 @@ class WPLA_FeedDataBuilder {
 			}
 		}
 
-		// handle variation attribute values
-		if ( in_array( $product->product_type, array('variation','variable') ) ) {
-			if ( ( strpos( $column, '_name') > 0 ) || ( strpos( $column, '_type') > 0 ) ) {
-				wpla_logger_start_timer('parseVariationAttributeColumn');
-				$value = self::parseVariationAttributeColumn( $value, $column, $item, $product );
-				wpla_logger_end_timer('parseVariationAttributeColumn');
-			}
-		}
-
 		wpla_logger_end_timer('parseProductColumn');
 		return $value;
 	} // parseProductColumn()
 
+
 	static public function parseVariationAttributeColumn( $value, $column, $item, $product ) {
 
-		$vtheme_array   = explode( '-', $item['vtheme'] );
+		// skip if this is not an actual attribute column (like size_name or color_name)
+		if ( in_array( $column, array( 'item_name', 'external_product_id_type', 'feed_product_type', 'brand_name' ) ) ) return $value;
+
+		// adjust some incompatible vtheme values
+		$vtheme = $item['vtheme'];
+		$vtheme = str_replace( 'Name', '', $vtheme ); 							// ColorName -> Color
+		$vtheme = strtolower($vtheme) == 'sizecolor' ? 'Size-Color' : $vtheme; 	// sizecolor -> Size-Color
+		$vtheme = strtolower($vtheme) == 'colorsize' ? 'Color-Size' : $vtheme; 	// colorsize -> Color-Size
+
+		$vtheme_array   = explode( '-', $vtheme );
 		$col_slug       = str_replace('_name', '', $column);
 		$col_slug       = str_replace('_type', '', $col_slug);
 		$attribute_name = false;
@@ -480,7 +492,6 @@ class WPLA_FeedDataBuilder {
 				$attribute_name = $vtheme_attribute;
 		}
 		if ( ! $attribute_name ) return $value;
-		// echo "<pre>attribute_name: ";print_r($attribute_name);echo"</pre>";#die();
 
 		// parent product should have empty attributes
 		if ( $product->product_type == 'variable' ) return '';
@@ -509,6 +520,7 @@ class WPLA_FeedDataBuilder {
 		return $value;
 	} // parseVariationAttributeColumn()
 
+
 	static public function convertToEnglishAttributeLabel( $value ) {
 
 		// translate common attributes
@@ -529,6 +541,7 @@ class WPLA_FeedDataBuilder {
 
 		return $value;
 	} // convertToEnglishAttributeLabel()
+
 
 	static public function parseProfileShortcode( $original_value, $placeholder, $item, $product, $post_id, $profile ) {
 
@@ -574,6 +587,12 @@ class WPLA_FeedDataBuilder {
 				$value = $profile ? $profile->processProfilePrice( $value ) : $value;
 				$value = apply_filters( 'wpla_filter_sale_price', $value, $post_id, $product, $item, $profile );
 				$value = $value ? round($value,2) : $value;
+
+				// make sure sale_price is not higher than standard_price / price - Amazon might silently ignore price updates otherwise
+				$standard_price = WPLA()->memcache->getColumnValue( $product->sku, 'standard_price' );
+				$standard_price = $standard_price ? $standard_price : WPLA()->memcache->getColumnValue( $product->sku, 'price' );
+				if ( $standard_price && ( $value > $standard_price ) ) $value = '';
+				
 				break;
 
 			case '[product_sale_start]':
@@ -640,7 +659,8 @@ class WPLA_FeedDataBuilder {
 				// check for attributes
 				if ( substr( $placeholder, 0, 11 ) == '[attribute_' ) {
 					wpla_logger_start_timer('processAttributeShortcodes');
-					$value = self::processAttributeShortcodes( $product->id, $placeholder );
+					// $value = self::processAttributeShortcodes( $product->id, $placeholder );
+					$value = self::processAttributeShortcodes( $product, $placeholder );
 					wpla_logger_end_timer('processAttributeShortcodes');
 					// $value = utf8_decode( $value ); 						// convert WP UTF-8 to Amazon ISO...
 				// check for custom meta shortcodes
@@ -681,6 +701,7 @@ class WPLA_FeedDataBuilder {
 		return $value;
 	} // parseProfileShortcode()
 
+
 	static public function convertTitle( $value ) {
 
 		// convert special / UTF-8 characters
@@ -690,6 +711,7 @@ class WPLA_FeedDataBuilder {
 
 		return $value;
 	} // convertTitle()
+
 
 	static public function convertContent( $value ) {
 
@@ -729,6 +751,7 @@ class WPLA_FeedDataBuilder {
 
 		return $value;
 	} // convertContent()
+
 
 	static public function processShortcodesInContent( $html_content ) {
 
@@ -775,6 +798,7 @@ class WPLA_FeedDataBuilder {
 		return $html_content;
 	} // processShortcodesInContent()
 
+
 	static public function convertImageUrl( $url ) {
 
 		// urlencode utf8 characters in image filename
@@ -785,6 +809,7 @@ class WPLA_FeedDataBuilder {
 
 		return $url;
 	} // convertImageUrl()
+
 
 	// Amazon doesn't accept image urls using https
 	static function removeHttpsFromUrl( $url ) {
@@ -800,6 +825,7 @@ class WPLA_FeedDataBuilder {
 
 		return $url;
 	}
+
 
 	static public function processCustomMetaShortcodes( $post_id, $field_value, $real_post_id ) {
 
@@ -827,14 +853,40 @@ class WPLA_FeedDataBuilder {
 		return $field_value;
 	} // processCustomMetaShortcodes()
 
-	static public function processAttributeShortcodes( $post_id, $field_value, $max_length = false ) {
 
+	static public function processAttributeShortcodes( $product, $field_value, $max_length = false ) {
+
+		// child variations: check variation attributes first
+		if ( $product->product_type == 'variation' ) {
+
+			// match shortcodes - exit if none are found
+			if ( ! preg_match_all("/\\[attribute_(.*)\\]/uUsm", $field_value, $matches ) ) return $field_value;
+
+			// get variation attributes
+			$variation_attributes = $product->get_variation_attributes();
+
+			foreach ( $matches[1] as $attribute ) {
+
+				$taxonomy_name = 'attribute_pa_'.$attribute;
+				if ( isset( $variation_attributes[ $taxonomy_name ] )){
+					$attribute_slug  = $variation_attributes[ $taxonomy_name ];
+					$attribute_value = WPLA_ProductWrapper::getAttributeValueFromSlug( $taxonomy_name, $attribute_slug );
+					$field_value     = str_replace( '[attribute_'.$attribute.']', $attribute_value,  $field_value );
+				}
+
+			}
+
+		} // if child variation
+
+
+		$post_id = $product->id;
+
+		// match shortcodes (again, because they may already been processed)
 		if ( preg_match_all("/\\[attribute_(.*)\\]/uUsm", $field_value, $matches ) ) {
 
-			// global $wpla_logger;
-			// $wpla_logger->debug('processAttributeShortcodes() - product_attributes: '.print_r($product_attributes,1));
 			// $product_attributes = WPLA_ProductWrapper::getAttributes( $post_id );
-			// $wpla_logger->debug('called getAttributes() for post_id '.$post_id.' - field: '.$field_value);
+			// WPLA()->logger->debug('processAttributeShortcodes() - product_attributes: '.print_r($product_attributes,1));
+			// WPLA()->logger->debug('called getAttributes() for post_id '.$post_id.' - field: '.$field_value);
 
 			// process attribute shortcodes i.e. [attribute_Brand]
 			$product_attributes = WPLA()->memcache->getProductAttributes( $post_id );
@@ -859,6 +911,8 @@ class WPLA_FeedDataBuilder {
 			}
 
 		}
+		// WPLA()->logger->info('processAttributeShortcodes() - return value: '.print_r($field_value,1));
+
 		return $field_value;
 	} // processAttributeShortcodes()
 
@@ -1006,8 +1060,6 @@ class WPLA_FeedDataBuilder {
 
 	// generate csv feed for updated products
 	static function buildListingLoaderFeedData( $items, $account_id, $append_feed = false ) {
-		global $wpla_logger;
-		// echo "<pre>";print_r($items);echo"</pre>";#die();
 
 		// build csv
 		$columns = array( 
@@ -1048,7 +1100,7 @@ class WPLA_FeedDataBuilder {
 			if ( ! $product ) continue;
 			if ( ! $item['sku'] ) continue;
 			// echo "<pre>";print_r($product);echo"</pre>";#die();
-			$wpla_logger->debug('processing ListingLoader item '.$item['sku'].' - ID '.$product_id);
+			WPLA()->logger->debug('processing ListingLoader item '.$item['sku'].' - ID '.$product_id);
 
 			// load profile fields
 			$profile  		= new WPLA_AmazonProfile( $item['profile_id'] );
@@ -1317,10 +1369,6 @@ class WPLA_FeedDataBuilder {
 
 		return $value;
 	} // parseFbaSubmissionColumn()
-
-
-
-
 
 
 } // class WPLA_FeedDataBuilder

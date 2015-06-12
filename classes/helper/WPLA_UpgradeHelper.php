@@ -862,6 +862,35 @@ class WPLA_UpgradeHelper {
 
 		}
 
+		// upgrade to version 29  (0.9.6.1)
+		if ( 29 > $db_version ) {
+			$new_db_version = 29;
+
+			// allow longer listing titles
+			$sql = "ALTER TABLE `{$wpdb->prefix}amazon_listings` 
+					CHANGE listing_title listing_title VARCHAR(511) DEFAULT NULL;
+			";
+			$wpdb->query($sql);
+						
+			update_option('wpla_db_version', $new_db_version);
+			$msg  = __('WP-Lister database was upgraded to version', 'wpla') .' '. $new_db_version . '.';
+
+		}
+
+		// upgrade to version 30  (0.9.6.3)
+		if ( 30 > $db_version ) {
+			$new_db_version = 30;
+
+			// add column to amazon_accounts table
+			$sql = "ALTER TABLE `{$wpdb->prefix}amazon_accounts`
+			        ADD COLUMN `is_reg_brand` int(11) NOT NULL AFTER `active`
+			";
+			$wpdb->query($sql);						
+						
+			update_option('wpla_db_version', $new_db_version);
+			$msg  = __('WP-Lister database was upgraded to version', 'wpla') .' '. $new_db_version . '.';
+
+		}
 
 		// show update message
 		if ( $msg && ! $hide_message ) self::showMessage( $msg );

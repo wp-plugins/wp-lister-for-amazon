@@ -3,17 +3,18 @@
 Plugin Name: WP-Lister Light for Amazon
 Plugin URI: http://www.wplab.com/plugins/wp-lister-for-amazon/
 Description: List your products on Amazon the easy way.
-Version: 0.9.5.16
+Version: 0.9.6.3
 Author: Matthias Krok
 Author URI: http://www.wplab.com/ 
 Max WP Version: 4.2
-Text Domain: wp-lister
+Text Domain: wpla
+Domain Path: /languages/
 License: GPL2+
 */
 
 if ( class_exists('WPLA_WPLister') ) die(sprintf( 'WP-Lister for Amazon %s is already installed and activated. Please deactivate any other version before you activate this one.', WPLA_VERSION ));
 
-define('WPLA_VERSION', '0.9.5.16' );
+define('WPLA_VERSION', '0.9.6.3' );
 define('WPLA_PATH', realpath( dirname(__FILE__) ) );
 define('WPLA_URL', plugins_url() . '/' . basename(dirname(__FILE__)) . '/' );
 
@@ -195,7 +196,7 @@ class WPLA_WPLister extends WPLA_BasePlugin {
 	public function printOrdersPageStyles() {	
 		?>
     	<style type="text/css">
-			table.wp-list-table .column-wpl_order_src { width: 25px; text-align: center; padding-left: 1px; }    	
+			table.wp-list-table .column-wpl_order_src { width: 55px; text-align: center; padding-left: 1px; }    	
     	</style>
     	<?php
 	}

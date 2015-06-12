@@ -251,6 +251,12 @@ class WPLA_AmazonReport {
 			$existing_record = WPLA_AmazonReport::getReportByRequestId( $report->ReportRequestId );
 			if ( $existing_record ) {
 
+				// skip existing report if it was requested using another "account" (different marketplace using the same account)
+				if ( $existing_record->account_id != $account->id ) {
+					WPLA()->logger->info('skipped existing report '.$existing_record->id.' for account '.$existing_record->account_id);
+					continue;
+				}
+
 				$new_report = new WPLA_AmazonReport( $existing_record->id );
 
 				$new_report->ReportRequestId        = $report->ReportRequestId;
@@ -260,7 +266,7 @@ class WPLA_AmazonReport {
 				$new_report->StartedProcessingDate  = isset( $report->StartedProcessingDate ) ? $report->StartedProcessingDate : '';
 				$new_report->CompletedDate          = isset( $report->CompletedDate ) ? $report->CompletedDate : '';
 				$new_report->GeneratedReportId      = isset( $report->GeneratedReportId ) ? $report->GeneratedReportId : '';
-				$new_report->account_id             = $account->id;
+				// $new_report->account_id             = $account->id;
 				$new_report->results                = maybe_serialize( $report );
 
 				// save new record

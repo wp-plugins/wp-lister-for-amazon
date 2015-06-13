@@ -25,47 +25,34 @@
 		<div class="metabox-holder">
 			<div class="meta-box-sortables ui-sortable">
 				
-				<div class="postbox" id="UpdateToolsBox">
-					<h3 class="hndle"><span><?php echo __('Tools','wpla'); ?></span></h3>
+				<div class="postbox" id="AutoMatchToolBox">
+					<h3 class="hndle"><span><?php echo __('Bulk Listing','wpla'); ?></span></h3>
 					<div class="inside">
 
-						<!--
 						<form method="post" action="<?php echo $wpl_form_action; ?>">
 								<?php wp_nonce_field( 'wpla_tools_page' ); ?>
-								<input type="hidden" name="action" value="update_amazon_orders_30" />
-								<input type="hidden" name="days" value="30" />
-								<input type="submit" value="<?php echo __('Update Amazon orders','wpla'); ?>" name="submit" class="button">
-								<p><?php echo __('Load all orders within 30 days from Amazon.','wpla'); ?></p>
+								<input type="hidden" name="action" value="wpla_match_all_unlisted_with_asin" />
+								<input type="submit" value="<?php echo __('Match all ASINs','wpla'); ?>" name="submit" class="button">
+								<p>
+									<?php echo __('This will find products with ASINs which do not exist on the Listings page. It will then create new listings with the status "matched".','wpla'); ?>
+								</p>
+								<p>
+									<?php echo __('If you have added ASINs to your WooCommerce products using a CSV import tool, use this to add them to WP-Lister automatically.','wpla'); ?>
+								</p>
+								<p>
+									<?php 
+										$default_account_id = get_option( 'wpla_default_account_id', 1 );
+										$account = WPLA_AmazonAccount::getAccount( $default_account_id );
+									?>
+									<i>Default Account: <?php echo $account->title ?> (<?php echo $account->market_code ?>)</i> <br>
+									<i>Maximum batch size: 1000 items</i> <br>
+								</p>
 						</form>
-						<br style="clear:both;"/>
-						-->
-
-						<form method="post" action="<?php echo $wpl_form_action; ?>">
-								<?php wp_nonce_field( 'wpla_tools_page' ); ?>
-								<input type="hidden" name="action" value="wpla_run_daily_schedule" />
-								<input type="submit" value="<?php echo __('Run daily schedule','wpla'); ?>" name="submit" class="button">
-								<p><?php echo __('Manually trigger the daily task schedule.','wpla'); ?></p>
-						</form>
-						<br style="clear:both;"/>
-
-						<form method="post" action="<?php echo $wpl_form_action; ?>">
-								<?php wp_nonce_field( 'wpla_tools_page' ); ?>
-								<input type="hidden" name="action" value="wpla_run_update_schedule" />
-								<input type="submit" value="<?php echo __('Run update schedule','wpla'); ?>" name="submit" class="button">
-								<p><?php echo __('Manually run scheduled background tasks.','wpla'); ?></p>
-						</form>
-						<br style="clear:both;"/>
-
-						<form method="post" action="<?php echo $wpl_form_action; ?>">
-								<?php wp_nonce_field( 'wpla_tools_page' ); ?>
-								<input type="hidden" name="action" value="wpla_run_autosubmit_fba_orders" />
-								<input type="submit" value="<?php echo __('Run FBA autosubmission','wpla'); ?>" name="submit" class="button">
-								<p><?php echo __('Submit recent matching WC orders (24h) to FBA.','wpla'); ?></p>
-						</form>
-						<!-- <br style="clear:both;"/> -->
+						<!br style="clear:both;"/>
 
 					</div>
 				</div> <!-- postbox -->
+
 
 				<div class="postbox" id="DatabaseToolBox">
 					<h3 class="hndle"><span><?php echo __('Database','wpla'); ?></span></h3>
@@ -116,6 +103,49 @@
 
 					</div>
 				</div> <!-- postbox -->
+
+				<div class="postbox" id="UpdateToolsBox">
+					<h3 class="hndle"><span><?php echo __('Tools','wpla'); ?></span></h3>
+					<div class="inside">
+
+						<!--
+						<form method="post" action="<?php echo $wpl_form_action; ?>">
+								<?php wp_nonce_field( 'wpla_tools_page' ); ?>
+								<input type="hidden" name="action" value="update_amazon_orders_30" />
+								<input type="hidden" name="days" value="30" />
+								<input type="submit" value="<?php echo __('Update Amazon orders','wpla'); ?>" name="submit" class="button">
+								<p><?php echo __('Load all orders within 30 days from Amazon.','wpla'); ?></p>
+						</form>
+						<br style="clear:both;"/>
+						-->
+
+						<form method="post" action="<?php echo $wpl_form_action; ?>">
+								<?php wp_nonce_field( 'wpla_tools_page' ); ?>
+								<input type="hidden" name="action" value="wpla_run_daily_schedule" />
+								<input type="submit" value="<?php echo __('Run daily schedule','wpla'); ?>" name="submit" class="button">
+								<p><?php echo __('Manually trigger the daily task schedule.','wpla'); ?></p>
+						</form>
+						<br style="clear:both;"/>
+
+						<form method="post" action="<?php echo $wpl_form_action; ?>">
+								<?php wp_nonce_field( 'wpla_tools_page' ); ?>
+								<input type="hidden" name="action" value="wpla_run_update_schedule" />
+								<input type="submit" value="<?php echo __('Run update schedule','wpla'); ?>" name="submit" class="button">
+								<p><?php echo __('Manually run scheduled background tasks.','wpla'); ?></p>
+						</form>
+						<br style="clear:both;"/>
+
+						<form method="post" action="<?php echo $wpl_form_action; ?>">
+								<?php wp_nonce_field( 'wpla_tools_page' ); ?>
+								<input type="hidden" name="action" value="wpla_run_autosubmit_fba_orders" />
+								<input type="submit" value="<?php echo __('Run FBA autosubmission','wpla'); ?>" name="submit" class="button">
+								<p><?php echo __('Submit recent matching WC orders (24h) to FBA.','wpla'); ?></p>
+						</form>
+						<!-- <br style="clear:both;"/> -->
+
+					</div>
+				</div> <!-- postbox -->
+
 
 				<?php if ( get_option('wpla_log_level') > 1 ): ?>
 				<div class="postbox" id="DebuggingToolBox">

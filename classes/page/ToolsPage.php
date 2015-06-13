@@ -88,6 +88,11 @@ class WPLA_ToolsPage extends WPLA_Page {
 					wpla_show_message('Minimum and maximum prices in WP-Lister have been refreshed.');
 				}
 
+				// wpla_match_all_unlisted_with_asin
+				if ( $_REQUEST['action'] == 'wpla_match_all_unlisted_with_asin') {
+					$this->matchAllUnlistedWithASIN();
+				}
+
 
 				// check_wc_out_of_sync
 				if ( $_REQUEST['action'] == 'check_wc_out_of_sync') {				
@@ -169,6 +174,76 @@ class WPLA_ToolsPage extends WPLA_Page {
 
 		$this->display( 'tools_page', $aData );
 	}
+
+
+	public function matchAllUnlistedWithASIN() {
+		global $wpdb;
+
+		$items = $wpdb->get_results("
+            SELECT 
+            	pm.meta_value as ASIN,
+            	p.ID, p.post_title, p.post_type, p.post_modified,
+            	a.sku, a.id
+            FROM {$wpdb->postmeta} pm
+            LEFT JOIN {$wpdb->posts}                 p ON pm.post_id = p.ID
+            LEFT JOIN {$wpdb->prefix}amazon_listings a ON pm.post_id = a.post_id
+
+            WHERE p.ID IS NOT NULL
+			  AND ( p.post_type = 'product' OR p.post_type = 'product_variation' )
+			  AND pm.meta_key = '_wpla_asin'
+			  AND pm.meta_value <> ''
+			  AND a.id IS NULL
+
+            ORDER BY pm.post_id
+            LIMIT 1000
+		");
+		// echo "<pre>";print_r($items);echo"</pre>";#die();
+
+		$mode  = isset($_REQUEST['mode']) ? $_REQUEST['mode'] : false;
+		if ( $mode == 'create_listings' ) {
+
+			$lm = new WPLA_ListingsModel();
+			$msg = '';
+			foreach ( $items as $product ) {
+
+				$asin               = $product->ASIN;
+				$post_id            = $product->ID;
+				$default_account_id = get_option( 'wpla_default_account_id', 1 );
+				$lm->lastError 	    = null;
+				// $lm->last_insert_id = null;
+
+				$success = $lm->insertMatchedProduct( $post_id, $asin, $default_account_id );
+				if ( $success ) {
+
+					// $msg .= "Listing {$lm->last_insert_id} was created for ASIN $asin (#$post_id) <br>";
+					// if ( $lm->lastError ) $msg .= "{$lm->lastError} <br>";
+					$msg .= "{$lm->lastError} <br>";
+
+				} else {
+					$msg .= "<b>Failed to match product: {$lm->lastError} </b><br>";
+				}
+
+			}
+
+			wpla_show_message( $msg );
+			return;
+		} // if create_listings
+
+
+		if ( ! empty($items) ) {
+
+			$nonce      = wp_create_nonce('wpla_tools_page');
+			$btn_import = '<a href="admin.php?page=wpla-tools&tab=developer&action=wpla_match_all_unlisted_with_asin&mode=create_listings&_wpnonce='.$nonce.'" class="button button-small button-primary"  >'.'Create listings'.'</a>';
+			$buttons    = ' &nbsp; ' . $btn_import;
+			wpla_show_message('There are '.sizeof($items).' products(s) that can be matched automatically.'.$buttons, 'info');
+
+		} else {
+
+			wpla_show_message('No products found. All products with ASINs already exist in WP-Lister.');
+
+		}
+
+	} // matchAllUnlistedWithASIN()
 
 
 	public function refreshMinMaxPrices() {

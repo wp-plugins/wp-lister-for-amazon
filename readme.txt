@@ -48,6 +48,13 @@ Please check out our growing knowledgebase at http://www.wplab.com/plugins/wp-li
 
 == Changelog ==
 
+= 0.9.6.4 =
+* added option to set a default product category for products imported from Amazon (advanced settings page) 
+* added option to automatically create matched listings for all products with ASINs (developer tools page) 
+* improved profile editor for spanish feed templates 
+* fixed some CE feed templates not being imported properly (amazon.es) 
+* fixed possible fatal error during import 
+
 = 0.9.6.3 =
 * added option to process only selected rows when importing / updating products from merchant report 
 * added option to enable Brand Registry / UPC exemption for account 

@@ -294,6 +294,31 @@
 						<h3 class="hndle"><span><?php echo __('Import','wpla') ?></span></h3>
 						<div class="inside">
 
+							<label for="wpl-import_parent_category_id" class="text_label">
+								<?php echo __('Product category','wpla'); ?>
+	                            <?php wpla_tooltip('If you want to assign a product category when importing products from Amazon, select your category here.<br><br>Note: This option applies when the import queue is processed (import step 2).') ?>
+							</label>
+							<select id="wpl-import_parent_category_id" name="wpla_import_parent_category_id" class=" required-entry select">
+								<option value="">-- <?php echo __('top level','wpla'); ?> --</option>
+							<?php
+
+					            // get categories
+								$tax_slug = 'product_cat';
+								$tax_obj  = get_taxonomy( $tax_slug );
+								$tax_name = $tax_obj->labels->name;
+								$terms    = get_terms( $tax_slug, array( 'hide_empty' => false ) );
+
+					            // output html for taxonomy dropdown filter
+					            foreach ($terms as $term) {
+					                $selected = $wpl_import_parent_category_id == $term->term_id ? ' selected="selected"' : '';
+					                echo '<option value="'. $term->term_id . '" ' . $selected . '>' . $term->name . '</option>';
+					            }
+					        ?>
+							</select>
+							<p class="desc" style="display: block;">
+								<?php echo __('Select the product category for products imported from Amazon.','wpla'); ?>
+							</p>
+
 							<label for="wpl-enable_variation_image_import" class="text_label">
 								<?php echo __('Import variation images','wpla') ?>
                                 <?php wpla_tooltip('Variation images are imported by default. If you get timeout errors when importing large variable products from Amazon, you might have to disable this or increase your <code>max_execution_time</code> PHP setting.') ?>

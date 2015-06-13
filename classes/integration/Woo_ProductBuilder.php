@@ -520,8 +520,14 @@ class WPLA_ProductBuilder {
 			update_post_meta( $post_id, '_amazon_condition_note', $data['condition_note'] );
 		}
 
+		// assign global import parent category
+		$term_id = get_option('wpla_import_parent_category_id' );
+		if ( $term_id ) {
+			$this->logger->info( "Adding default category {$term_id} to product id {$post_id}" );
+			$result = wp_set_object_terms( $post_id, intval( $term_id ), 'product_cat', true );
+		}
 
-		// assign product categories
+		// assign product categories (not used yet)
 		foreach ( $data['categories'] as $category_id ) {
 			$term_id = $this->getCategoryIdByOriginalId( $category_id );
 			if ( $term_id ) {

@@ -206,6 +206,7 @@ class WPLA_SettingsPage extends WPLA_Page {
 			'pricing_info_expiry_time'  		=> self::getOption( 'pricing_info_expiry_time', 24 ),
 			'repricing_use_lowest_offer'  		=> self::getOption( 'repricing_use_lowest_offer', 0 ),
 			'repricing_margin'  				=> self::getOption( 'repricing_margin', '' ),
+			'import_parent_category_id'  		=> self::getOption( 'import_parent_category_id', '' ),
 			'enable_variation_image_import'  	=> self::getOption( 'enable_variation_image_import', 1 ),
 			'enable_gallery_images_import'  	=> self::getOption( 'enable_gallery_images_import', 1 ),
 			'import_images_subfolder_level'  	=> self::getOption( 'import_images_subfolder_level', 0 ),
@@ -362,6 +363,7 @@ class WPLA_SettingsPage extends WPLA_Page {
 			self::updateOption( 'enable_auto_repricing', 			$this->getValueFromPost( 'enable_auto_repricing' ) );
 			self::updateOption( 'repricing_use_lowest_offer', 		$this->getValueFromPost( 'repricing_use_lowest_offer' ) );
 			self::updateOption( 'repricing_margin', 	            $this->getValueFromPost( 'repricing_margin' ) );
+			self::updateOption( 'import_parent_category_id', 		$this->getValueFromPost( 'import_parent_category_id' ) );
 			self::updateOption( 'enable_variation_image_import', 	$this->getValueFromPost( 'enable_variation_image_import' ) );
 			self::updateOption( 'enable_gallery_images_import', 	$this->getValueFromPost( 'enable_gallery_images_import' ) );
 			self::updateOption( 'import_images_subfolder_level', 	$this->getValueFromPost( 'import_images_subfolder_level' ) );

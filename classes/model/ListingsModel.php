@@ -786,9 +786,21 @@ class WPLA_ListingsModel extends WPLA_Model {
 
 		// $this->logger->info('prod: '.print_r($product,1) );
 		$this->logger->info('data: '.print_r($data,1) );
+		$this->lastError = false;
+
+		// // skip parent variations (?)
+		// if ( $product->product_type == 'variation') {
+		// 	$this->lastError = 'Skipped variable parent product #'.$post_id.'. Parent variations have no inventory and do not need to be matched.';
+		// 	return false;
+		// }
+
+		// check SKU
+		if ( empty( $data['sku'] ) ) {
+			$this->lastError = 'Skipped product #'.$post_id.' without SKU.';
+			return false;
+		}
 
 		// check if SKU already exists
-		$this->lastError = false;
 		if ( $this->getItemBySKU( $data['sku'], false ) ) {
 
 			// $wpdb->update( $this->tablename, $data, array( 'sku' => $data['sku'] ) );
@@ -809,7 +821,7 @@ class WPLA_ListingsModel extends WPLA_Model {
 			$wpdb->insert( $this->tablename, $data );
 			$this->last_insert_id = $wpdb->insert_id;
 			$this->imported_count++;
-			$this->lastError = 'A new listing was created with status "matched".';
+			$this->lastError = 'Matched listing created for ASIN '.$asin.' (#'.$post_id.')';
 		}
 
 		echo $wpdb->last_error;
@@ -817,7 +829,7 @@ class WPLA_ListingsModel extends WPLA_Model {
 		#$this->logger->info( $wpdb->last_error );
 
 		return true;
-	}
+	} // insertMatchedProduct()
 
 	function updateItemFromReportCSV( $csv, $account_id )
 	{

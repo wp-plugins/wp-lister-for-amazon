@@ -76,7 +76,8 @@ class WPLA_ProductsImporter {
 
 		} else {
 			// SKU does not exist in WC...
-			$this->logger->info('no WC product found for SKU '.$listing['sku'].' - type: '.$result->product->variation_type );
+			$variation_type = $result->success ? $result->product->variation_type : '_unknown_';
+			$this->logger->info('no WC product found for SKU '.$listing['sku'].' - type: '.$variation_type );
 
 			// process child variation - fetch parent item instead
 			if ( $result->success && $result->product->variation_type == 'child' ) {

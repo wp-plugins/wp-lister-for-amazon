@@ -48,6 +48,9 @@ Please check out our growing knowledgebase at http://www.wplab.com/plugins/wp-li
 
 == Changelog ==
 
+= 0.9.6.4.1 =
+* fixed possible php error during import 
+
 = 0.9.6.4 =
 * added option to set a default product category for products imported from Amazon (advanced settings page) 
 * added option to automatically create matched listings for all products with ASINs (developer tools page) 

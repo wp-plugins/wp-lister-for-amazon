@@ -76,7 +76,8 @@ class WPLA_ProductBuilder {
 
 
 	public function importSingleProduct( $item, $product_node ) {
-		$this->logger->info( "* importSingleProduct() - SKU ".$item['sku'] .' - type: '.$product_node->variation_type );
+		$variation_type = is_string( $product_node->variation_type ) ? $product_node->variation_type : '_none_'; // convert empty object to string
+		$this->logger->info( "* importSingleProduct() - SKU ".$item['sku'] .' - type: '.$variation_type );
 
 		$lm = new WPLA_ListingsModel();
 

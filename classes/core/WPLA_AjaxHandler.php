@@ -790,7 +790,7 @@ class WPLA_AjaxHandler extends WPLA_Core {
 		$wpla_shutdown_handler_enabled = true;
 		register_shutdown_function( array( $this, 'shutdown_handler' ) );
 
-		$this->logger->info('running task: '.print_r($task,1));
+		WPLA()->logger->info('running task: '.print_r($task,1));
 
 		// handle job name
 		switch ( $task['task'] ) {
@@ -819,7 +819,7 @@ class WPLA_AjaxHandler extends WPLA_Core {
 						// $lm->updateItemAttributes( $product, $listing_id );
 						// $listing = $lm->getItem( $listing_id ); // update values
 						$lm->updateWhere( array( 'id' => $listing_id ), array( 'asin' => $result->product->ASIN ) );
-						$this->logger->info('new ASIN for listing #'.$listing['id'] . ': '.$result->product->ASIN );
+						WPLA()->logger->info('new ASIN for listing #'.$listing['id'] . ': '.$result->product->ASIN );
 
 						// update product
 						// $woo = new WPLA_ProductBuilder();
@@ -1063,7 +1063,7 @@ class WPLA_AjaxHandler extends WPLA_Core {
 		// create tasklist
         $tasks = array();
         foreach( $items as $item ) {
-			$this->logger->info('adding task for item #'.$item['id'] . ' - '.@$item['listing_title']);
+			WPLA()->logger->info('adding task for item #'.$item['id'] . ' - '.@$item['listing_title']);
 			// $tasks = $this->_prepare_sub_tasks( $item, $taskname, $tasks );
 
 			$task = array( 
@@ -1136,7 +1136,7 @@ class WPLA_AjaxHandler extends WPLA_Core {
 		require_once( WPLA_PATH . '/includes/php-tail/PHPTail.php' );
 		
 		// Initilize a new instance of PHPTail - 3 sec reload, 512k max
-		$tail = new PHPTail( array('log' => $this->logger->file), 3000, 524288 );
+		$tail = new PHPTail( array('log' => WPLA()->logger->file), 3000, 524288 );
 
 		// handle ajax call
 		if(isset($_GET['ajax']))  {

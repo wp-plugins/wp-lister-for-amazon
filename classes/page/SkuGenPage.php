@@ -46,7 +46,7 @@ class WPLA_SkuGenPage extends WPLA_Page {
 	
 
 	public function handleActions() {
-        // $this->logger->debug("handleActions()");
+        // WPLA()->logger->debug("handleActions()");
 	}
 	
 	public function generateNewSKUs( $product_ids ) {

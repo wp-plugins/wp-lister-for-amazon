@@ -9,8 +9,8 @@ class WPLA_AmazonWebHelper {
     var $dblogger;
 	
 	public function __construct() {
-		global $wpla_logger;
-		$this->logger = &$wpla_logger;
+		// global $wpla_logger;
+		// $this->logger = &$wpla_logger;
 	}
 
 
@@ -73,12 +73,12 @@ class WPLA_AmazonWebHelper {
         // if ( empty( $desc ) ) {
         //     $error_msg  = sprintf( __('There was a problem fetching product details for %s.','wpla'), $item['asin'] );
         //     $error_msg  .= ' The product description received from Amazon was empty.';
-        //     $this->logger->error( $error_msg );
+        //     WPLA()->logger->error( $error_msg );
         //     $this->errors[] = $error_msg;
         //     $this->success = false;
         // }
         // echo "<pre>";print_r(htmlspecialchars($this->description));echo"</pre>";#die();
-        $this->logger->info('listing description: '.strlen($this->description).' bytes');
+        WPLA()->logger->info('listing description: '.strlen($this->description).' bytes');
 
     } // processListingDescription()
 
@@ -88,7 +88,7 @@ class WPLA_AmazonWebHelper {
         // extract additional images
         $product_images = array();
         if ( preg_match("/('colorImages': { 'initial': )(.*}])}/uUsm", $html_content, $matches ) ) {
-            // $this->logger->info('MATCHED JSON: '.print_r($matches[2],1));
+            // WPLA()->logger->info('MATCHED JSON: '.print_r($matches[2],1));
             $json = $matches[2];
             $image_data = json_decode($json);
             if ( is_array($image_data) ) {
@@ -124,8 +124,8 @@ class WPLA_AmazonWebHelper {
         // }
 
         $this->images = $product_images;
-        $this->logger->info('found '.sizeof($this->images).' listing images');
-        // $this->logger->info('found '.sizeof($this->images).' listing image: '.print_r($this->images,1));
+        WPLA()->logger->info('found '.sizeof($this->images).' listing images');
+        // WPLA()->logger->info('found '.sizeof($this->images).' listing image: '.print_r($this->images,1));
 
     } // processListingImages()
 
@@ -147,7 +147,7 @@ class WPLA_AmazonWebHelper {
 
 
     public function fetchPageContent( $listing_url ) {
-        $this->logger->info('fetching URL: '.$listing_url);
+        WPLA()->logger->info('fetching URL: '.$listing_url);
 
         // fetch HTML content
         $response = wp_remote_get( $listing_url, array( 
@@ -155,20 +155,20 @@ class WPLA_AmazonWebHelper {
             'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.99 Safari/537.36',
                             // without a known user-agent, Amazon will return different content which is missing the require JS code to extract variation images
         ));
-        // $this->logger->info("BODY: ".$response['body']);
+        // WPLA()->logger->info("BODY: ".$response['body']);
 
         // handle errors
         if ( is_wp_error( $response ) ) {
             echo "<pre>";print_r($response);echo"</pre>";   
             // $this->showMessage( "Couldn't fetch URL $listing_url - ".$response->get_error_message(), 1, 1 );
-            $this->logger->error("Couldn't fetch URL $listing_url - ".$response->get_error_message());
+            WPLA()->logger->error("Couldn't fetch URL $listing_url - ".$response->get_error_message());
             $this->errors[] = "Couldn't fetch URL $listing_url - ".$response->get_error_message();
             return false;
         }
         if ( $response['response']['code'] != 200 ) {
             echo "<pre>Couldn't fetch URL $listing_url - server returned error code ".$response['response']['code']."</pre>";
             // $this->showMessage( "Couldn't fetch URL $listing_url - server returned error code ".$response['response']['code'], 1, 1 );
-            $this->logger->error("Couldn't fetch URL $listing_url - server returned error code ".$response['response']['code'] );
+            WPLA()->logger->error("Couldn't fetch URL $listing_url - server returned error code ".$response['response']['code'] );
             $this->errors[] = "Couldn't fetch URL $listing_url - server returned error code ".$response['response']['code'];
             return false;
         }

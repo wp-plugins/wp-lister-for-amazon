@@ -74,11 +74,10 @@ class WPLA_WooBackendIntegration extends WPLA_Core {
 	// add_filter('woocommerce_get_product_from_item', 'wpla_woocommerce_get_product_from_item', 10, 2 );
 
 	function wpla_woocommerce_get_product_from_item( $_product, $item, $order ){
-		// global $wpla_logger;
 
-		// $wpla_logger->info('wpla_woocommerce_get_product_from_item - item: '.print_r($item,1));
-		// $wpla_logger->info('wpla_woocommerce_get_product_from_item - _product: '.print_r($_product,1));
-		// $wpla_logger->info('wpla_woocommerce_get_product_from_item - order: '.print_r($order,1));
+		// WPLA()->logger->info('wpla_woocommerce_get_product_from_item - item: '.print_r($item,1));
+		// WPLA()->logger->info('wpla_woocommerce_get_product_from_item - _product: '.print_r($_product,1));
+		// WPLA()->logger->info('wpla_woocommerce_get_product_from_item - order: '.print_r($order,1));
 
 		// if this is not a valid WC product object, post processing, email generation or refunds might fail
 		if ( ! $_product ) {
@@ -88,7 +87,7 @@ class WPLA_WooBackendIntegration extends WPLA_Core {
 
 				// create a new amazon product object to allow email templates or other plugins to do $_product->get_sku() and more...
 				$_product = new WC_Product_Amazon( $item['product_id'] );
-				// $wpla_logger->info('wpla_woocommerce_get_product_from_item - NEW _product: '.print_r($_product,1));
+				// WPLA()->logger->info('wpla_woocommerce_get_product_from_item - NEW _product: '.print_r($_product,1));
 
 			}
 
@@ -103,9 +102,8 @@ class WPLA_WooBackendIntegration extends WPLA_Core {
 	// add_filter('woocommerce_order_get_items', 'wpla_woocommerce_order_get_items', 10, 2 );
 
 	function wpla_woocommerce_order_get_items( $items, $order ){
-		global $wpla_logger;
-		$wpla_logger->info('wpla_woocommerce_order_get_items - items: '.print_r($items,1));
-		// $wpla_logger->info('wpla_woocommerce_order_get_items - order: '.print_r($order,1));
+		WPLA()->logger->info('wpla_woocommerce_order_get_items - items: '.print_r($items,1));
+		// WPLA()->logger->info('wpla_woocommerce_order_get_items - order: '.print_r($order,1));
 	}
 
 
@@ -116,8 +114,7 @@ class WPLA_WooBackendIntegration extends WPLA_Core {
 
 	function wpla_woocommerce_edit_product_columns($columns){
 		
-		// $columns['listed_on_amazon'] = '<img src="'.WPLA_URL.'/img/amazon-dark-16x16.png" title="'.__('Listing status', 'wpla').'" />';		
-		$columns['listed_on_amazon'] = '<img src="'.WPLA_URL.'/img/amazon-16x16.png" title="'.__('Listing status', 'wpla').'" />';		
+		$columns['listed_on_amazon'] = '<img src="'.WPLA_URL.'/img/amazon-16x16.png" data-tip="'.__('Amazon', 'wpla').'"  class="tips" />';		
 		return $columns;
 	}
 
@@ -137,67 +134,114 @@ class WPLA_WooBackendIntegration extends WPLA_Core {
 		switch ($column) {
 			case 'listed_on_amazon' :
 
-				// default status is unmatched
-				$status = 'unmatched';
-
 				// $item_source = get_post_meta( $post->ID, '_amazon_item_source', true );
 				// if ( ! $item_source ) return;
 				// $asin = get_post_meta( $post->ID, '_wpla_asin', true );
 				// $asin = $listingsModel->getASINFromPostID( $post->ID );
 				// if ( $asin ) $status = 'online';
 
-				// get listing item
+				// get all listings for product ID
 				$listingsModel = new WPLA_ListingsModel();
-				$item = $listingsModel->getItemByPostID( $post->ID );
-				if ( ! $item ) {
+				$listings      = $listingsModel->getAllItemsByPostID( $post->ID );
+				if ( empty( $listings ) ) {
+					// $listings = $listingsModel->getAllItemsByParentID( $post->ID );
+					// $item = $listings ? reset($listings) : false;
+
+					// get ALL child items (variations)
 					$listings = $listingsModel->getAllItemsByParentID( $post->ID );
-					$item = $listings ? reset($listings) : false;
-				}
-				if ( $item ) {
-					$asin   = $item->asin;	
-					$status = $item->status;
+					// echo "<pre>count 2: ";echo sizeof($listings);echo"</pre>";//die();
 
-					// get proper amazon_url
-			        if ( $asin && $item->account_id ) {
-			            $account = new WPLA_AmazonAccount( $item->account_id );
-			            $market  = new WPLA_AmazonMarket( $account->market_id );
-			            $amazon_url = 'http://www.'.$market->url.'/dp/'.$item->asin.'/';
-			        }
-				} 
-
-				switch ($status) {
-					case 'online':
-					case 'changed':
-						$amazon_url = isset($amazon_url) ? $amazon_url : 'http://www.amazon.com/dp/'.$asin;
-						echo '<a href="'.$amazon_url.'" title="'.__('View on Amazon','wpla').'" target="_blank"><img src="'.WPLA_URL.'/img/amazon-16x16.png" alt="yes" /></a>';
-						break;
-					
-					case 'matched':
-					case 'prepared':
-						echo '<img src="'.WPLA_URL.'/img/amazon-orange-16x16.png" class="tips" data-tip="'.__('This product is scheduled to be submitted to Amazon.','wpla').'" />';
-						break;
-					
-					case 'failed':
-						echo '<img src="'.WPLA_URL.'/img/amazon-red-16x16.png" class="tips" data-tip="'.__('There was a problem submitting this product to Amazon.','wpla').'" />';
-						break;
-					
-					case 'unmatched':
-						if ( $the_product->product_type == 'variable' ) {
-							$msg = 'Variable products can only be matched on the edit product page where you need to select an ASIN for each variation.';
-							echo '<a href="#" onclick="alert(\''.$msg.'\');return false;" title="'.__('Match on Amazon','wpla').'"><img src="'.WPLA_URL.'/img/search3.png" alt="match" /></a>';
-						} elseif ( $the_product->post->post_status == 'draft' ) {
-							$msg = 'This product is a draft. You need to publish your product before you can list it on Amazon.';
-							echo '<a href="#" onclick="alert(\''.$msg.'\');return false;" title="'.__('Match on Amazon','wpla').'"><img src="'.WPLA_URL.'/img/search3.png" alt="match" /></a>';
+					// group found child items by account
+					$grouped_listings = array();
+					foreach ( $listings as $listing ) {
+						$account_id = $listing->account_id;
+						if ( isset( $grouped_listings[$account_id] ) ) {
+							$grouped_listings[$account_id]->counter++;
 						} else {
-							$tb_url = 'admin-ajax.php?action=wpla_show_product_matches&id='.$post->ID.'&width=640&height=420';
-							echo '<a href="'.$tb_url.'" class="thickbox" title="'.__('Match on Amazon','wpla').'"><img src="'.WPLA_URL.'/img/search3.png" alt="match" /></a>';
+							$listing->counter = 1;
+							$grouped_listings[$account_id] = $listing;
 						}
-						break;
-					
-					default:
-						// echo '<img src="'.WPLA_URL.'/img/search3.png" title="unmatched" />';
-						break;
+					}
+					$listings = $grouped_listings;					
 				}
+
+				// show select profile button if no listings found
+				if ( empty($listings) ) {
+					if ( $the_product->product_type == 'variable' ) {
+						$msg = 'Variable products can only be matched on the edit product page where you need to select an ASIN for each variation.';
+						echo '<a href="#" onclick="alert(\''.$msg.'\');return false;" class="tips" data-tip="'.__('Match on Amazon','wpla').'" style="width:16px;height:16px; padding:0; cursor:pointer;" ><img src="'.WPLA_URL.'/img/search3.png" alt="match" /></a>';
+					} elseif ( $the_product->post->post_status == 'draft' ) {
+						$msg = 'This product is a draft. You need to publish your product before you can list it on Amazon.';
+						echo '<a href="#" onclick="alert(\''.$msg.'\');return false;" class="tips" data-tip="'.__('Match on Amazon','wpla').'" style="width:16px;height:16px; padding:0; cursor:pointer;" ><img src="'.WPLA_URL.'/img/search3.png" alt="match" /></a>';
+					} else {
+						$tb_url = 'admin-ajax.php?action=wpla_show_product_matches&id='.$post->ID.'&width=640&height=420';
+						echo '<a href="'.$tb_url.'" class="thickbox tips" data-tip="'.__('Match on Amazon','wpla').'" style="width:16px;height:16px; padding:0; cursor:pointer;" ><img src="'.WPLA_URL.'/img/search3.png" alt="match" /></a>';
+					}
+					return;					
+				}
+
+				// show all found listings
+				foreach ( $listings as $item ) {
+
+					$msg_1   = 'Amazon item is '.$item->status.'.';
+					$msg_2   = '';
+					$msg_3   = 'Click to view all listings for this product in WP-Lister.';
+					$linkurl = 'admin.php?page=wpla&amp;s='.$post->ID;
+					$imgfile = 'amazon-16x16.png';
+
+					switch ($item->status) {
+						case 'online':
+						case 'changed':
+
+							// $msg_1   = 'This product is published on Amazon';
+							$msg_3   = 'Click to open this listing on Amazon in a new tab.';
+							$imgfile = 'icon-success-32x32.png';
+
+							// get proper amazon_url
+					        if ( $item->asin && $item->account_id ) {
+					            $account = new WPLA_AmazonAccount( $item->account_id );
+					            $market  = new WPLA_AmazonMarket( $account->market_id );
+					            $amazon_url = 'http://www.'.$market->url.'/dp/'.$item->asin.'/';
+					        }
+							$linkurl = isset($amazon_url) ? $amazon_url : 'http://www.amazon.com/dp/'.$item->asin;
+
+							break;
+						
+						case 'matched':
+						case 'prepared':
+							// echo '<img src="'.WPLA_URL.'/img/amazon-orange-16x16.png" class="tips" data-tip="'.__('This product is scheduled to be submitted to Amazon.','wpla').'" />';
+							$imgfile = 'amazon-orange-16x16.png';
+							break;
+						
+						case 'failed':
+							// echo '<img src="'.WPLA_URL.'/img/amazon-red-16x16.png" class="tips" data-tip="'.__('There was a problem submitting this product to Amazon.','wpla').'" />';
+							$imgfile = 'amazon-red-16x16.png';
+							break;
+						
+						default:
+							// echo '<img src="'.WPLA_URL.'/img/search3.png" class="tips" data-tip="unmatched" />';
+							break;
+					}
+
+					// get account
+					$accounts = WPLA()->accounts;
+					$account  = isset( $accounts[ $item->account_id ] ) ? $accounts[ $item->account_id ] : false;
+					if ( $account && sizeof($accounts) > 0 ) {
+						$msg_2 = '<i>' . $account->title . ' ('.$account->market_code.')</i><br>';
+					}
+
+					// show counter
+					if ( isset( $item->counter ) ) {
+						$msg_2 .= '<small>Variation listings: '.$item->counter.'</small><br>';
+					}
+
+					// output icon
+					$msg_html = '<b>'.$msg_1.'</b><br/>'.$msg_2.'<br/>'.$msg_3;
+					echo '<a href="'.$linkurl.'" target="_blank">';
+					echo '<img src="'.WPLA_URL.'/img/'.$imgfile.'" class="tips" data-tip="' . esc_attr( $msg_html ) . '" style="width:16px;height:16px; padding:0; cursor:pointer;" />';
+					echo '</a>';
+
+				} // each listing
 
 			break;
 
@@ -556,7 +600,6 @@ class WPLA_WooBackendIntegration extends WPLA_Core {
 	// add_action( 'woocommerce_process_product_meta', 'wpla_product_handle_submitbox_actions', 100, 2 );
 	function wpla_product_handle_submitbox_actions( $post_id, $post ) {
 		global $oWPL_WPLister;
-		global $wpla_logger;
 
 	} // save_meta_box()
 
@@ -759,6 +802,11 @@ class WPLA_WooBackendIntegration extends WPLA_Core {
 				// Price
 				if ( ! $_product->regular_price )
 					$missing_variation_fields[] = __('Price','wpla') . $var_info;
+
+				// SKU
+				$sku = get_post_meta( $variation_id, '_sku', true );
+				if ( empty( $sku) )
+					$missing_variation_fields[] = __('SKU','wpla') . $var_info;
 
 				// Sale Price Dates
 				// if ( $_product->sale_price ) {

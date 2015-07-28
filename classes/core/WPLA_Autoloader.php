@@ -44,6 +44,7 @@ class WPLA_Autoloader {
 		'WPLA_ReportProcessor'    => '/classes/helper/WPLA_ReportProcessor.php',
 		'WPLA_FbaHelper'          => '/classes/helper/WPLA_FbaHelper.php',
 		'WPLA_CountryHelper'      => '/classes/helper/WPLA_CountryHelper.php',
+		'WPLA_DateTimeHelper'     => '/classes/helper/WPLA_DateTimeHelper.php',
 		
 		// models		
 		'WPLA_AmazonMarket'       => '/classes/model/AmazonMarket.php',

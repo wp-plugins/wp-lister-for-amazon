@@ -316,11 +316,11 @@ class WPLA_AmazonReport {
 	}
 
 
-	function get_data_rows() {
+	function get_data_rows( $query = false ) {
 		if ( ! $this->id ) return;
 		if ( ! $this->data ) return;
 
-		$rows = $this->csv_to_array( $this->data );
+		$rows = self::csv_to_array( $this->data, $query );
 		return $rows;
 	}
 
@@ -503,7 +503,7 @@ class WPLA_AmazonReport {
 
 
 
-	function csv_to_array( $input, $delimiter = "\t" ) {
+	static function csv_to_array( $input, $query = false, $delimiter = "\t" ) {
 
 		$header  = null;
 		$data    = array();
@@ -518,8 +518,13 @@ class WPLA_AmazonReport {
 
 	        if ( is_null($header) ) {
 	        	$header = explode($delimiter, $csvLine);	
-	        } else{
+	        } else {
 
+	        	// handle query string
+	        	if ( $query && false === stripos( $csvLine, $query ) ) continue;
+
+
+	        	// split row into cells
 	            $items = explode($delimiter, $csvLine);
 
             	// $line++;

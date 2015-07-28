@@ -512,8 +512,8 @@ class WPLA_ListingsPage extends WPLA_Page {
 		$item = array();
 		$item['id'] 						= $this->getValueFromPost( 'listing_id' );
 		$item['listing_title'] 				= stripslashes( $this->getValueFromPost( 'listing_title' ) );
-		$item['price'] 						= $this->getValueFromPost( 'price' );
-		$item['quantity'] 					= $this->getValueFromPost( 'quantity' );
+		$item['price'] 						= trim( $this->getValueFromPost( 'price'    ) );
+		$item['quantity'] 					= trim( $this->getValueFromPost( 'quantity' ) );
 		$item['profile_id']					= $this->getValueFromPost( 'profile_id' );
 		$item['quantity_sold'] 				= $this->getValueFromPost( 'quantity_sold' );
 
@@ -530,10 +530,10 @@ class WPLA_ListingsPage extends WPLA_Page {
 		// handle developer settings
 		if ( $this->getValueFromPost( 'enable_dev_mode' ) == '1' ) {
 			$item['status']        = $this->getValueFromPost( 'listing_status' );
-			$item['asin']          = $this->getValueFromPost( 'asin' );
-			$item['sku']           = $this->getValueFromPost( 'sku' );
-			$item['post_id']       = $this->getValueFromPost( 'post_id' );
-			$item['source']        = $this->getValueFromPost( 'source' );
+			$item['asin']          = trim( $this->getValueFromPost( 'asin'    ) );
+			$item['sku']           = trim( $this->getValueFromPost( 'sku'     ) );
+			$item['post_id']       = trim( $this->getValueFromPost( 'post_id' ) );
+			$item['source']        = trim( $this->getValueFromPost( 'source'  ) );
 			$item['fba_fcid']      = $this->getValueFromPost( 'fba_fcid' );
 			$item['fba_quantity']  = $this->getValueFromPost( 'fba_quantity' );
 			$item['pnq_status']    = $this->getValueFromPost( 'pnq_status' );

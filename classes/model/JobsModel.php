@@ -7,8 +7,8 @@ class WPLA_JobsModel extends WPLA_Model {
 
 	function WPLA_JobsModel( $job = null )
 	{
-		global $wpla_logger;
-		$this->logger = &$wpla_logger;
+		// global $wpla_logger;
+		// $this->logger = &$wpla_logger;
 
 		global $wpdb;
 		$this->tablename = $wpdb->prefix . 'amazon_jobs';
@@ -104,7 +104,7 @@ class WPLA_JobsModel extends WPLA_Model {
 
 		$wpdb->insert($this->tablename, $data);
 
-		$this->logger->info("insertJob( $jobname ) - key $key" );
+		WPLA()->logger->info("insertJob( $jobname ) - key $key" );
 		$this->key = $key;					
 		return $key;
 	}

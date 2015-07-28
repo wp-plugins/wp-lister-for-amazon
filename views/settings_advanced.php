@@ -247,6 +247,16 @@
 								<option value="2" <?php if ( $wpl_enable_minmax_product_prices == '2' ): ?>selected="selected"<?php endif; ?>><?php echo __('Hide for variations','wpla'); ?></option>
 							</select>
 
+							<label for="wpl-enable_item_condition_fields" class="text_label">
+								<?php echo __('Enable item condition fields','wpla') ?>
+                                <?php wpla_tooltip('If you only sell new item on Amazon and prefer less options when editing a product, you can disable these fields here.') ?>
+							</label>
+							<select id="wpl-enable_item_condition_fields" name="wpla_enable_item_condition_fields" class=" required-entry select">
+								<option value="0" <?php if ( $wpl_enable_item_condition_fields == '0' ): ?>selected="selected"<?php endif; ?>><?php echo __('No','wpla'); ?></option>
+								<option value="1" <?php if ( $wpl_enable_item_condition_fields == '1' ): ?>selected="selected"<?php endif; ?>><?php echo __('Yes','wpla'); ?></option>
+								<option value="2" <?php if ( $wpl_enable_item_condition_fields == '2' ): ?>selected="selected"<?php endif; ?>><?php echo __('Hide for variations','wpla'); ?> (<?php _e('default','wpla'); ?>)</option>
+							</select>
+
 						</div>
 					</div>
 
@@ -277,7 +287,7 @@
                                 <?php wpla_tooltip('Select whether only the Buy Box price should be checked - or whether the lowest offer / next competitor price should be used when you already have the Buy Box.') ?>
 							</label>
 							<select id="wpl-repricing_use_lowest_offer" name="wpla_repricing_use_lowest_offer" class=" required-entry select">
-								<option value="0" <?php if ( $wpl_repricing_use_lowest_offer == '0' ): ?>selected="selected"<?php endif; ?>><?php echo __('Buy Box only','wpla'); ?> (Default)</option>
+								<option value="0" <?php if ( $wpl_repricing_use_lowest_offer == '0' ): ?>selected="selected"<?php endif; ?>><?php echo __('Buy Box only','wpla'); ?> (<?php _e('default','wpla'); ?>)</option>
 								<option value="1" <?php if ( $wpl_repricing_use_lowest_offer == '1' ): ?>selected="selected"<?php endif; ?>><?php echo __('Boy Box and Lowest Offer','wpla'); ?> (beta)</option>
 							</select>
 
@@ -324,7 +334,7 @@
                                 <?php wpla_tooltip('Variation images are imported by default. If you get timeout errors when importing large variable products from Amazon, you might have to disable this or increase your <code>max_execution_time</code> PHP setting.') ?>
 							</label>
 							<select id="wpl-enable_variation_image_import" name="wpla_enable_variation_image_import" class=" required-entry select">
-								<option value="1" <?php if ( $wpl_enable_variation_image_import == '1' ): ?>selected="selected"<?php endif; ?>><?php echo __('Yes','wpla'); ?> (Default)</option>
+								<option value="1" <?php if ( $wpl_enable_variation_image_import == '1' ): ?>selected="selected"<?php endif; ?>><?php echo __('Yes','wpla'); ?> (<?php _e('default','wpla'); ?>)</option>
 								<option value="0" <?php if ( $wpl_enable_variation_image_import == '0' ): ?>selected="selected"<?php endif; ?>><?php echo __('No','wpla'); ?></option>
 							</select>
 
@@ -333,7 +343,7 @@
                                 <?php wpla_tooltip('All product images are imported by default. If you get timeout errors when importing large variable products from Amazon, you might have to only import the main image or increase your <code>max_execution_time</code> PHP setting.') ?>
 							</label>
 							<select id="wpl-enable_gallery_images_import" name="wpla_enable_gallery_images_import" class=" required-entry select">
-								<option value="1" <?php if ( $wpl_enable_gallery_images_import == '1' ): ?>selected="selected"<?php endif; ?>><?php echo __('Yes','wpla'); ?> (Default)</option>
+								<option value="1" <?php if ( $wpl_enable_gallery_images_import == '1' ): ?>selected="selected"<?php endif; ?>><?php echo __('Yes','wpla'); ?> (<?php _e('default','wpla'); ?>)</option>
 								<option value="0" <?php if ( $wpl_enable_gallery_images_import == '0' ): ?>selected="selected"<?php endif; ?>><?php echo __('No, only import main image','wpla'); ?></option>
 							</select>
 
@@ -342,7 +352,7 @@
                                 <?php wpla_tooltip('If you import a large number of products, enable this option to lower the number of images per folder.') ?>
 							</label>
 							<select id="wpl-import_images_subfolder_level" name="wpla_import_images_subfolder_level" class=" required-entry select">
-								<option value="0" <?php if ( $wpl_import_images_subfolder_level == '0' ): ?>selected="selected"<?php endif; ?>><?php echo __('No subfolders','wpla'); ?> (Default)</option>
+								<option value="0" <?php if ( $wpl_import_images_subfolder_level == '0' ): ?>selected="selected"<?php endif; ?>><?php echo __('No subfolders','wpla'); ?> (<?php _e('default','wpla'); ?>)</option>
 								<option value="1" <?php if ( $wpl_import_images_subfolder_level == '1' ): ?>selected="selected"<?php endif; ?>><?php echo __('1 level','wpla'); ?></option>
 								<option value="2" <?php if ( $wpl_import_images_subfolder_level == '2' ): ?>selected="selected"<?php endif; ?>><?php echo __('2 levels','wpla'); ?></option>
 							</select>
@@ -385,12 +395,22 @@
 						<h3 class="hndle"><span><?php echo __('Misc Options','wpla') ?></span></h3>
 						<div class="inside">
 
+							<label for="wpl-product_gallery_fallback" class="text_label">
+								<?php echo __('Product Gallery Mode','wpla'); ?>
+                                <?php wpla_tooltip('In order to find additional product images, WP-Lister first checks if there is a WooCommerce <i>Product Gallery</i>.<br>
+                                						If there\'s none, it can use all images which were uploaded (attached) to the product, which might be required for 3rd party gallery plugins.') ?>
+							</label>
+							<select id="wpl-product_gallery_fallback" name="wpla_product_gallery_fallback" class="required-entry select">
+								<option value="none"     <?php if ( $wpl_product_gallery_fallback == 'none'     ): ?>selected="selected"<?php endif; ?>><?php echo __('Use Product Gallery images','wpla'); ?> (<?php _e('default','wpla'); ?>)</option>
+								<option value="attached" <?php if ( $wpl_product_gallery_fallback == 'attached' ): ?>selected="selected"<?php endif; ?>><?php echo __('Use attached images if no Product Gallery found','wpla'); ?></option>
+							</select>
+
 							<label for="wpl-product_gallery_first_image" class="text_label">
-								<?php echo __('Gallery images','wpla') ?>
+								<?php echo __('First gallery image','wpla') ?>
                                 <?php wpla_tooltip('If your product gallery in WooCommerce contains the features image as the first image, you can choose to skip the first image to avoid duplicate images on Amazon.') ?>
 							</label>
 							<select id="wpl-product_gallery_first_image" name="wpla_product_gallery_first_image" class=" required-entry select">
-								<option value=""     <?php if ( $wpl_product_gallery_first_image != 'skip' ): ?>selected="selected"<?php endif; ?>><?php echo __('Use all gallery images','wpla'); ?> (Default)</option>
+								<option value=""     <?php if ( $wpl_product_gallery_first_image != 'skip' ): ?>selected="selected"<?php endif; ?>><?php echo __('Use all gallery images','wpla'); ?> (<?php _e('default','wpla'); ?>)</option>
 								<option value="skip" <?php if ( $wpl_product_gallery_first_image == 'skip' ): ?>selected="selected"<?php endif; ?>><?php echo __('Skip first gallery image','wpla'); ?></option>
 							</select>
 
@@ -399,7 +419,7 @@
                                 <?php wpla_tooltip('Enable this to run your product description through the usual WordPress content filters which enables you to use shortcodes in your product description on Amazon.<br>If a plugin causes trouble by adding unwanted HTML to your description on eBay, you should try the default setting "off".') ?>
 							</label>
 							<select id="wpl-process_shortcodes" name="wpla_process_shortcodes" class="required-entry select">
-								<option value="off"          <?php if ( $wpl_process_shortcodes == 'off' ):          ?>selected="selected"<?php endif; ?>><?php echo __('Off','wpla'); ?> (Default)</option>
+								<option value="off"          <?php if ( $wpl_process_shortcodes == 'off' ):          ?>selected="selected"<?php endif; ?>><?php echo __('Off','wpla'); ?> (<?php _e('default','wpla'); ?>)</option>
 								<option value="the_content"  <?php if ( $wpl_process_shortcodes == 'the_content' ):  ?>selected="selected"<?php endif; ?>><?php echo __('Process shortcodes','wpla'); ?> - the_content()</option>
 								<option value="do_shortcode" <?php if ( $wpl_process_shortcodes == 'do_shortcode' ): ?>selected="selected"<?php endif; ?>><?php echo __('Process shortcodes','wpla'); ?> - do_shortcode()</option>
 								<option value="remove_all"   <?php if ( $wpl_process_shortcodes == 'remove_all' ):   ?>selected="selected"<?php endif; ?>><?php echo __('Remove all shortcodes from description','wpla'); ?></option>

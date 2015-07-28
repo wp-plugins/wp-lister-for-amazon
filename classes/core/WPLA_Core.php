@@ -26,15 +26,15 @@ class WPLA_Core {
 	// const ViewExt			= '.php';
 	// const ViewDir			= '../views';
 
-	var $logger;
+	// var $logger;
 	var $message;
 	var $messages = array();
 	var $EC;
 	var $app_name;
 
 	public function __construct() {
-		global $wpla_logger;
-		$this->logger = &$wpla_logger;
+		// global $wpla_logger;
+		// $this->logger = &$wpla_logger;
 		$this->app_name = apply_filters( 'wpla_app_name', 'Amazon' );
 
 		add_action( 'init', 				array( &$this, 'onWpInit' ), 5 ); // minimum priority is 5 (or saving profile will throw an error when fetching variation attributes)

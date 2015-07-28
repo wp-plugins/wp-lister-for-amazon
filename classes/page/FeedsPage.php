@@ -241,7 +241,7 @@ class WPLA_FeedsPage extends WPLA_Page {
 
 	// update selected feeds 
 	public function updateFeedStatus( $feed_ids ) {
-        $this->logger->info("updateFeedStatus() - ".join(', ',$feed_ids));
+        WPLA()->logger->info("updateFeedStatus() - ".join(', ',$feed_ids));
         // echo "<pre>";print_r($feed_ids);echo"</pre>";die();
 
         if ( empty($feed_ids) ) return;
@@ -263,16 +263,16 @@ class WPLA_FeedsPage extends WPLA_Page {
 				WPLA_AmazonFeed::processFeedsSubmissionList( $feeds, $account );
 
 				$msg  = sprintf( __('%s feed submission(s) were found for account %s.','wpla'), sizeof($feeds), $account->title );
-				$this->logger->info( $msg );
+				WPLA()->logger->info( $msg );
 				$this->showMessage( nl2br($msg),0,1 );
 
 			} elseif ( $feeds->Error->Message ) {
 				$msg = sprintf( __('There was a problem fetching feed submissions for account %s.','wpla'), $account->title ) .' - Error: '. $feeds->Error->Message;
-				$this->logger->error( $msg );
+				WPLA()->logger->error( $msg );
 				$this->showMessage( nl2br($msg),1,1 );
 			} else {
 				$msg = sprintf( __('There was a problem fetching feed submissions for account %s.','wpla'), $account->title );
-				$this->logger->error( $msg );
+				WPLA()->logger->error( $msg );
 				$this->showMessage( nl2br($msg),1,1 );
 			}
 

@@ -20,6 +20,9 @@ $is_expert_mode      = $profile_editor_mode == 'expert' ? true : false;
 	&nbsp;
 	<input type="checkbox" id="_wpla_tpl_col_and_preferred" onchange="wpla_update_filter();" />
 	<label for="_wpla_tpl_col_and_preferred"><?php echo __('and preferred fields','wpla') ?></label>
+	&nbsp;
+	<input type="checkbox" id="_wpla_tpl_col_hide_empty" onchange="wpla_update_filter();" />
+	<label for="_wpla_tpl_col_hide_empty"><?php echo __('hide empty fields','wpla') ?></label>
 </div>
 
 
@@ -131,7 +134,7 @@ $is_expert_mode      = $profile_editor_mode == 'expert' ? true : false;
 					<!-- select from a list of values -->
 					<select	name="tpl_col_<?php echo $field['field'] ?>" id="tpl_col_<?php echo $field['field'] ?>" >
 
-						<optgroup label="<?php echo 'Allowed Values' ?>">
+						<optgroup label="<?php echo 'Select from Allowed Values' ?>">
 							<option value="">&mdash; none &mdash;</option>
 							<?php foreach ( explode( '|', $wpl_values[ $field['field'] ]['values'] ) as $value ) : ?>
 								<option value="<?php echo $value ?>" 
@@ -148,7 +151,7 @@ $is_expert_mode      = $profile_editor_mode == 'expert' ? true : false;
 							<?php endforeach; ?>
 						</optgroup>
 
-						<optgroup label="<?php echo 'Product Attributes' ?>">
+						<optgroup label="<?php echo 'Pull value from Product Attribute' ?>">
 							<?php foreach ( $wpl_product_attributes as $attribute ) : ?>
 								<?php $value = '[' . str_replace('pa_', 'attribute_', $attribute->name ) . ']' ?>
 								<option value="<?php echo $value ?>" 
@@ -159,7 +162,7 @@ $is_expert_mode      = $profile_editor_mode == 'expert' ? true : false;
 							<?php endforeach; ?>
 						</optgroup>
 
-						<optgroup label="<?php echo 'Other' ?>">
+						<optgroup label="<?php echo 'Custom Values ' ?>">
 							<?php
 								$wpl_other_shortcodes = array(
 									'[---]' => '-- leave empty --',
@@ -340,6 +343,7 @@ $is_expert_mode      = $profile_editor_mode == 'expert' ? true : false;
 
 		var only_required = jQuery('#_wpla_tpl_col_only_required').attr('checked');
 		var and_preferred = jQuery('#_wpla_tpl_col_and_preferred').attr('checked');
+		var hide_empty    = jQuery('#_wpla_tpl_col_hide_empty'   ).attr('checked');
 
 		// auto tick required checkbox when preferred checkbox is ticked
 		if ( ! only_required && and_preferred ) {
@@ -381,6 +385,17 @@ $is_expert_mode      = $profile_editor_mode == 'expert' ? true : false;
 			jQuery('.wpla_optional_row').hide();
 			jQuery('.wpla_preferred_row').hide();
 		}
+
+		if ( hide_empty ) {
+			jQuery('.wpla_tpl_row').each( function(index, value){
+				var input_field  = jQuery(this).find('input').first();
+				var select_field = jQuery(this).find('select').first();
+				if ( ! input_field.val() && ! select_field.val() ) {
+					jQuery(this).hide();
+				}
+			});
+		}
+
 
 	} // wpla_update_filter()
 

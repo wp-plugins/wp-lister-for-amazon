@@ -3,7 +3,7 @@
 class WPLA_ImportHelper {
 	
 	var $account;
-	var $logger;
+	// var $logger;
 	public $result;
 	public $message = '';
 	public $lastError;
@@ -15,8 +15,8 @@ class WPLA_ImportHelper {
 	const TABLENAME = 'amazon_listings';
 
 	public function __construct() {
-		global $wpla_logger;
-		$this->logger = &$wpla_logger;
+		// global $wpla_logger;
+		// $this->logger = &$wpla_logger;
 	}
 
 
@@ -88,20 +88,22 @@ class WPLA_ImportHelper {
 			}
 			if ( ! $row_asin ) continue;
 
-			if ( ! in_array($row_asin, $ASINs) )
-				// $ASINs[] = $row['product-id'];
-				$ASINs[] = $row_asin;
+			// if ( ! in_array($row_asin, $ASINs) ) // poor performance on big arrays
+			if ( ! isset( $ASINs[ $row_asin ] ) )
+				$ASINs[ $row_asin ] = 1;
 		}
-		return $ASINs;
+		return array_keys( $ASINs );
 	} 
 
 	public static function getAllSKUsInReport( $rows ) {
 		$SKUs = array();
 		foreach ($rows as $row) {
-			if ( ! in_array($row['seller-sku'], $SKUs) )
-				$SKUs[] = $row['seller-sku'];
+			$row_sku = $row['seller-sku'];
+			// if ( ! in_array($row_sku, $SKUs) )  // poor performance on big arrays
+			if ( ! isset( $SKUs[ $row_sku ] ) )
+				$SKUs[ $row_sku ] = 1;
 		}
-		return $SKUs;
+		return array_keys( $SKUs );
 	} 
 
 

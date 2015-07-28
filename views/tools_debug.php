@@ -99,6 +99,17 @@
 									<?php echo __('Only use this if you want to start from scratch!','wpla'); ?>
 								</p>
 						</form>
+						<br style="clear:both;"/>
+
+						<form method="post" action="<?php echo $wpl_form_action; ?>">
+								<?php wp_nonce_field( 'wpla_tools_page' ); ?>
+								<input type="hidden" name="action" value="wpla_upgrade_tables_to_utf8mb4" />
+								<input type="submit" value="<?php echo __('Convert tables to utf8mb4','wpla'); ?>" name="submit" class="button">
+								<p>
+									<?php echo __('Manually upgrade tables that were skipped by the WordPress updater.','wpla'); ?>
+									<?php echo __('Please backup your database. Only applicable for WordPress 4.2+.','wpla'); ?>
+								</p>
+						</form>
 						<!-- <br style="clear:both;"/> -->
 
 					</div>

@@ -39,7 +39,7 @@ class WPLA_SettingsPage extends WPLA_Page {
 	}
 	
 	public function handleSubmit() {
-        // $this->logger->debug("handleSubmit()");
+        // WPLA()->logger->debug("handleSubmit()");
 
 		// save settings
 		if ( $this->requestAction() == 'save_wpla_settings' ) {
@@ -199,10 +199,12 @@ class WPLA_SettingsPage extends WPLA_Page {
 			'enable_missing_details_warning'  	=> self::getOption( 'enable_missing_details_warning' ),
 			'enable_custom_product_prices'  	=> self::getOption( 'enable_custom_product_prices', 1 ),
 			'enable_minmax_product_prices'  	=> self::getOption( 'enable_minmax_product_prices', 0 ),
+			'enable_item_condition_fields'  	=> self::getOption( 'enable_item_condition_fields', 2 ),
 			'enable_thumbs_column'  			=> self::getOption( 'enable_thumbs_column' ),
 			'autofetch_listing_quality_feeds'  	=> self::getOption( 'autofetch_listing_quality_feeds', 1 ),
 			'autofetch_inventory_report'  		=> self::getOption( 'autofetch_inventory_report', 0 ),
 			'product_gallery_first_image'  		=> self::getOption( 'product_gallery_first_image' ),
+			'product_gallery_fallback'  		=> self::getOption( 'product_gallery_fallback', 'none' ),
 			'pricing_info_expiry_time'  		=> self::getOption( 'pricing_info_expiry_time', 24 ),
 			'repricing_use_lowest_offer'  		=> self::getOption( 'repricing_use_lowest_offer', 0 ),
 			'repricing_margin'  				=> self::getOption( 'repricing_margin', '' ),
@@ -249,6 +251,9 @@ class WPLA_SettingsPage extends WPLA_Page {
 			'feed_currency_format'	    => self::getOption( 'feed_currency_format' ),
 			'log_record_limit'			=> self::getOption( 'log_record_limit', 4096 ),
 			'log_days_limit'			=> self::getOption( 'log_days_limit', 30 ),
+			'feeds_days_limit'			=> self::getOption( 'feeds_days_limit', 90 ),
+			'reports_days_limit'		=> self::getOption( 'reports_days_limit', 90 ),
+			'orders_days_limit'			=> self::getOption( 'orders_days_limit', '' ),
 			'text_log_level'			=> self::getOption( 'log_level' ),
 			'option_log_to_db'			=> self::getOption( 'log_to_db' ),
 			'show_browse_node_ids'		=> self::getOption( 'show_browse_node_ids' ),
@@ -355,10 +360,12 @@ class WPLA_SettingsPage extends WPLA_Page {
 			self::updateOption( 'enable_missing_details_warning', 	$this->getValueFromPost( 'enable_missing_details_warning' ) );
 			self::updateOption( 'enable_custom_product_prices', 	$this->getValueFromPost( 'enable_custom_product_prices' ) );
 			self::updateOption( 'enable_minmax_product_prices', 	$this->getValueFromPost( 'enable_minmax_product_prices' ) );
+			self::updateOption( 'enable_item_condition_fields', 	$this->getValueFromPost( 'enable_item_condition_fields' ) );
 			self::updateOption( 'enable_thumbs_column', 			$this->getValueFromPost( 'enable_thumbs_column' ) );
 			self::updateOption( 'autofetch_listing_quality_feeds', 	$this->getValueFromPost( 'autofetch_listing_quality_feeds' ) );
 			self::updateOption( 'autofetch_inventory_report', 		$this->getValueFromPost( 'autofetch_inventory_report' ) );
 			self::updateOption( 'product_gallery_first_image', 		$this->getValueFromPost( 'product_gallery_first_image' ) );
+			self::updateOption( 'product_gallery_fallback', 		$this->getValueFromPost( 'product_gallery_fallback' ) );
 			self::updateOption( 'pricing_info_expiry_time', 		$this->getValueFromPost( 'pricing_info_expiry_time' ) );
 			self::updateOption( 'enable_auto_repricing', 			$this->getValueFromPost( 'enable_auto_repricing' ) );
 			self::updateOption( 'repricing_use_lowest_offer', 		$this->getValueFromPost( 'repricing_use_lowest_offer' ) );
@@ -559,6 +566,9 @@ class WPLA_SettingsPage extends WPLA_Page {
 			self::updateOption( 'feed_currency_format',	$this->getValueFromPost( 'feed_currency_format' ) );
 			self::updateOption( 'log_record_limit',		$this->getValueFromPost( 'log_record_limit' ) );
 			self::updateOption( 'log_days_limit',		$this->getValueFromPost( 'log_days_limit' ) );
+			self::updateOption( 'feeds_days_limit',		$this->getValueFromPost( 'feeds_days_limit' ) );
+			self::updateOption( 'reports_days_limit',	$this->getValueFromPost( 'reports_days_limit' ) );
+			self::updateOption( 'orders_days_limit',	$this->getValueFromPost( 'orders_days_limit' ) );
 			self::updateOption( 'show_browse_node_ids',	$this->getValueFromPost( 'show_browse_node_ids' ) );
 	
 
@@ -571,7 +581,7 @@ class WPLA_SettingsPage extends WPLA_Page {
 
 
 	protected function handleCronSettings( $schedule ) {
-        $this->logger->info("handleCronSettings( $schedule )");
+        WPLA()->logger->info("handleCronSettings( $schedule )");
 
         // remove scheduled event
 	    $timestamp = wp_next_scheduled(  'wpla_update_schedule' );
@@ -586,7 +596,7 @@ class WPLA_SettingsPage extends WPLA_Page {
 	}
 
 	protected function handleFbaCronSettings( $schedule ) {
-        $this->logger->info("handleFbaCronSettings( $schedule )");
+        WPLA()->logger->info("handleFbaCronSettings( $schedule )");
 
         // remove scheduled event
 	    $timestamp = wp_next_scheduled(  'wpla_fba_report_schedule' );

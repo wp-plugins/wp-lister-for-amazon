@@ -265,13 +265,26 @@ class WPLA_ReportsPage extends WPLA_Page {
 		// get WooCommerce report
 		// $wc_report_notes = $amazon_report['post_id'] ? $this->get_report_notes( $amazon_report['post_id'] ) : false;
 
-        $rows = $report->get_data_rows();
+		// check for query paramater
+		$query = isset( $_REQUEST['query'] ) ? sanitize_text_field( $_REQUEST['query'] ) : '';
+
+        $rows = $report->get_data_rows( $query );
 		unset( $report->data );
 		unset( $report->results );
+
+		// limit to 1000 rows per page
+		$limit = 1000;
+		$offset = 0;
+		$total_rows = sizeof( $rows );
+		if ( $total_rows > $limit ) {
+			$rows = array_splice( $rows, $offset, $limit );
+		}
 
 		$aData = array(
 			'report'				=> $report,
 			'rows'					=> $rows,
+			'total_rows'			=> $total_rows,
+			'query'					=> $query,
 		);
 		$this->display( 'report_details', $aData );
 		

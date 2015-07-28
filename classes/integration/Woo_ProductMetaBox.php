@@ -15,6 +15,8 @@ class WPLA_Product_MetaBox {
         add_action('woocommerce_product_after_variable_attributes', array(&$this, 'woocommerce_custom_variation_meta_fields'), 2, 3);
         add_action('woocommerce_process_product_meta_variable', array(&$this, 'process_product_meta_variable'), 10, 1);
         add_action('woocommerce_process_product_meta_variable', array(&$this, 'process_custom_variation_meta_fields'), 10, 1);
+		add_action('woocommerce_ajax_save_product_variations',  array( $this, 'process_product_meta_variable') ); // WC2.4
+		add_action('woocommerce_ajax_save_product_variations',  array( $this, 'process_custom_variation_meta_fields') ); // WC2.4
 
 		// remove amazon specific meta data from duplicated products
 		add_action( 'woocommerce_duplicate_product', array( &$this, 'woocommerce_duplicate_product' ), 0, 2 );
@@ -143,36 +145,39 @@ class WPLA_Product_MetaBox {
 
 		}
 
-		woocommerce_wp_select( array(
-			'id' 			=> 'wpl_amazon_condition_type',
-			'label' 		=> __('Item Condition', 'wpla'),
-			'options' 		=> array( 
-					''                      => __('-- use profile setting --', 'wpla'),
-					'New'                   => __('New', 'wpla'),
-					'UsedLikeNew'           => __('Used - Like New', 'wpla'),
-					'UsedVeryGood'          => __('Used - Very Good', 'wpla'),
-					'UsedGood'              => __('Used - Good', 'wpla'),
-					'UsedAcceptable'        => __('Used - Acceptable', 'wpla'),
-					'Refurbished'           => __('Refurbished', 'wpla'),
-					'CollectibleLikeNew'    => __('Collectible - Like New', 'wpla'),
-					'CollectibleVeryGood'   => __('Collectible - Very Good', 'wpla'),
-					'CollectibleGood'       => __('Collectible - Good', 'wpla'),
-					'CollectibleAcceptable' => __('Collectible - Acceptable', 'wpla'),
-				),
-			'description' 	=> 'Indicates the condition of the item. Review the condition guidelines definitions.',
-			'desc_tip'		=>  true,
-			'value'			=> get_post_meta( $post->ID, '_amazon_condition_type', true )
-		) );
+		if ( get_option( 'wpla_enable_item_condition_fields', 2 ) != 0 ) {
 
-		woocommerce_wp_text_input( array(
-			'id' 			=> 'wpl_amazon_condition_note',
-			'label' 		=> __('Condition Note', 'wpla'),
-			'description' 	=> 'Descriptive text explaining the actual condition of the item. Required if item condition is not "New". <br>Example: "Small dent in left side panel."',
-			'desc_tip'		=>  true,
-			'custom_attributes' => array( 'maxlength' => 1000 ),
-			'value'			=> get_post_meta( $post->ID, '_amazon_condition_note', true )
-		) );
+			woocommerce_wp_select( array(
+				'id' 			=> 'wpl_amazon_condition_type',
+				'label' 		=> __('Item Condition', 'wpla'),
+				'options' 		=> array( 
+						''                      => __('-- use profile setting --', 'wpla'),
+						'New'                   => __('New', 'wpla'),
+						'UsedLikeNew'           => __('Used - Like New', 'wpla'),
+						'UsedVeryGood'          => __('Used - Very Good', 'wpla'),
+						'UsedGood'              => __('Used - Good', 'wpla'),
+						'UsedAcceptable'        => __('Used - Acceptable', 'wpla'),
+						'Refurbished'           => __('Refurbished', 'wpla'),
+						'CollectibleLikeNew'    => __('Collectible - Like New', 'wpla'),
+						'CollectibleVeryGood'   => __('Collectible - Very Good', 'wpla'),
+						'CollectibleGood'       => __('Collectible - Good', 'wpla'),
+						'CollectibleAcceptable' => __('Collectible - Acceptable', 'wpla'),
+					),
+				'description' 	=> 'Indicates the condition of the item. Review the condition guidelines definitions.',
+				'desc_tip'		=>  true,
+				'value'			=> get_post_meta( $post->ID, '_amazon_condition_type', true )
+			) );
 
+			woocommerce_wp_text_input( array(
+				'id' 			=> 'wpl_amazon_condition_note',
+				'label' 		=> __('Condition Note', 'wpla'),
+				'description' 	=> 'Descriptive text explaining the actual condition of the item. Required if item condition is not "New". <br>Example: "Small dent in left side panel."',
+				'desc_tip'		=>  true,
+				'custom_attributes' => array( 'maxlength' => 1000 ),
+				'value'			=> get_post_meta( $post->ID, '_amazon_condition_note', true )
+			) );
+
+		}
 
 		woocommerce_wp_text_input( array(
 			'id' 			=> 'wpl_amazon_bullet_point1',
@@ -359,7 +364,7 @@ class WPLA_Product_MetaBox {
 			update_post_meta( $post_id, '_amazon_generic_keywords5',	esc_attr( @$_POST['wpl_amazon_generic_keywords5'] ) );
 			update_post_meta( $post_id, '_amazon_product_description',	esc_attr( @$_POST['wpl_amazon_product_description'] ) );
 
-			update_post_meta( $post_id, '_wpla_asin',					esc_attr( @$_POST['wpl_amazon_asin'] ) );
+			update_post_meta( $post_id, '_wpla_asin',					esc_attr( trim( @$_POST['wpl_amazon_asin'] ) ) );
 
 		}
 
@@ -470,10 +475,25 @@ class WPLA_Product_MetaBox {
 
 
         // available ID types
-		$options = array( 
+		$available_id_types = array( 
 			''          => __('-- use profile setting --', 'wpla'),
 			'UPC'   	=> __('UPC', 'wpla'),
 			'EAN'   	=> __('EAN', 'wpla')
+		);
+
+        // available item conditions
+		$available_item_conditions = array( 
+			''                      => __('-- use profile setting --', 'wpla'),
+			'New'                   => __('New', 'wpla'),
+			'UsedLikeNew'           => __('Used - Like New', 'wpla'),
+			'UsedVeryGood'          => __('Used - Very Good', 'wpla'),
+			'UsedGood'              => __('Used - Good', 'wpla'),
+			'UsedAcceptable'        => __('Used - Acceptable', 'wpla'),
+			'Refurbished'           => __('Refurbished', 'wpla'),
+			'CollectibleLikeNew'    => __('Collectible - Like New', 'wpla'),
+			'CollectibleVeryGood'   => __('Collectible - Very Good', 'wpla'),
+			'CollectibleGood'       => __('Collectible - Good', 'wpla'),
+			'CollectibleAcceptable' => __('Collectible - Acceptable', 'wpla'),
 		);
 
 		// // current values
@@ -488,13 +508,15 @@ class WPLA_Product_MetaBox {
 		$variation_post_id = $variation ? $variation->ID : $variation_data['variation_post_id']; // $variation exists since WC2.2 (at least)
 
 		// get current values - WC2.3
-		$_amazon_id_type       = get_post_meta( $variation_post_id, '_amazon_id_type'  		, true );
-		$_amazon_product_id    = get_post_meta( $variation_post_id, '_amazon_product_id'  	, true );
-		$_amazon_price         = get_post_meta( $variation_post_id, '_amazon_price'       	, true );
-		$_amazon_minimum_price = get_post_meta( $variation_post_id, '_amazon_minimum_price' , true );
-		$_amazon_maximum_price = get_post_meta( $variation_post_id, '_amazon_maximum_price' , true );
-		$_amazon_is_disabled   = get_post_meta( $variation_post_id, '_amazon_is_disabled'   , true );
-		$_amazon_asin          = get_post_meta( $variation_post_id, '_wpla_asin'  			, true );
+		$_amazon_id_type        = get_post_meta( $variation_post_id, '_amazon_id_type'  		, true );
+		$_amazon_product_id     = get_post_meta( $variation_post_id, '_amazon_product_id'  		, true );
+		$_amazon_price          = get_post_meta( $variation_post_id, '_amazon_price'       		, true );
+		$_amazon_minimum_price  = get_post_meta( $variation_post_id, '_amazon_minimum_price' 	, true );
+		$_amazon_maximum_price  = get_post_meta( $variation_post_id, '_amazon_maximum_price' 	, true );
+		$_amazon_condition_type = get_post_meta( $variation_post_id, '_amazon_condition_type' 	, true );
+		$_amazon_condition_note = get_post_meta( $variation_post_id, '_amazon_condition_note' 	, true );
+		$_amazon_is_disabled    = get_post_meta( $variation_post_id, '_amazon_is_disabled'   	, true );
+		$_amazon_asin           = get_post_meta( $variation_post_id, '_wpla_asin'  				, true );
 
         ?>
 
@@ -514,7 +536,7 @@ class WPLA_Product_MetaBox {
                     </label> 
                     <select name="variable_amazon_id_type[<?php echo $loop; ?>]" class="wpla_var_selector">
                         <?php
-                        foreach ( $options as $key => $option_name ) {
+                        foreach ( $available_id_types as $key => $option_name ) {
                             echo '<option value="' . $key . '" ';
                             selected($key, $_amazon_id_type);
                             echo '>' . $option_name . '</option>';
@@ -587,6 +609,35 @@ class WPLA_Product_MetaBox {
             </div>
             <?php endif; ?>
 
+            <?php if ( get_option( 'wpla_enable_item_condition_fields', 0 ) == 1 ) : ?>
+            <div>
+                <p class="form-row form-row-first">
+                    <label>
+                        <?php _e('Item Condition', 'wpla'); ?>
+                        <a class="tips" data-tip="Indicates the condition of the item." href="#">[?]</a>
+                    </label> 
+					<select name="variable_amazon_condition_type[<?php echo $loop; ?>]" class="select" style="">
+                    <?php
+                        foreach ( $available_item_conditions as $key => $option_name ) {
+                            echo '<option value="' . $key . '" ';
+                            selected($key, $_amazon_condition_type);
+                            echo '>' . $option_name . '</option>';
+                        }
+                    ?>
+					</select>
+
+
+                </p>
+                <p class="form-row form-row-last">
+                    <label>
+                        <?php _e('Condition Note', 'wpla'); ?>
+                        <a class="tips" data-tip="Descriptive text explaining the actual condition of the item. Required if item condition is not New." href="#">[?]</a>
+                    </label> 
+                    <input type="text" name="variable_amazon_condition_note[<?php echo $loop; ?>]" class="" value="<?php echo $_amazon_condition_note ?>" maxlength="1000" />
+                </p>
+            </div>
+            <?php endif; ?>
+
         <?php
 
     } // woocommerce_variation_options()
@@ -596,23 +647,22 @@ class WPLA_Product_MetaBox {
         // echo "<pre>";print_r($_POST);echo"</pre>";die();
         if ( ! isset($_POST['variable_sku']) ) return;
 
-		$variable_post_id              = $_POST['variable_post_id'];
-		$variable_amazon_product_id    = $_POST['variable_amazon_product_id'];
-		$variable_amazon_id_type       = $_POST['variable_amazon_id_type'];
-		$variable_amazon_asin          = $_POST['variable_amazon_asin'];
-		$variable_sku                  = $_POST['variable_sku'];
-		$variable_amazon_price         = isset( $_POST['variable_amazon_price']         ) ? $_POST['variable_amazon_price']         : '';
-		$variable_amazon_minimum_price = isset( $_POST['variable_amazon_minimum_price'] ) ? $_POST['variable_amazon_minimum_price'] : '';
-		$variable_amazon_maximum_price = isset( $_POST['variable_amazon_maximum_price'] ) ? $_POST['variable_amazon_maximum_price'] : '';
-		$variable_amazon_is_disabled   = isset( $_POST['variable_amazon_is_disabled']   ) ? $_POST['variable_amazon_is_disabled']   : '';
+		$variable_post_id               = $_POST['variable_post_id'];
+		$variable_amazon_product_id     = $_POST['variable_amazon_product_id'];
+		$variable_amazon_id_type        = $_POST['variable_amazon_id_type'];
+		$variable_amazon_asin           = $_POST['variable_amazon_asin'];
+		$variable_sku                   = $_POST['variable_sku'];
+		$variable_amazon_price          = isset( $_POST['variable_amazon_price']          ) ? $_POST['variable_amazon_price']          : '';
+		$variable_amazon_minimum_price  = isset( $_POST['variable_amazon_minimum_price']  ) ? $_POST['variable_amazon_minimum_price']  : '';
+		$variable_amazon_maximum_price  = isset( $_POST['variable_amazon_maximum_price']  ) ? $_POST['variable_amazon_maximum_price']  : '';
+		$variable_amazon_condition_type = isset( $_POST['variable_amazon_condition_type'] ) ? $_POST['variable_amazon_condition_type'] : '';
+		$variable_amazon_condition_note = isset( $_POST['variable_amazon_condition_note'] ) ? $_POST['variable_amazon_condition_note'] : '';
+		$variable_amazon_is_disabled    = isset( $_POST['variable_amazon_is_disabled']    ) ? $_POST['variable_amazon_is_disabled']    : '';
 
 		// convert decimal comma for all price fields
 		$variable_amazon_price         = str_replace( ',', '.', $variable_amazon_price         );
 		$variable_amazon_minimum_price = str_replace( ',', '.', $variable_amazon_minimum_price );
 		$variable_amazon_maximum_price = str_replace( ',', '.', $variable_amazon_maximum_price );
-
-        // if (isset($_POST['variable_enabled']))
-        //     $variable_enabled           = $_POST['variable_enabled'];
 
         $lm = new WPLA_ListingsModel();
         $all_variations_with_SKU  = array();
@@ -625,13 +675,15 @@ class WPLA_Product_MetaBox {
             $variation_id = (int) $variable_post_id[$i];
 
             // Update post meta
-            update_post_meta( $variation_id, '_amazon_product_id', 		$variable_amazon_product_id[$i] );
-            update_post_meta( $variation_id, '_amazon_id_type', 		$variable_amazon_id_type[$i] );
-            update_post_meta( $variation_id, '_wpla_asin', 				$variable_amazon_asin[$i] );
-            update_post_meta( $variation_id, '_amazon_price', 			isset( $variable_amazon_price[$i]         ) ? trim( $variable_amazon_price[$i]         ) : '' );
-            update_post_meta( $variation_id, '_amazon_minimum_price', 	isset( $variable_amazon_minimum_price[$i] ) ? trim( $variable_amazon_minimum_price[$i] ) : '' );
-            update_post_meta( $variation_id, '_amazon_maximum_price', 	isset( $variable_amazon_maximum_price[$i] ) ? trim( $variable_amazon_maximum_price[$i] ) : '' );
-            update_post_meta( $variation_id, '_amazon_is_disabled', 	isset( $variable_amazon_is_disabled[$i]   ) ? $variable_amazon_is_disabled[$i]           : '' );
+            update_post_meta( $variation_id, '_amazon_product_id', 		trim( $variable_amazon_product_id[$i] ) );
+            update_post_meta( $variation_id, '_amazon_id_type', 		      $variable_amazon_id_type[$i]      );
+            update_post_meta( $variation_id, '_wpla_asin', 				trim( $variable_amazon_asin[$i]       ) );
+            update_post_meta( $variation_id, '_amazon_price', 			isset( $variable_amazon_price[$i]          ) ? trim( $variable_amazon_price[$i]         ) : '' );
+            update_post_meta( $variation_id, '_amazon_minimum_price', 	isset( $variable_amazon_minimum_price[$i]  ) ? trim( $variable_amazon_minimum_price[$i] ) : '' );
+            update_post_meta( $variation_id, '_amazon_maximum_price', 	isset( $variable_amazon_maximum_price[$i]  ) ? trim( $variable_amazon_maximum_price[$i] ) : '' );
+            update_post_meta( $variation_id, '_amazon_condition_type', 	isset( $variable_amazon_condition_type[$i] ) ? trim( $variable_amazon_condition_type[$i] ) : '' );
+            update_post_meta( $variation_id, '_amazon_condition_note', 	isset( $variable_amazon_condition_note[$i] ) ? trim( $variable_amazon_condition_note[$i] ) : '' );
+            update_post_meta( $variation_id, '_amazon_is_disabled', 	isset( $variable_amazon_is_disabled[$i]    ) ? $variable_amazon_is_disabled[$i]           : '' );
 
             // if ( $variable_amazon_product_id[$i] !== 'parent' )
             //     update_post_meta( $variation_id, '_amazon_product_id', $variable_amazon_product_id[$i] );

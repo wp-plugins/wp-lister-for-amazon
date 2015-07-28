@@ -1,4 +1,4 @@
-=== WP-Lister Light for Amazon ===
+=== WP-Lister Lite for Amazon ===
 Contributors: wp-lab
 Tags: amazon, woocommerce, products, export
 Requires at least: 4.0
@@ -47,6 +47,52 @@ No, and there are no plans on adding support for IIS.
 Please check out our growing knowledgebase at http://www.wplab.com/plugins/wp-lister-for-amazon/faq/
 
 == Changelog ==
+
+= 0.9.6.6 =
+* added filter option to hide empty fields in profile editor
+* added Industrial & Scientific feed templates for amazon.com
+* added support for WooCommerce CSV importer 3.x
+
+= 0.9.6.5.4 =
+* added optional field for item condition and condition note on variation level
+* added options to specify how long feeds, reports and order data should be kept in the database
+* order details page: enter shipping time as local time instead of UTC
+* view report: added search box to filter results / limit view to 1000 rows by default
+* regard shipping discount when creating orders in WooCommerce (fix shipping total)
+* fixed search box on import preview page - returned no results when searching for exact match ASIN or SKU
+
+= 0.9.6.5.3 =
+* fixed saving variations via AJAX on WooCommerce 2.4 beta
+* show warning on edit product page if variations have no SKU set
+* improved SKU mismatch warning on listings page in case the WooCommerce SKU is empty
+* edit product: trim spaces from ASINs and UPCs automatically
+* when duplicating a profile, jump to edit profile page
+
+= 0.9.6.5.2 =
+* shipping feed: make sure carrier-name is not empty if carrier-code is 'Other' (prevent Error 99021)
+* edit order page: fixed field for custom service provider name not showing when tracking provider is set to "Other"
+* fixed setup warnings not being shown (like missing cURL warning message)
+
+= 0.9.6.5.1 =
+* improved performance of generating import preview page
+* fixed possible error code 200 when processing import queue
+
+= 0.9.6.5 =
+* added support for custom order statuses on settings page
+* added gallery fallback option to use attached images if there is no WooCommerce Product Gallery (fixed issue with WooCommerce Dynamic Gallery plugin)
+* added loading indicator on edit profile page
+* added missing SDK file MarketplaceWebServiceProducts/Model/ErrorResponse.php
+* added button to manually convert custom tables to utf8mb4 on WordPress 4.2+ (fix "Illegal mix of collations" sql error)
+* improved Amazon column on Products page - show all listings for each product (but group variation listings)
+* make sure the latest changes are submitted - even if a feed is "stuck" as submitted
+* optimized memory footprint when processing import queue (fixed loading task list for 20k+ items on 192M RAM)
+* improved processing of browse tree guide files - link db records to tpl_id to be able to clean incorrectly imported data automatically
+* fixed php warning in ajax request when enabling all images on edit product page
+* fixed issue with SWVG and Sports feed templates ok Amazon UK
+
+= 0.9.6.4.2 =
+* added option to request FBA shipment report every 3 hours
+* added Clothing feed template for amazon.ca
 
 = 0.9.6.4.1 =
 * fixed possible php error during import 

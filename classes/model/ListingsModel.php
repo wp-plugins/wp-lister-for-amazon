@@ -15,8 +15,8 @@ class WPLA_ListingsModel extends WPLA_Model {
 
 	function WPLA_ListingsModel()
 	{
-		global $wpla_logger;
-		$this->logger = &$wpla_logger;
+		// global $wpla_logger;
+		// $this->logger = &$wpla_logger;
 
 		global $wpdb;
 		$this->tablename = $wpdb->prefix . self::TABLENAME;
@@ -297,6 +297,20 @@ class WPLA_ListingsModel extends WPLA_Model {
 	}
 
 	function getAllItemsByPostID( $post_id, $format = OBJECT ) {
+		global $wpdb;
+		$table = $wpdb->prefix . self::TABLENAME;
+
+		$items = $wpdb->get_results( $wpdb->prepare("
+			SELECT *
+			FROM $table
+			WHERE post_id   = %d
+		", $post_id
+		), $format);
+
+		return $items;
+	}
+
+	function getAllItemsByPostOrParentID( $post_id, $format = OBJECT ) {
 		global $wpdb;
 		$table = $wpdb->prefix . self::TABLENAME;
 
@@ -721,7 +735,7 @@ class WPLA_ListingsModel extends WPLA_Model {
 		
 		// skip if no product...
 		if ( empty( $ItemAttributes->Title ) ) {
-			$this->logger->error( 'could not update ItemAttributes: '.print_r($ItemAttributes,1) );
+			WPLA()->logger->error( 'could not update ItemAttributes: '.print_r($ItemAttributes,1) );
 			return false;
 		}
 
@@ -733,8 +747,8 @@ class WPLA_ListingsModel extends WPLA_Model {
 		$wpdb->update( $this->tablename, $data, array( 'id' => $id ) );
 		echo $wpdb->last_error;
 
-		#$this->logger->info('sql: '.$wpdb->last_query );
-		#$this->logger->info( $wpdb->last_error );
+		#WPLA()->logger->info('sql: '.$wpdb->last_query );
+		#WPLA()->logger->info( $wpdb->last_error );
 
 		return true;
 	}
@@ -784,8 +798,8 @@ class WPLA_ListingsModel extends WPLA_Model {
 
 		}
 
-		// $this->logger->info('prod: '.print_r($product,1) );
-		$this->logger->info('data: '.print_r($data,1) );
+		// WPLA()->logger->info('prod: '.print_r($product,1) );
+		WPLA()->logger->info('data: '.print_r($data,1) );
 		$this->lastError = false;
 
 		// // skip parent variations (?)
@@ -825,8 +839,8 @@ class WPLA_ListingsModel extends WPLA_Model {
 		}
 
 		echo $wpdb->last_error;
-		#$this->logger->info('sql: '.$wpdb->last_query );
-		#$this->logger->info( $wpdb->last_error );
+		#WPLA()->logger->info('sql: '.$wpdb->last_query );
+		#WPLA()->logger->info( $wpdb->last_error );
 
 		return true;
 	} // insertMatchedProduct()
@@ -840,7 +854,7 @@ class WPLA_ListingsModel extends WPLA_Model {
 		// map CSV Report Row to DB columns
 		$data = self::mapMerchantReportItemCSVToDB( $csv );
 		$data['account_id'] = $account_id;
-		// $this->logger->debug('data: '.print_r($data,1) );
+		// WPLA()->logger->debug('data: '.print_r($data,1) );
 
 		// check if SKU already exists
 		if ( $item = $this->getItemBySKU( $data['sku'], false ) ) {
@@ -862,8 +876,8 @@ class WPLA_ListingsModel extends WPLA_Model {
 		}
 
 		echo $wpdb->last_error;
-		#$this->logger->info('sql: '.$wpdb->last_query );
-		#$this->logger->info( $wpdb->last_error );
+		#WPLA()->logger->info('sql: '.$wpdb->last_query );
+		#WPLA()->logger->info( $wpdb->last_error );
 
 		return $item;
 	} // updateItemFromReportCSV()
@@ -940,8 +954,8 @@ class WPLA_ListingsModel extends WPLA_Model {
 		// update
 		$wpdb->update( $table, $data, array( 'id' => $id ) );
 
-		#$this->logger->info('sql: '.$wpdb->last_query );
-		#$this->logger->info( $wpdb->last_error );
+		#WPLA()->logger->info('sql: '.$wpdb->last_query );
+		#WPLA()->logger->info( $wpdb->last_error );
 	}
 
 	static public function updateWhere( $where, $data ) {
@@ -959,7 +973,7 @@ class WPLA_ListingsModel extends WPLA_Model {
 		$source = esc_sql( $source );
 		$where_sql = $source ? " AND source = '$source' " : '';
 		$items = $wpdb->get_results("
-			SELECT * 
+			SELECT id, sku, asin, listing_title 
 			FROM $table
 			WHERE status = 'imported'
 			$where_sql
@@ -1305,7 +1319,7 @@ class WPLA_ListingsModel extends WPLA_Model {
         // $this->reapplyProfileToItem( $listing_id );
 
 		// get all matching items - parent and child variations
-		$listings = $this->getAllItemsByPostID( $post_id );
+		$listings = $this->getAllItemsByPostOrParentID( $post_id );
 		$there_were_changes = false;
 
 		// if no listings found, return log message
@@ -1346,12 +1360,14 @@ class WPLA_ListingsModel extends WPLA_Model {
 				// prepared and sold listings keep their status
 				case 'matched':		// matched items
 				case 'prepared':	// new items
-				case 'submitted':
+				// case 'submitted':
 				case 'sold':
 					$new_status = $listing_status;
 					break;
 				
 				case 'online':
+				case 'submitted':	// allow another feed to be submitted, even when there is a submitted feed already
+									// (make sure the latest changes are submitted - even if a feed is "stuck" as submitted for some reason)
 					$new_status = 'changed';
 					break;
 				
@@ -1515,17 +1531,17 @@ class WPLA_ListingsModel extends WPLA_Model {
 			$data['vtheme']      = $last_variation_data['vtheme'];
 		}
 		
-		$this->logger->info('insert new listing '.$post_id.' - title: '.$data['listing_title']);
-		// $this->logger->debug( print_r($post,1) );
-		$this->logger->debug( print_r($data,1) );
+		WPLA()->logger->info('insert new listing '.$post_id.' - title: '.$data['listing_title']);
+		// WPLA()->logger->debug( print_r($post,1) );
+		WPLA()->logger->debug( print_r($data,1) );
 		
 		// insert in listings table
 		$wpdb->insert( $this->tablename, $data );
 		echo $wpdb->last_error;
 
-		$this->logger->debug('insert_id: '.$wpdb->insert_id );
-		$this->logger->debug('sql: '.$wpdb->last_query );
-		$this->logger->debug( $wpdb->last_error );
+		WPLA()->logger->debug('insert_id: '.$wpdb->insert_id );
+		WPLA()->logger->debug('sql: '.$wpdb->last_query );
+		WPLA()->logger->debug( $wpdb->last_error );
 
 		// apply profile (price)
 		$listing_id = $wpdb->insert_id;
@@ -1591,8 +1607,8 @@ class WPLA_ListingsModel extends WPLA_Model {
 			$data['account_id']    = $profile->account_id;
 			$data['product_type']  = $variable_product->product_type;
 			
-			$this->logger->info('insert new variation '.$variation_id.' - title: '.$data['listing_title']);
-			$this->logger->debug( print_r($post,1) );
+			WPLA()->logger->info('insert new variation '.$variation_id.' - title: '.$data['listing_title']);
+			WPLA()->logger->debug( print_r($post,1) );
 			
 			// insert in listings table
 			$wpdb->insert( $this->tablename, $data );
@@ -1658,7 +1674,7 @@ class WPLA_ListingsModel extends WPLA_Model {
 		$data['account_id']    = $parent_listing->account_id;
 		$data['product_type']  = $variable_product->product_type;
 		
-		$this->logger->info('insert new variation '.$variation_id.' - title: '.$data['listing_title']);
+		WPLA()->logger->info('insert new variation '.$variation_id.' - title: '.$data['listing_title']);
 		
 		// insert in listings table
 		$wpdb->insert( $this->tablename, $data );
@@ -1807,17 +1823,17 @@ class WPLA_ListingsModel extends WPLA_Model {
 
 		// debug
 		if ( $status != $data['status'] ) {
-			$this->logger->info('applyProfileToItem('.$id.') old status: '.$status );
-			$this->logger->info('applyProfileToItem('.$id.') new status: '.$data['status'] );
+			WPLA()->logger->info('applyProfileToItem('.$id.') old status: '.$status );
+			WPLA()->logger->info('applyProfileToItem('.$id.') new status: '.$data['status'] );
 		}
 
 		// update auctions table
 		$wpdb->update( $this->tablename, $data, array( 'id' => $id ) );
 
-		// $this->logger->info('updating listing ID '.$id);
-		// $this->logger->info('data: '.print_r($data,1));
-		// $this->logger->info('sql: '.$wpdb->last_query);
-		// $this->logger->info('error: '.$wpdb->last_error);
+		// WPLA()->logger->info('updating listing ID '.$id);
+		// WPLA()->logger->info('data: '.print_r($data,1));
+		// WPLA()->logger->info('sql: '.$wpdb->last_query);
+		// WPLA()->logger->info('error: '.$wpdb->last_error);
 
 
 	} // applyProfileToItem()

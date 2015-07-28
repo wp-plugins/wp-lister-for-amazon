@@ -118,7 +118,7 @@ class WPLA_Logger{
 
 
 	// custom call stack trace
-	// usage: $this->logger->callStack( debug_backtrace() );
+	// usage: WPLA()->logger->callStack( debug_backtrace() );
     function callStack($stacktrace) {
         $this->info( str_repeat("=", 50) );
         $i = 1;

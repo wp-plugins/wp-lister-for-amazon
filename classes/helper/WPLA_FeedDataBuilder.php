@@ -293,7 +293,8 @@ class WPLA_FeedDataBuilder {
 				// if main image is disabled, use first enabled gallery image
 				$disabled_images = explode( ',', get_post_meta( $product->id, '_wpla_disabled_gallery_images', true ) );
 				if ( in_array( $attachment_id, $disabled_images ) ) {
-		            $gallery_images = $product->get_gallery_attachment_ids();
+		            // $gallery_images = $product->get_gallery_attachment_ids();
+		            $gallery_images = WPLA_ProductWrapper::getGalleryAttachmentIDs( $product );
 		            $gallery_images = array_values( array_diff( $gallery_images, $disabled_images ) );
 	    	        $gallery_images = apply_filters( 'wpla_product_gallery_attachment_ids', $gallery_images, $post_id );
 		            if ( isset( $gallery_images[0] ) ) {
@@ -323,7 +324,8 @@ class WPLA_FeedDataBuilder {
 
 				// build list of enabled gallery images (attachment_ids)
 				$disabled_images = explode( ',', get_post_meta( $product->id, '_wpla_disabled_gallery_images', true ) );
-	            $gallery_images = $product->get_gallery_attachment_ids();
+	            // $gallery_images = $product->get_gallery_attachment_ids();
+	            $gallery_images = WPLA_ProductWrapper::getGalleryAttachmentIDs( $product );
 	            $gallery_images = array_values( array_diff( $gallery_images, $disabled_images ) );
 	            $gallery_images = apply_filters( 'wpla_product_gallery_attachment_ids', $gallery_images, $post_id );
 
@@ -1158,9 +1160,13 @@ class WPLA_FeedDataBuilder {
 		$csv_header = join( "\t", $columns ) . "\n";
 		$csv_body = '';
 
+		// reset row cache
+		WPLA()->memcache->clearColumnCache();
+
 		foreach ( $columns as $col ) {
 			$value = self::parseOrderColumn( $col, $post_id );
 			$csv_body .= $value . "\t";
+			WPLA()->memcache->setColumnValue( 'shipfeed_oid_'.$post_id, $col, $value );
 		}
 		$csv_body .= "\n";
 
@@ -1206,7 +1212,12 @@ class WPLA_FeedDataBuilder {
 				break;
 			
 			case 'carrier-name':
-				$value = get_post_meta( $post_id, '_wpla_tracking_service_name', true );
+				$carrier = WPLA()->memcache->getColumnValue( 'shipfeed_oid_'.$post_id, 'carrier-code' );				
+				$value   = get_post_meta( $post_id, '_wpla_tracking_service_name', true );
+				if ( empty($value) && $carrier == 'Other' ) {
+					$value = get_option( 'wpla_default_shipping_service_name', '' );
+					if ( empty($value) ) $value = 'N/A'; // we can't leave carrier-name empty if carrier-code is 'Other'
+				}
 				break;
 			
 			case 'tracking-number':

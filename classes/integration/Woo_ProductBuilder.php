@@ -3,15 +3,15 @@
 class WPLA_ProductBuilder {
 
 	//public $categories_array;
-	var $logger;
+	// var $logger;
 	var $images_url;
 	var $updated_count;
 	var $images_hashmap = array();
 
 	public function __construct() {
 		//parent::__construct();
-		global $wpla_logger;
-		$this->logger = &$wpla_logger;
+		// global $wpla_logger;
+		// $this->logger = &$wpla_logger;
 	}
 
 
@@ -25,12 +25,12 @@ class WPLA_ProductBuilder {
 			WHERE meta_key = '_amazon_item_source'
 			"
 		);
-		//$this->logger->info( 'last query: ' . $wpdb->last_query );
+		//WPLA()->logger->info( 'last query: ' . $wpdb->last_query );
 
 		if ( $items )
 			foreach ( $items as $item ) {
 				$this->deleteProduct( $item->post_id );
-				$this->logger->debug( 'deleting product from previous import: ' . $item->post_id );
+				WPLA()->logger->debug( 'deleting product from previous import: ' . $item->post_id );
 			}
 		return count( $items );
 
@@ -77,20 +77,20 @@ class WPLA_ProductBuilder {
 
 	public function importSingleProduct( $item, $product_node ) {
 		$variation_type = is_string( $product_node->variation_type ) ? $product_node->variation_type : '_none_'; // convert empty object to string
-		$this->logger->info( "* importSingleProduct() - SKU ".$item['sku'] .' - type: '.$variation_type );
+		WPLA()->logger->info( "* importSingleProduct() - SKU ".$item['sku'] .' - type: '.$variation_type );
 
 		$lm = new WPLA_ListingsModel();
 
 		// // check if product already exists by ASIN (disabled)
 		// $this->last_insert_id = $this->getProductIdByOriginalId( $item['asin'] );
-		// if ( $this->last_insert_id ) $this->logger->info('found existing product by ASIN '.$item['asin'].' - post_id: '.$this->last_insert_id );
+		// if ( $this->last_insert_id ) WPLA()->logger->info('found existing product by ASIN '.$item['asin'].' - post_id: '.$this->last_insert_id );
 
 		// if ( ! $this->last_insert_id ) {
 
 		// 	$this->last_insert_id = self::getProductIdBySKU( $item['sku'] );
 		// 	if ( $this->last_insert_id ) {
 		// 		update_post_meta( $this->last_insert_id, '_wpla_asin', $item['asin'] );
-		// 		$this->logger->info('found existing product by SKU '.$item['sku'].'- post_id: '.$this->last_insert_id );	
+		// 		WPLA()->logger->info('found existing product by SKU '.$item['sku'].'- post_id: '.$this->last_insert_id );	
 		// 	} 
 
 		// }
@@ -102,7 +102,7 @@ class WPLA_ProductBuilder {
 		// if a product exists, update ASIN
 		if ( $this->last_insert_id ) {
 			update_post_meta( $this->last_insert_id, '_wpla_asin', $item['asin'] );
-			$this->logger->info('Found existing product by SKU '.$item['sku'].' - post_id: '.$this->last_insert_id );	
+			WPLA()->logger->info('Found existing product by SKU '.$item['sku'].' - post_id: '.$this->last_insert_id );	
 		} 
 
 
@@ -125,13 +125,13 @@ class WPLA_ProductBuilder {
 
 					// skip existing SKUs					
 					if ( $variation_id = self::getProductIdBySKU( $variation->sku ) ) {
-						$this->logger->info('skipped existing variation '.$variation->sku.' - parent_id: '.$post_id );	
+						WPLA()->logger->info('skipped existing variation '.$variation->sku.' - parent_id: '.$post_id );	
 						continue;
 					}
 
 					// create child variation
 					$this->addVariation( $post_id, $variation, $data );
-					$this->logger->info('ADDED missing variation '.$variation->sku.' - parent_id: '.$post_id );	
+					WPLA()->logger->info('ADDED missing variation '.$variation->sku.' - parent_id: '.$post_id );	
 				}
 
 			} // is parent variation
@@ -277,7 +277,7 @@ class WPLA_ProductBuilder {
 
 					if ( ! empty( $var_images ) ) {
 						$var->variation_image  = $var_images[0];
-						$this->logger->info( "found HighRes var image: ".$var->variation_image);
+						WPLA()->logger->info( "found HighRes var image: ".$var->variation_image);
 					}
 
 				} // each var
@@ -297,8 +297,8 @@ class WPLA_ProductBuilder {
 	 * @return $post_id
 	 */
 	public function addProduct( $data ) {
-		$this->logger->info( "==============================================================================" );
-		$this->logger->info( "addProduct() - data: ".print_r($data,1) );
+		WPLA()->logger->info( "==============================================================================" );
+		WPLA()->logger->info( "addProduct() - data: ".print_r($data,1) );
 
 		// some shortcuts
 		// $products_id  = 0;
@@ -524,7 +524,7 @@ class WPLA_ProductBuilder {
 		// assign global import parent category
 		$term_id = get_option('wpla_import_parent_category_id' );
 		if ( $term_id ) {
-			$this->logger->info( "Adding default category {$term_id} to product id {$post_id}" );
+			WPLA()->logger->info( "Adding default category {$term_id} to product id {$post_id}" );
 			$result = wp_set_object_terms( $post_id, intval( $term_id ), 'product_cat', true );
 		}
 
@@ -532,12 +532,12 @@ class WPLA_ProductBuilder {
 		foreach ( $data['categories'] as $category_id ) {
 			$term_id = $this->getCategoryIdByOriginalId( $category_id );
 			if ( $term_id ) {
-				$this->logger->info( "Adding category {$term_id} ({$category_id}) to productid {$post_id}" );
+				WPLA()->logger->info( "Adding category {$term_id} ({$category_id}) to productid {$post_id}" );
 				$result = wp_set_object_terms( $post_id, intval( $term_id ), 'product_cat', true );
-				$this->logger->info( "wp_set_object_terms( $post_id, $term_id, 'product_cat' )" );
-				$this->logger->info( "wp_set_object_terms result:".print_r($result,1) );			
+				WPLA()->logger->info( "wp_set_object_terms( $post_id, $term_id, 'product_cat' )" );
+				WPLA()->logger->info( "wp_set_object_terms result:".print_r($result,1) );			
 			} else {
-				$this->logger->error( "failed to find match for store category {$category_id} - productid {$post_id}" );				
+				WPLA()->logger->error( "failed to find match for store category {$category_id} - productid {$post_id}" );				
 			}
 		}
 
@@ -548,14 +548,14 @@ class WPLA_ProductBuilder {
 			if ( $this->isTextAttribute( $attrib->name ) ) {
 
 				// add 'text' attribute
-				$this->logger->info( "adding TEXT attribute: ".$attrib->name );			
+				WPLA()->logger->info( "adding TEXT attribute: ".$attrib->name );			
 				$attribute_name = $this->addAttribute( $attrib->name, false );
 				if ($attribute_name) $this->addProductAttribute( $post_id, $attribute_name, $attrib->value, $attrib->name );
 
 			} else {
 
 				// add 'select' attribute
-				$this->logger->info( "adding SELECT attribute: ".$attrib->name );			
+				WPLA()->logger->info( "adding SELECT attribute: ".$attrib->name );			
 				$attribute_name = $this->addAttribute( $attrib->name, true );
 				if ($attribute_name) {
 					$attribute_values = explode( '|', $attrib->value );
@@ -628,7 +628,7 @@ class WPLA_ProductBuilder {
 
 		}
 
-		$this->logger->info( "added product $post_id ($asin): $products_name " );
+		WPLA()->logger->info( "added product $post_id ($asin): $products_name " );
 
 		return $post_id;
 	} // addProduct()
@@ -638,8 +638,10 @@ class WPLA_ProductBuilder {
 	function addVariation( $post_id, $variation, $data ) {
 		global $woocommerce, $wpdb;
 
-		$this->logger->info( "--------------------------------" );
-		$this->logger->info( "addVariation for {$post_id} ".$variation->attributes[0]->value );
+		WPLA()->logger->info( "--------------------------------" );
+		WPLA()->logger->info( "addVariation for {$post_id} " );
+		WPLA()->logger->info( "variation attributes: ".print_r($variation->attributes,1) );
+		// WPLA()->logger->info( "variation attributes: ".print_r($variation->attributes[0]->value,1) );
 		// echo "<pre>VAR: ";print_r($variation);echo"</pre>";#die();
 
 		// $variable_post_id 			= $_POST['variable_post_id'];
@@ -691,7 +693,7 @@ class WPLA_ProductBuilder {
 		update_post_meta( $variation_id, '_price', $variation->price );
 		update_post_meta( $variation_id, '_regular_price', $variation->price );	// WC2.2
 		update_post_meta( $variation_id, '_sale_price', '' );
-		$this->logger->info( "set price for variation {$variation_id} / {$post_id} to ".$variation->price );
+		WPLA()->logger->info( "set price for variation {$variation_id} / {$post_id} to ".$variation->price );
 
 		update_post_meta( $variation_id, '_sku', $variation->sku );
 		update_post_meta( $variation_id, '_weight', $data['weight'] );
@@ -729,27 +731,27 @@ class WPLA_ProductBuilder {
 
  			// fall back to old behaviour
  			if ( ! $term ) {
-				$this->logger->info( "fallback - search for attribute value {$attribute->value} by name..." );
+				WPLA()->logger->info( "fallback - search for attribute value {$attribute->value} by name..." );
 	 			$term = get_term_by( 'name', $attribute_value, $attribute_name);
  			}
 
  			// add attribute to variation
 			if ( $term ) {
 
-				$this->logger->info( "attribute_$attribute_name: ".$term->slug );
+				WPLA()->logger->info( "attribute_$attribute_name: ".$term->slug );
 				update_post_meta( $variation_id, 'attribute_' . sanitize_title($attribute_name), $term->slug );
-				$this->logger->info( "added attribute {$attribute_name} / {$attribute->value} to variation {$variation_id}" );
+				WPLA()->logger->info( "added attribute {$attribute_name} / {$attribute->value} to variation {$variation_id}" );
 
 				// Update default attribute options setting
 				$value = esc_attr(trim( @$term->slug ));
 				if ($value) :
 					$default_attributes[ sanitize_title($attribute_name) ] = $value;
-					$this->logger->info( "-- added default attribute {$attribute_name} / {$attribute->value} to parent product {$post_id}" );
+					WPLA()->logger->info( "-- added default attribute {$attribute_name} / {$attribute->value} to parent product {$post_id}" );
 				endif;
 
 			} else {
-				$this->logger->error( "could not find attribute term for {$attribute_name} : '{$attribute_value}'" );				
-				$this->logger->error( "get_term_by() returned: ".print_r($term,1) );				
+				WPLA()->logger->error( "could not find attribute term for {$attribute_name} : '{$attribute_value}'" );				
+				WPLA()->logger->error( "get_term_by() returned: ".print_r($term,1) );				
 			}
 
 		}
@@ -824,7 +826,7 @@ class WPLA_ProductBuilder {
 			if ( $attachment_id && ! in_array( $attachment_id, $image_attachment_ids ) ) {
 				$image_attachment_ids[] = $attachment_id;
 				update_post_meta( $post_parent, '_product_image_gallery', implode( ',', $image_attachment_ids ) );
-				$this->logger->info( "added GALLERY image $attachment_id for variation $variation_id / parent product {$post_parent}" );
+				WPLA()->logger->info( "added GALLERY image $attachment_id for variation $variation_id / parent product {$post_parent}" );
 			}
 
 		}
@@ -856,23 +858,23 @@ class WPLA_ProductBuilder {
  		// Update post terms
  		if ( taxonomy_exists( $attribute_name ) ) {
  			// $term = get_term_by( 'name', $attribute_value, $attribute_name);
-			// $this->logger->info( "term object:".print_r($term,1) );
+			// WPLA()->logger->info( "term object:".print_r($term,1) );
  			// $result = wp_set_object_terms( $parent_id, $term->term_id, $attribute_name, true );
  			$result = wp_set_object_terms( $parent_id, $attribute_value, $attribute_name, true );
-			$this->logger->info( "wp_set_object_terms( $parent_id, $attribute_value, $attribute_name )" );
+			WPLA()->logger->info( "wp_set_object_terms( $parent_id, $attribute_value, $attribute_name )" );
 			
 			// wp_set_object_terms() returns the term_taxonomy_id(s) as an array if successful
 			$term_taxonomy_id = false;
 			if ( is_array($result) ) {
 				$term_taxonomy_id = $result[0];	
-				$this->logger->info( "term_taxonomy_id: ".print_r($term_taxonomy_id,1) );
+				WPLA()->logger->info( "term_taxonomy_id: ".print_r($term_taxonomy_id,1) );
 			} else {
-				$this->logger->info( "wp_set_object_terms result:".print_r($result,1) );
+				WPLA()->logger->info( "wp_set_object_terms result:".print_r($result,1) );
 			}
 
  		} else {
-			$this->logger->error( "taxonomy {$attribute_name} does not exist! ( addVariationAttribute() )" );
-			$this->logger->info( "attribute_value:".print_r($attribute_value,1) );
+			WPLA()->logger->error( "taxonomy {$attribute_name} does not exist! ( addVariationAttribute() )" );
+			WPLA()->logger->info( "attribute_value:".print_r($attribute_value,1) );
  		}
 
  		// Add attribute to array, but don't set values
@@ -886,7 +888,7 @@ class WPLA_ProductBuilder {
 	 	);
 		update_post_meta( $parent_id, '_product_attributes', $attributes );
 
-		// $this->logger->info( "added attribute {$attribute_name} / {$attribute_value} to variation $post_id ($parent_id)" );
+		// WPLA()->logger->info( "added attribute {$attribute_name} / {$attribute_value} to variation $post_id ($parent_id)" );
 
 		return $term_taxonomy_id;
 	} // addVariationAttribute
@@ -933,7 +935,7 @@ class WPLA_ProductBuilder {
 		 		if ( taxonomy_exists( $attribute_name ) ) {
 		 			wp_set_object_terms( $post_id, $values, $attribute_name );
 		 		} else {
-					$this->logger->error( "taxonomy {$attribute_name} does not exist!" );
+					WPLA()->logger->error( "taxonomy {$attribute_name} does not exist!" );
 
 		 		}
 
@@ -981,7 +983,7 @@ class WPLA_ProductBuilder {
 		update_post_meta( $post_id, '_product_attributes', $attributes );
 
 	
-		$this->logger->info( "added attribute {$attribute_name} / {$attribute_value} to productid {$post_id}" );
+		WPLA()->logger->info( "added attribute {$attribute_name} / {$attribute_value} to productid {$post_id}" );
 
 	} // addProductAttribute()
 
@@ -1003,11 +1005,11 @@ class WPLA_ProductBuilder {
 
 		if ( $attribute_name && strlen( $attribute_name ) < 30 && $attribute_type ) {
 
-			$this->logger->info( "checking if attribute exists: ". $attribute_name );			
+			WPLA()->logger->info( "checking if attribute exists: ". $attribute_name );			
 			if ( taxonomy_exists( wc_attribute_taxonomy_name( $attribute_name ) ) ) {
 				
 				$attribute_name = wc_attribute_taxonomy_name( $attribute_name );
-				$this->logger->info( "using existing attribute: ". $attribute_name );			
+				WPLA()->logger->info( "using existing attribute: ". $attribute_name );			
 
 			} else {
 
@@ -1034,11 +1036,11 @@ class WPLA_ProductBuilder {
 
 				$this->clearAttributeCache();
 
-				$this->logger->info( "added new attribute {$attribute_name} - {$attribute_label}" );
+				WPLA()->logger->info( "added new attribute {$attribute_name} - {$attribute_label}" );
 			}
 
 		} else {
-			$this->logger->error( "there was a problem adding attribute {$attribute_name} !" );			
+			WPLA()->logger->error( "there was a problem adding attribute {$attribute_name} !" );			
 		}
 
 		return $attribute_name;
@@ -1050,7 +1052,7 @@ class WPLA_ProductBuilder {
 		$attributes_as_text = get_option('wpla_import_attrib_as_text', array() );
 		foreach ($attributes_as_text as $searchstring) {
 			if ( stripos( $attribute_name, $searchstring) !== false ) {
-				$this->logger->info( "isTextAttribute( $attribute_name ) found match for $searchstring" );
+				WPLA()->logger->info( "isTextAttribute( $attribute_name ) found match for $searchstring" );
 				return true;
 			}
 		}
@@ -1132,7 +1134,7 @@ class WPLA_ProductBuilder {
 		// 	string - matching image found by MD5 hash
 
 		if ( is_wp_error( $copy_result ) ) {
-			$this->logger->error('image download failed: '.$img_url);
+			WPLA()->logger->error('image download failed: '.$img_url);
 			// TODO: notify user when image download failed
 			return false;
 		}
@@ -1147,11 +1149,11 @@ class WPLA_ProductBuilder {
 			$attachment_id = $this->get_attachment_id_for_filename( $imgfile );
 
 			if ( $attachment_id ) {
-				$this->logger->info( 'found existing attachment_id (md5): '.$attachment_id );
+				WPLA()->logger->info( 'found existing attachment_id (md5): '.$attachment_id );
 
 				// set post thumbnail
 				if ( $is_featured_image ) set_post_thumbnail( $post_id, $attachment_id );
-				$this->logger->info( "set_post_thumbnail( $post_id, $attachment_id )" );
+				WPLA()->logger->info( "set_post_thumbnail( $post_id, $attachment_id )" );
 
 				return $attachment_id;	
 			} 
@@ -1163,11 +1165,11 @@ class WPLA_ProductBuilder {
 			$attachment_id = $this->get_attachment_id_for_filename( $imgfile );
 
 			if ( $attachment_id ) {
-				$this->logger->info( 'found existing attachment_id: '.$attachment_id );
+				WPLA()->logger->info( 'found existing attachment_id: '.$attachment_id );
 
 				// set post thumbnail
 				if ( $is_featured_image ) set_post_thumbnail( $post_id, $attachment_id );
-				$this->logger->info( "set_post_thumbnail( $post_id, $attachment_id )" );
+				WPLA()->logger->info( "set_post_thumbnail( $post_id, $attachment_id )" );
 
 				return $attachment_id;	
 			} 
@@ -1191,16 +1193,16 @@ class WPLA_ProductBuilder {
 
 		// Save the attachment data
 		$attachment_id = wp_insert_attachment( $attachment, $img_local_path, $post_id );
-		$this->logger->info( 'attachment_id: ' . $attachment_id );
+		WPLA()->logger->info( 'attachment_id: ' . $attachment_id );
 		if ( !is_wp_error( $attachment_id ) ) {
 
 			// if ( $is_new_image ) {
 			// 	wp_update_attachment_metadata( $attachment_id, wp_generate_attachment_metadata( $attachment_id, $img_local_path ) );
-			// 	$this->logger->info( 'wp_update_attachment_metadata()' );
+			// 	WPLA()->logger->info( 'wp_update_attachment_metadata()' );
 			// }
 
 			// if ( $is_new_image ) ... removed because it would leave image meta data empty, resulting a in 1px image in admin
-			// $this->logger->info( 'wp_update_attachment_metadata()' );
+			// WPLA()->logger->info( 'wp_update_attachment_metadata()' );
 
 			// make sure we have wp_generate_attachment_metadata() available
 			require_once( ABSPATH . 'wp-admin/includes/image.php' );
@@ -1209,15 +1211,15 @@ class WPLA_ProductBuilder {
 
 			// set post thumbnail
 			if ( $is_featured_image ) set_post_thumbnail( $post_id, $attachment_id );
-			$this->logger->info( 'set_post_thumbnail()' );
+			WPLA()->logger->info( 'set_post_thumbnail()' );
 
 			// mark attachment as imported
 			update_post_meta( $attachment_id, '_wpla_asin', $post_id );
 
-			$this->logger->info( 'product image: ' . $img_local_url );
+			WPLA()->logger->info( 'product image: ' . $img_local_url );
 
 		} else {
-			$this->logger->error( 'there was a problem assigning this image: ' . $img_local_path );
+			WPLA()->logger->error( 'there was a problem assigning this image: ' . $img_local_path );
 		}
 		return $attachment_id;
 	} // addProductImage()
@@ -1233,7 +1235,7 @@ class WPLA_ProductBuilder {
 			  AND meta_value LIKE '%$imgfile%'
 			"
 		);
-		// $this->logger->info( "get_attachment_id_for_filename( $imgfile ) - attachment_id: $attachment_id" );
+		// WPLA()->logger->info( "get_attachment_id_for_filename( $imgfile ) - attachment_id: $attachment_id" );
 		// echo "<pre>";print_r($wpdb->last_query);echo"</pre>";
 		// echo mysql_error();
 
@@ -1259,8 +1261,8 @@ class WPLA_ProductBuilder {
 	public function updateProduct( $product_id, $data ) {
 		global $wpdb;
 		global $woocommerce;
-		$this->logger->info( "==============================================================================" );
-		//$this->logger->info( "updateProduct() - ID: ".$data['asin'] );
+		WPLA()->logger->info( "==============================================================================" );
+		//WPLA()->logger->info( "updateProduct() - ID: ".$data['asin'] );
 
 		// some shortcuts
 		$asin              = $data['asin'];
@@ -1284,7 +1286,7 @@ class WPLA_ProductBuilder {
 		if ( $product->price != $products_price ) {
 			update_post_meta( $product_id, '_price', $products_price);
 			update_post_meta( $product_id, '_regular_price', $products_price);
-			$this->logger->info( "updated price for product $product_id - new price: ".$products_price );
+			WPLA()->logger->info( "updated price for product $product_id - new price: ".$products_price );
 			$updated = true;
 		}
 
@@ -1298,7 +1300,7 @@ class WPLA_ProductBuilder {
 				update_post_meta( $product_id, '_stock_status', 'outofstock' );
 			endif;
 
-			$this->logger->info( "updated stock for product $product_id - new stock: ".$products_quantity );
+			WPLA()->logger->info( "updated stock for product $product_id - new stock: ".$products_quantity );
 			$updated = true;
 		}
 
@@ -1318,7 +1320,7 @@ class WPLA_ProductBuilder {
 			if ( function_exists('wc_delete_product_transients') )
 				wc_delete_product_transients( $product_id );
 
-			$this->logger->info( "updated product $product_id ($asin): $products_name " );
+			WPLA()->logger->info( "updated product $product_id ($asin): $products_name " );
 			$this->updated_count++;
 		}
 
@@ -1328,8 +1330,8 @@ class WPLA_ProductBuilder {
 
 	public function updateProductFromItem( $item, $report_row ) {
 		global $woocommerce;
-		$this->logger->info( "==============================================================================" );
-		//$this->logger->info( "updateProductFromItem() - ID: ".$data['asin'] );
+		WPLA()->logger->info( "==============================================================================" );
+		//WPLA()->logger->info( "updateProductFromItem() - ID: ".$data['asin'] );
 
 		// some shortcuts
 		$asin            = $item->asin;
@@ -1381,7 +1383,7 @@ class WPLA_ProductBuilder {
 				if ( ! get_post_meta( $product_id, '_amazon_price', true ) ) {
 					update_post_meta( $product_id, '_price', $amazon_price);
 					update_post_meta( $product_id, '_regular_price', $amazon_price);
-					$this->logger->info( "updated price for product $product_id - new price: ".$amazon_price );
+					WPLA()->logger->info( "updated price for product $product_id - new price: ".$amazon_price );
 					$updated = true;			
 				}
 			}
@@ -1396,7 +1398,7 @@ class WPLA_ProductBuilder {
 
 			if ( $product->stock != $amazon_quantity ) {
 				update_post_meta( $product_id, '_stock', $amazon_quantity);
-				$this->logger->info( "updated stock for product $product_id - new stock: ".$amazon_quantity );
+				WPLA()->logger->info( "updated stock for product $product_id - new stock: ".$amazon_quantity );
 				$updated = true;
 			}
 
@@ -1418,7 +1420,7 @@ class WPLA_ProductBuilder {
 			if ( function_exists('wc_delete_product_transients') )
 				wc_delete_product_transients( $product_id );
 
-			$this->logger->info( "updated product $product_id ($asin): $amazon_name " );
+			WPLA()->logger->info( "updated product $product_id ($asin): $amazon_name " );
 			$this->updated_count++;
 		}
 
@@ -1445,10 +1447,10 @@ class WPLA_ProductBuilder {
 
 
 	public function copyRemoteImage( $url, $file ) {
-		$this->logger->info( 'import img: ' . $url );
+		WPLA()->logger->info( 'import img: ' . $url );
 		if ( file_exists( $file ) ) {
 			$this->images_hashmap[ md5( file_get_contents($file) ) ] = $file;
-			$this->logger->info( 'skipped image' );
+			WPLA()->logger->info( 'skipped image' );
 			return false;
 		}
 
@@ -1456,7 +1458,7 @@ class WPLA_ProductBuilder {
 		if ( get_option('wpla_import_load_highres_eps', 1) == 1 ) {
 			if ( strpos( $url, 'amazonimg.com') > 0 ) {
 				$url = str_replace( '_1.JPG', '_57.JPG', $url );
-				$this->logger->info( '*** HighRes EPS URL: '.$url );
+				WPLA()->logger->info( '*** HighRes EPS URL: '.$url );
 			} 
 		}
 
@@ -1464,7 +1466,7 @@ class WPLA_ProductBuilder {
 		$response = wp_remote_get( $url, array( 'timeout' => 15 ) );
 
 		if ( is_wp_error( $response ) ) {
-			$this->logger->warn( 'error downloading file: ' . print_r( $response, 1 ) );
+			WPLA()->logger->warn( 'error downloading file: ' . print_r( $response, 1 ) );
 			return false;
 		} else {
 
@@ -1472,13 +1474,13 @@ class WPLA_ProductBuilder {
 			$this_hash = md5( $response['body'] );
 			foreach ($this->images_hashmap as $cached_hash => $cached_image_path) {
 				if ( $this_hash == $cached_hash ) {
-					$this->logger->info( 'FOUND IMAGE by MD5: '.$cached_image_path );
+					WPLA()->logger->info( 'FOUND IMAGE by MD5: '.$cached_image_path );
 					return $cached_image_path;
 				}
 			}
 
 			//print_r( $response );
-			$this->logger->info( 'copied to : ' . $file );
+			WPLA()->logger->info( 'copied to : ' . $file );
 			$this->images_hashmap[ $this_hash ] = $file;
 
 			// v1
@@ -1496,9 +1498,9 @@ class WPLA_ProductBuilder {
 
 			$f = fopen( $file, $mode );
 			if ( $f === false ) {
-				$this->logger->error( 'error on fopen() ' . basename($file) );	
+				WPLA()->logger->error( 'error on fopen() ' . basename($file) );	
 				$bytes_written = 0;
-				$this->logger->error( 'php_errormsg: ' . $php_errormsg );	
+				WPLA()->logger->error( 'php_errormsg: ' . $php_errormsg );	
 				echo '<div class="error"><p><b>There was an error when saving an image:</b><br>' . htmlspecialchars($php_errormsg) . '</p></div>'; 
 
 				$filecount = count(scandir( dirname($file) ));
@@ -1519,20 +1521,20 @@ class WPLA_ProductBuilder {
 
 			// log possible error reasons
 			if ( $bytes_written > 0) {
-				$this->logger->info( $bytes_written . ' bytes written to file ' . basename($file) );
+				WPLA()->logger->info( $bytes_written . ' bytes written to file ' . basename($file) );
 			} else {
-				$this->logger->error( $bytes_written . ' (zero) bytes written to file ' . basename($file) );	
-				$this->logger->error( strlen( $response['body'] ) . ' bytes SHOULD be written' );
+				WPLA()->logger->error( $bytes_written . ' (zero) bytes written to file ' . basename($file) );	
+				WPLA()->logger->error( strlen( $response['body'] ) . ' bytes SHOULD be written' );
 				
 				if ( ! is_writable( dirname( $file ) ) ) {
-					$this->logger->error( 'folder ' . dirname($file) . ' is not writable!' );	
+					WPLA()->logger->error( 'folder ' . dirname($file) . ' is not writable!' );	
 					echo '<div class="error"><p><b>The folder is not writable:</b><br>' . dirname($file) . '</p></div>'; 
 				}
 
 				if ( file_exists( $file ) ) {
-					$this->logger->error( 'file already exists: ' . ($file) );	
+					WPLA()->logger->error( 'file already exists: ' . ($file) );	
 					if ( ! is_writable( $file ) ) {
-						$this->logger->error( 'but it is not writable!!');	
+						WPLA()->logger->error( 'but it is not writable!!');	
 						echo '<div class="error"><p><b>The file already exists but is not writable:</b><br>' . basename($file) . '</p></div>'; 
 					}
 				}
@@ -1579,7 +1581,7 @@ class WPLA_ProductBuilder {
 			  AND meta_value = '$category_id'
 			"
 		);
-		$this->logger->info( "getCategoryIdByOriginalId( $category_id ) : " . $woocommerce_term_id );
+		WPLA()->logger->info( "getCategoryIdByOriginalId( $category_id ) : " . $woocommerce_term_id );
 
 		# *****
 		// $woocommerce_term_id = get_option('wpla_import_category_id', false);
@@ -1640,7 +1642,7 @@ class WPLA_ProductBuilder {
 			  AND meta_value = '$asin'
 			"
 		);
-		$this->logger->debug( "getProductIdByOriginalId( $asin ) : " . $woocommerce_product_id );
+		WPLA()->logger->debug( "getProductIdByOriginalId( $asin ) : " . $woocommerce_product_id );
 
 		// make sure the product / post exists
 		$post_status = $wpdb->get_var(
@@ -1697,7 +1699,7 @@ class WPLA_ProductBuilder {
 			  AND post_parent = '$id'
 			"
 		);
-		$this->logger->debug( "getProductImagesFilenames( $id ) : " . print_r( $results, 1 ) );
+		WPLA()->logger->debug( "getProductImagesFilenames( $id ) : " . print_r( $results, 1 ) );
 
 		$filenames = array();
 		foreach ( $results as $row ) {

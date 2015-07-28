@@ -107,6 +107,31 @@ class WPLA_ProductWrapper {
 		$large_image_url = wp_get_attachment_image_src( get_post_thumbnail_id( $post_id ), $size );
 		return $large_image_url[0];
 	}	
+
+	// get product gallery images - as attachment IDs
+	static function getGalleryAttachmentIDs( $_product ) {
+
+		// use WooCommerce Product Gallery first
+		$gallery_images = $_product->get_gallery_attachment_ids();
+		if ( ! empty($gallery_images) ) return $gallery_images;
+
+		// if gallery is empty and fallback disabled, return empty array
+		if ( get_option( 'wpla_product_gallery_fallback', 'none' ) == 'none' ) return array();
+
+		// if gallery is empty and fallback enabled, use images attached to post ID
+		global $wpdb;
+    	$attachment_ids = $wpdb->get_col( $wpdb->prepare(" 
+			SELECT id
+			FROM {$wpdb->prefix}posts
+			WHERE post_type = 'attachment' 
+			  AND post_parent = %s
+			ORDER BY menu_order
+		", $_product->id ) );
+		// WPLA()->logger->info( "getGalleryAttachmentIDs( $_product->id ) : " . print_r($attachment_ids,1) );
+
+		if ( ! is_array($attachment_ids) ) return array();
+		return $attachment_ids;
+	}	
 	
 	// get all product attributes
 	static function getAttributes( $post_id, $use_label_as_key = false ) {
@@ -195,9 +220,9 @@ class WPLA_ProductWrapper {
 
 	// get all product addons (requires Product Add-Ons extension)
 	static function getAddons( $post_id ) {
-		global $wpla_logger;
+
 		$addons = array();
-		// $wpla_logger->info('getAddons() for post_id '.print_r($post_id,1));
+		// WPLA()->logger->info('getAddons() for post_id '.print_r($post_id,1));
 
 		// check if addons are enabled
 		$product_addons = get_post_meta( $post_id, '_product_addons', true );
@@ -208,7 +233,7 @@ class WPLA_ProductWrapper {
 		// $available_addons = shopp_product_addons( $post_id );
 		// $meta = shopp_product_meta($post_id, 'options');
 		// $a = $meta['a'];
-		// $wpla_logger->info('a:'.print_r($a,1));
+		// WPLA()->logger->info('a:'.print_r($a,1));
 
 		// build clean options array
 		$options = array();
@@ -227,7 +252,7 @@ class WPLA_ProductWrapper {
 			}
 			$options[] = $addonGroup;
 		}
-		$wpla_logger->info('addons:'.print_r($options,1));
+		WPLA()->logger->info('addons:'.print_r($options,1));
 
 		return $options;
 	}	
@@ -430,8 +455,7 @@ class WPLA_ProductWrapper {
 		// handle attribute merging
 		$variations = self::mergeVariationAttributes( $variations );
 
-        // global $wpla_logger;
-        // $wpla_logger->info( 'getVariations() result: '.print_r($variations,1));
+        // WPLA()->logger->info( 'getVariations() result: '.print_r($variations,1));
 
 		return $variations;
 
@@ -541,8 +565,7 @@ class WPLA_ProductWrapper {
 		}
 		// print_r($attributes);die();
 
-        // global $wpla_logger;
-        // $wpla_logger->info( 'getAttributeTaxonomies() result: '.print_r($attributes,1));
+        // WPLA()->logger->info( 'getAttributeTaxonomies() result: '.print_r($attributes,1));
 
 		return $attributes;
 	}	
@@ -583,13 +606,13 @@ class WPLA_ProductWrapper {
 	
 	// find variation by attributes (private)
 	static function findVariationID( $parent_id, $VariationSpecifics ) {
-		global $wpla_logger;
+
 		$variations = self::getVariations( $parent_id );
 		foreach ($variations as $var) {
 			$diffs = array_diff_assoc( $var['variation_attributes'], $VariationSpecifics );
 			if ( count($diffs) == 0 ) {
-				$wpla_logger->info('findVariationID('.$parent_id.') found: '.$var['post_id']);
-				$wpla_logger->info('VariationSpecifics: '.print_r($VariationSpecifics,1));
+				WPLA()->logger->info('findVariationID('.$parent_id.') found: '.$var['post_id']);
+				WPLA()->logger->info('VariationSpecifics: '.print_r($VariationSpecifics,1));
 				return $var['post_id'];
 			}
 		}

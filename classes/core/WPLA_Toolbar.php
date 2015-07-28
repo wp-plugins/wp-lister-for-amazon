@@ -309,7 +309,7 @@ class WPLA_Toolbar  {
 
 		// get all items
 		$lm = new WPLA_ListingsModel();
-		$listings = $lm->getAllItemsByPostID( $post_id );
+		$listings = $lm->getAllItemsByPostOrParentID( $post_id );
 
 		if ( sizeof($listings) > 0 ) {
 

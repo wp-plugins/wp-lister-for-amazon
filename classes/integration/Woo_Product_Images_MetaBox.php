@@ -58,7 +58,7 @@ class WPLA_Product_Images_MetaBox {
 
         // get gallery images
 		$product        = get_product( $post->ID );
-		$attachment_ids = $product->get_gallery_attachment_ids();
+        $attachment_ids = WPLA_ProductWrapper::getGalleryAttachmentIDs( $product );
 
 		// use featured image first, and merge gallery images
 		$attachment_ids = array_unique(array_merge( array($featured_image_id), $attachment_ids ));
@@ -178,7 +178,7 @@ class WPLA_Product_Images_MetaBox {
 
 		// get field values
 		$post_id         = $_REQUEST['post_id'];
-		$disabled_images = $_REQUEST['disabled_images'];
+		$disabled_images = isset($_REQUEST['disabled_images']) ? $_REQUEST['disabled_images'] : array();
 		if ( ! is_array($disabled_images) ) $disabled_images = array();
         // echo "<pre>";print_r($_REQUEST);echo"</pre>";die();
 

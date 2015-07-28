@@ -80,7 +80,7 @@
 				<div class="meta-box-sortables ui-sortable">
 
 					<div class="postbox" id="DbLoggingBox">
-						<h3 class="hndle"><span><?php echo __('Logging','wpla') ?></span></h3>
+						<h3 class="hndle"><span><?php echo __('Logging and Maintenance','wpla') ?></span></h3>
 						<div class="inside">
 
 							<label for="wpl-option-log_to_db" class="text_label"><?php echo __('Log to database','wpla'); ?>:</label>
@@ -97,14 +97,49 @@
                                 <?php wpla_tooltip('Select how long log records should be kept. Older records are removed automatically. The default is 30 days.') ?>
 							</label>
 							<select id="wpl-option-log_days_limit" name="wpla_log_days_limit" class=" required-entry select">
-								<option value="1"  <?php if ( $wpl_log_days_limit == '1' ):  ?>selected="selected"<?php endif; ?>>1 day</option>
-								<option value="2"  <?php if ( $wpl_log_days_limit == '2' ):  ?>selected="selected"<?php endif; ?>>2 days</option>
-								<option value="3"  <?php if ( $wpl_log_days_limit == '3' ):  ?>selected="selected"<?php endif; ?>>3 days</option>
-								<option value="7"  <?php if ( $wpl_log_days_limit == '7' ):  ?>selected="selected"<?php endif; ?>>7 days</option>
+								<option value="1"   <?php if ( $wpl_log_days_limit == '1' ):   ?>selected="selected"<?php endif; ?>> 1 day </option>
+								<option value="2"   <?php if ( $wpl_log_days_limit == '2' ):   ?>selected="selected"<?php endif; ?>> 2 days</option>
+								<option value="3"   <?php if ( $wpl_log_days_limit == '3' ):   ?>selected="selected"<?php endif; ?>> 3 days</option>
+								<option value="7"   <?php if ( $wpl_log_days_limit == '7' ):   ?>selected="selected"<?php endif; ?>> 7 days</option>
 								<option value="14"  <?php if ( $wpl_log_days_limit == '14' ):  ?>selected="selected"<?php endif; ?>>14 days</option>
-								<option value="30"  <?php if ( $wpl_log_days_limit == '30' ):  ?>selected="selected"<?php endif; ?>>30 days</option>
+								<option value="30"  <?php if ( $wpl_log_days_limit == '30' ):  ?>selected="selected"<?php endif; ?>>30 days (default)</option>
 								<option value="60"  <?php if ( $wpl_log_days_limit == '60' ):  ?>selected="selected"<?php endif; ?>>60 days</option>
 								<option value="90"  <?php if ( $wpl_log_days_limit == '90' ):  ?>selected="selected"<?php endif; ?>>90 days</option>
+							</select>
+
+							<label for="wpl-option-reports_days_limit" class="text_label">
+								<?php echo __('Keep reports for','wpla'); ?>
+                                <?php wpla_tooltip('Select how long Amazon reports should be kept. Older reports are removed automatically. The default is 90 days.') ?>
+							</label>
+							<select id="wpl-option-reports_days_limit" name="wpla_reports_days_limit" class=" required-entry select">
+								<option value="7"   <?php if ( $wpl_reports_days_limit == '7' ):   ?>selected="selected"<?php endif; ?>> 7 days</option>
+								<option value="14"  <?php if ( $wpl_reports_days_limit == '14' ):  ?>selected="selected"<?php endif; ?>>14 days</option>
+								<option value="30"  <?php if ( $wpl_reports_days_limit == '30' ):  ?>selected="selected"<?php endif; ?>>30 days</option>
+								<option value="60"  <?php if ( $wpl_reports_days_limit == '60' ):  ?>selected="selected"<?php endif; ?>>60 days</option>
+								<option value="90"  <?php if ( $wpl_reports_days_limit == '90' ):  ?>selected="selected"<?php endif; ?>>90 days (default)</option>
+							</select>
+
+							<label for="wpl-option-feeds_days_limit" class="text_label">
+								<?php echo __('Keep feeds for','wpla'); ?>
+                                <?php wpla_tooltip('Select how long Amazon feeds should be kept. Older feeds are removed automatically. The default is 90 days.') ?>
+							</label>
+							<select id="wpl-option-feeds_days_limit" name="wpla_feeds_days_limit" class=" required-entry select">
+								<option value="7"   <?php if ( $wpl_feeds_days_limit == '7' ):   ?>selected="selected"<?php endif; ?>> 7 days</option>
+								<option value="14"  <?php if ( $wpl_feeds_days_limit == '14' ):  ?>selected="selected"<?php endif; ?>>14 days</option>
+								<option value="30"  <?php if ( $wpl_feeds_days_limit == '30' ):  ?>selected="selected"<?php endif; ?>>30 days</option>
+								<option value="60"  <?php if ( $wpl_feeds_days_limit == '60' ):  ?>selected="selected"<?php endif; ?>>60 days</option>
+								<option value="90"  <?php if ( $wpl_feeds_days_limit == '90' ):  ?>selected="selected"<?php endif; ?>>90 days (default)</option>
+							</select>
+
+							<label for="wpl-option-orders_days_limit" class="text_label">
+								<?php echo __('Keep sales data for','wpla'); ?>
+                                <?php wpla_tooltip('Select how long Amazon orders should be kept. Older orders are removed from WP-Lister automatically but will remain in WooCommerce. The default is forever.') ?>
+							</label>
+							<select id="wpl-option-orders_days_limit" name="wpla_orders_days_limit" class=" required-entry select">
+								<option value=""    <?php if ( $wpl_orders_days_limit == ''   ):  ?>selected="selected"<?php endif; ?>>forever (default)</option>
+								<option value="90"  <?php if ( $wpl_orders_days_limit == '90' ):  ?>selected="selected"<?php endif; ?>>90 days</option>
+								<option value="180" <?php if ( $wpl_orders_days_limit == '180' ): ?>selected="selected"<?php endif; ?>>180 days</option>
+								<option value="365" <?php if ( $wpl_orders_days_limit == '365' ): ?>selected="selected"<?php endif; ?>>1 year</option>
 							</select>
 
 						</div>

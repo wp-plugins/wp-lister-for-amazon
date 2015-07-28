@@ -16,14 +16,12 @@ function wpla_spacify( $str ) {
 	return preg_replace('/([a-z])([A-Z])/', '$1 $2', $str);
 }
 
-// make logger available in static methods
+// make logger available in static methods (obsolete since WPLA())
 function wpla_logger_start_timer($key) {
-	global $wpla_logger;
-	$wpla_logger->startTimer($key);
+	WPLA()->logger->startTimer($key);
 }
 function wpla_logger_end_timer($key) {
-	global $wpla_logger;
-	$wpla_logger->endTimer($key);
+	WPLA()->logger->endTimer($key);
 }
 
 // get instance of WP-Lister object (singleton)

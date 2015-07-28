@@ -34,7 +34,6 @@ class WPLA_ToolsPage extends WPLA_Page {
 	}
 
 	public function onDisplayToolsPage() {
-		global $wpla_logger;
 		
 		$this->check_wplister_setup();
 
@@ -152,6 +151,11 @@ class WPLA_ToolsPage extends WPLA_Page {
 					$this->removeAllImportedProducts();
 				}
 
+				// wpla_upgrade_tables_to_utf8mb4
+				if ( $_REQUEST['action'] == 'wpla_upgrade_tables_to_utf8mb4') {				
+					$this->upgradeTablesUTF8MB4();
+				}
+
 	
 			} else {
 				die ('not allowed');
@@ -162,7 +166,7 @@ class WPLA_ToolsPage extends WPLA_Page {
 			'plugin_url'				=> self::$PLUGIN_URL,
 			'message'					=> $this->message,		
 			'debug'						=> isset($debug) ? $debug : '',
-			'log_size'					=> file_exists($wpla_logger->file) ? filesize($wpla_logger->file) : '',
+			'log_size'					=> file_exists( WPLA()->logger->file ) ? filesize( WPLA()->logger->file ) : '',
 			'tools_url'	 				=> 'admin.php?page='.self::ParentMenuId.'-tools',
 			'form_action'				=> 'admin.php?page='.self::ParentMenuId.'-tools'.'&tab='.$active_tab
 		);
@@ -510,6 +514,34 @@ class WPLA_ToolsPage extends WPLA_Page {
 
 
 
+	// convert plugin tables to utf8mb4
+	// (this should happen automatically on WP4.2, but WordPress only converts utf8 tables and leaves latin1 tables unchanged)
+	public function upgradeTablesUTF8MB4() {
+		global $wpdb;
+
+		// get list of our tables
+		$tables = $wpdb->get_col( "SHOW TABLES LIKE '{$wpdb->prefix}amazon_%'" );
+		if ( empty($tables) ) {
+			wpla_show_message('no tables found.','error');
+			return;
+		}
+
+		// convert all tables
+		foreach ( $tables as $table ) {
+			$converted = WPLA_UpgradeHelper::convert_custom_table_to_utf8mb4( $table );
+			if ( $converted ) {
+				wpla_show_message('Table <i>'.$table.'</i> was converted.');
+			} else {
+				wpla_show_message('Table <i>'.$table.'</i> was not converted.','error');
+			}
+		}
+
+	} // upgradeTablesUTF8MB4()
+
+
+
+
+
 	// remove all imported products and listings - to start from scratch
 	public function removeAllImportedProducts() {
 		global $wpdb;
@@ -571,18 +603,16 @@ class WPLA_ToolsPage extends WPLA_Page {
 
 
 	public function viewLogfile() {
-		global $wpla_logger;
 
 		echo "<pre>";
-		echo readfile( $wpla_logger->file );
-		echo "<br>logfile: " . $wpla_logger->file . "<br>";
+		echo readfile( WPLA()->logger->file );
+		echo "<br>logfile: " . WPLA()->logger->file . "<br>";
 		echo "</pre>";
 
 	}
 
 	public function clearLogfile() {
-		global $wpla_logger;
-		file_put_contents( $wpla_logger->file, '' );
+		file_put_contents( WPLA()->logger->file, '' );
 	}
 
 	public function renderSettingsOptions() {

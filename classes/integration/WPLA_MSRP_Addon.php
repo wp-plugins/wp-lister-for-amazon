@@ -15,6 +15,7 @@ if ( ! class_exists( 'woocommerce_msrp_admin' ) && ! class_exists( 'WPL_MSRP_Add
 			add_action( 'woocommerce_product_options_pricing', array( $this, 'product_meta_field') );
 			add_action( 'woocommerce_product_after_variable_attributes', array( $this, 'variation_show_fields'), 10, 3 );
 			add_action( 'woocommerce_process_product_meta_variable', array( $this, 'variation_save_fields') );
+			add_action( 'woocommerce_ajax_save_product_variations',  array( $this, 'variation_save_fields') ); // WC2.4
 			add_action( 'save_post', array( $this, 'save_product' ) );
 
 		}

@@ -67,15 +67,15 @@ class WPLA_ProfilesPage extends WPLA_Page {
 			}
 		}
 
-	}
-	
-	public function handleActions() {
-	
 		// handle duplicate profile
 		if ( $this->requestAction() == 'wpla_duplicate_profile' ) {
 			$this->duplicateProfile();
 		}
 
+	}
+	
+	public function handleActions() {
+	
 		// handle delete action
 		if ( $this->requestAction() == 'wpla_delete_profile' ) {
 			$this->deleteProfiles( $_REQUEST['amazon_profile'] );
@@ -247,7 +247,7 @@ class WPLA_ProfilesPage extends WPLA_Page {
 		$new_profile_id = WPLA_AmazonProfile::duplicateProfile( $_REQUEST['profile'] );
 		
 		// redirect to edit new profile
-		// wp_redirect( get_admin_url().'admin.php?page=wpla-profiles&action=edit&profile='.$new_profile_id );
+		wp_redirect( get_admin_url().'admin.php?page=wpla-profiles&action=edit&profile='.$new_profile_id );
 
 	}
 

@@ -139,6 +139,10 @@
                 <?php #echo woocommerce_price( $item->ShippingPrice->Amount ) ?> 
                 <?php echo isset( $item->ShippingPrice->Amount ) ? $item->ShippingPrice->Amount : 'N/A' ?> 
                 <?php echo $wpl_amazon_order['currency'] ?> 
+                <?php if ( isset( $item->ShippingDiscount->Amount ) && $item->ShippingDiscount->Amount > 0 ) : ?> 
+                    <br>( - <?php echo $item->ShippingDiscount->Amount ?> 
+                    <?php echo $wpl_amazon_order['currency'] ?> )
+                <?php endif; ?> 
             </td></tr>
 
         <?php endforeach; ?>

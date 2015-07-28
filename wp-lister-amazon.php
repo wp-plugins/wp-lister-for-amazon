@@ -1,9 +1,9 @@
 <?php
 /* 
-Plugin Name: WP-Lister Light for Amazon
+Plugin Name: WP-Lister Lite for Amazon
 Plugin URI: http://www.wplab.com/plugins/wp-lister-for-amazon/
 Description: List your products on Amazon the easy way.
-Version: 0.9.6.4.1
+Version: 0.9.6.6
 Author: Matthias Krok
 Author URI: http://www.wplab.com/ 
 Max WP Version: 4.2
@@ -14,7 +14,7 @@ License: GPL2+
 
 if ( class_exists('WPLA_WPLister') ) die(sprintf( 'WP-Lister for Amazon %s is already installed and activated. Please deactivate any other version before you activate this one.', WPLA_VERSION ));
 
-define('WPLA_VERSION', '0.9.6.4.1' );
+define('WPLA_VERSION', '0.9.6.6' );
 define('WPLA_PATH', realpath( dirname(__FILE__) ) );
 define('WPLA_URL', plugins_url() . '/' . basename(dirname(__FILE__)) . '/' );
 
@@ -29,7 +29,7 @@ if ( version_compare(phpversion(), '5.3', '<')) {
 	require_once( WPLA_PATH . '/includes/php52_legacy.php' );
 }
 
-// init logger
+// init logger (should go into initLogger() method)
 global $wpla_logger;
 define( 'WPLA_DEBUG', get_option('wpla_log_level') );
 $wpla_logger = new WPLA_Logger();
@@ -40,8 +40,10 @@ if ( ! defined('WPLA_LIGHT')) define('WPLA_LIGHT', true );
 
 class WPLA_WPLister extends WPLA_BasePlugin {
 	
-	var $pages      = array();
-	var $shortcodes = array();
+	var $pages         = array();
+	var $accounts      = array();
+	var $shortcodes    = array();
+	var $multi_account = false;
 	var $logger;
 
 	protected static $_instance = null;
@@ -61,6 +63,7 @@ class WPLA_WPLister extends WPLA_BasePlugin {
 
 		$this->initLogger();
 		$this->initClasses();
+		$this->loadAccounts();
 		$this->loadShortcodes();
 		
 		if ( is_admin() ) {
@@ -100,6 +103,14 @@ class WPLA_WPLister extends WPLA_BasePlugin {
 		$this->woo_mb_feed    = new WPLA_Product_Feed_MetaBox();
 		$this->minmax_wiz     = new WPLA_MinMaxPriceWizard();
 
+	}
+
+	public function loadAccounts() {
+		$accounts = get_option('wpla_db_version') > 3 ? WPLA_AmazonAccount::getAll( true ) : array();
+		foreach ($accounts as $account) {
+			$this->accounts[ $account->id ] = $account;
+		}
+		$this->multi_account = count( $this->accounts ) > 1 ? true : false;
 	}
 		
 	public function loadShortcodes() {

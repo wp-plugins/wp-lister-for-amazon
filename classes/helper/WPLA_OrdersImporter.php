@@ -3,7 +3,7 @@
 class WPLA_OrdersImporter {
 	
 	var $account;
-	var $logger;
+	// var $logger;
 	public $result;
 	public $updated_count = 0;
 	public $imported_count = 0;
@@ -11,8 +11,8 @@ class WPLA_OrdersImporter {
 	const TABLENAME = 'amazon_orders';
 
 	public function __construct() {
-		global $wpla_logger;
-		$this->logger = &$wpla_logger;
+		// global $wpla_logger;
+		// $this->logger = &$wpla_logger;
 	}
 
 	public function importOrder( $order, $account ) {
@@ -183,7 +183,7 @@ class WPLA_OrdersImporter {
 				// increase product stock
 				$post_id = $details['product_id'];
 				$newstock = WPLA_ProductWrapper::increaseStockBy( $post_id, $quantity_purchased, $wpla_order['order_id'] );
-				$this->logger->info( 'increased product stock for #'.$post_id.' by '.$quantity_purchased.' - new qty: '.$newstock );
+				WPLA()->logger->info( 'increased product stock for #'.$post_id.' by '.$quantity_purchased.' - new qty: '.$newstock );
 
 				// notify WP-Lister for eBay (and other plugins)
 				do_action( 'wpla_inventory_status_changed', $post_id );
@@ -273,7 +273,7 @@ class WPLA_OrdersImporter {
 		// 		array( 'status' => 'sold', 'date_finished' => $data['date_created'], ), 
 		// 		array( 'sku' => $sku ) 
 		// 	);
-		// 	$this->logger->info( 'marked item '.$sku.' as SOLD ');
+		// 	WPLA()->logger->info( 'marked item '.$sku.' as SOLD ');
 		// }
 
 
@@ -310,7 +310,7 @@ class WPLA_OrdersImporter {
 
 		// prevent fatal error if $history is not an array
 		if ( ! is_array( $history ) ) {
-			$this->logger->error( "invalid history value in OrdersImporter::addHistory(): ".$history);
+			WPLA()->logger->error( "invalid history value in OrdersImporter::addHistory(): ".$history);
 
 			// build history record
 			$rec = new stdClass();

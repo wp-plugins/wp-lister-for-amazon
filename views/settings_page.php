@@ -241,6 +241,7 @@
 								<option value="daily"        <?php if ( $wpl_fba_report_schedule == 'daily'        ): ?>selected="selected"<?php endif; ?>><?php echo __('Daily','wpla') ?> (default)</option>
 								<option value="twelve_hours" <?php if ( $wpl_fba_report_schedule == 'twelve_hours' ): ?>selected="selected"<?php endif; ?>><?php echo __('Every 12 hours','wpla') ?></option>
 								<option value="six_hours"    <?php if ( $wpl_fba_report_schedule == 'six_hours'    ): ?>selected="selected"<?php endif; ?>><?php echo __('Every 6 hours','wpla') ?></option>
+								<option value="three_hours"  <?php if ( $wpl_fba_report_schedule == 'three_hours'  ): ?>selected="selected"<?php endif; ?>><?php echo __('Every 3 hours','wpla') ?></option>
 							</select>
 							<p class="desc fba_option" style="display: block;">
 								<?php echo __('Select how often WP-Lister should request an FBA Shipment Report from Amazon.','wpla'); ?>

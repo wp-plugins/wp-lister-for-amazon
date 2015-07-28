@@ -169,7 +169,7 @@ WPLA.JobRunner = function () {
         .error( function(e,xhr,error) { 
 
             // quit on other errors
-            jQuery('#wpla_jobs_log').append( "A problem occured while processing this task. The server responded with code " + e.status + ": " + e.responseText + "<br>" );
+            jQuery('#wpla_jobs_log').append( "A problem occurred while processing this task. The server responded with code " + e.status + ": " + e.responseText + "<br>" );
             jQuery('#wpla_jobs_window .btn_close').show();
             jQuery('#wpla_jobs_window .btn_cancel').hide();
             // alert( "There was a problem running the task '"+task.displayName+"'.\n\nThe server responded:\n" + e.responseText + '\n\nPlease contact support@wplab.com.' ); 
@@ -330,7 +330,7 @@ WPLA.JobRunner = function () {
                 } else { // halt
 
                     // halt task processing
-                    jQuery('#wpla_jobs_log').append( "A problem occured while processing this task. The server responded with code " + e.status + ": " + e.responseText + "<br>" );
+                    jQuery('#wpla_jobs_log').append( "A problem occurred while processing this task. The server responded with code " + e.status + ": " + e.responseText + "<br>" );
                     jQuery('#wpla_jobs_window .btn_close').show();
                     jQuery('#wpla_jobs_window .btn_cancel').hide();
 
@@ -345,7 +345,7 @@ WPLA.JobRunner = function () {
             } else {
     
                 // quit on other errors
-                jQuery('#wpla_jobs_log').append( "A problem occured while processing this task. The server responded with code " + e.status + ": " + e.responseText + "<br>" );
+                jQuery('#wpla_jobs_log').append( "A problem occurred while processing this task. The server responded with code " + e.status + ": " + e.responseText + "<br>" );
                 jQuery('#wpla_jobs_window .btn_close').show();
                 jQuery('#wpla_jobs_window .btn_cancel').hide();
                 // alert( "There was a problem running the task '"+task.displayName+"'.\n\nThe server responded:\n" + e.responseText + '\n\nPlease contact support@wplab.com.' ); 

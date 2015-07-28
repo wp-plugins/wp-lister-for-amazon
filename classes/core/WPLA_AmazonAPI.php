@@ -15,8 +15,8 @@ class WPLA_AmazonAPI {
     var $dblogger;
 	
 	public function __construct( $account_id = false ) {
-		global $wpla_logger;
-		$this->logger = &$wpla_logger;
+		// global $wpla_logger;
+		// $this->logger = &$wpla_logger;
 
         if ( $account_id ) {
 
@@ -530,7 +530,7 @@ class WPLA_AmazonAPI {
 
     // get matching product by ID (V2) (combined)
     public function getMatchingProductForId( $ProductID, $IdType = 'ASIN' ) {
-        $this->logger->info('getMatchingProductForId() - '.$ProductID);
+        WPLA()->logger->info('getMatchingProductForId() - '.$ProductID);
         $this->initAPI('Products');
 
         $request = new MarketplaceWebServiceProducts_Model_GetMatchingProductForIdRequest();
@@ -555,10 +555,10 @@ class WPLA_AmazonAPI {
             $dom->preserveWhiteSpace = false;
             $dom->formatOutput = true;
             $xml_data = $dom->saveXML();
-            // $this->logger->info('XML: '.print_r($xml_data,1));
+            // WPLA()->logger->info('XML: '.print_r($xml_data,1));
 
             $parsed_xml = $this->parseXML( $xml_data );
-            $this->logger->debug('parsed_xml: '.print_r($parsed_xml,1));
+            WPLA()->logger->debug('parsed_xml: '.print_r($parsed_xml,1));
 
             // $res = $response->getGetMatchingProductForIdResult();
             // echo("ResponseHeaderMetadata: " . $response->getResponseHeaderMetadata() . "\n");              
@@ -603,7 +603,7 @@ class WPLA_AmazonAPI {
 
     // get competitive pricing by ASIN/SKU (V2) (combined)
     public function getCompetitivePricingForId( $ProductID ) {
-        $this->logger->info('getCompetitivePricingForId() - '.join(', ',$ProductID));
+        WPLA()->logger->info('getCompetitivePricingForId() - '.join(', ',$ProductID));
         $this->initAPI('Products');
 
         $request = new MarketplaceWebServiceProducts_Model_GetCompetitivePricingForASINRequest();
@@ -627,10 +627,10 @@ class WPLA_AmazonAPI {
             $dom->preserveWhiteSpace = false;
             $dom->formatOutput = true;
             $xml_data = $dom->saveXML();
-            // $this->logger->info('XML: '.print_r($xml_data,1));
+            // WPLA()->logger->info('XML: '.print_r($xml_data,1));
 
             $parsed_xml = $this->parseXML( $xml_data );
-            $this->logger->debug('parsed_xml: '.print_r($parsed_xml,1));
+            WPLA()->logger->debug('parsed_xml: '.print_r($parsed_xml,1));
             // echo "<pre>parsed_xml: ";print_r($parsed_xml);echo"</pre>";
 
             // unify results for single and multiple items - result is an array of items
@@ -680,7 +680,7 @@ class WPLA_AmazonAPI {
 
     // get lowest prices for ASIN (V2) (combined)
     public function getLowestOfferListingsForASIN( $ProductID ) {
-        // $this->logger->info('getLowestOfferListingsForASIN() - '.join(', ',$ProductID));
+        // WPLA()->logger->info('getLowestOfferListingsForASIN() - '.join(', ',$ProductID));
         $this->initAPI('Products');
 
         $request = new MarketplaceWebServiceProducts_Model_GetLowestOfferListingsForASINRequest();
@@ -704,10 +704,10 @@ class WPLA_AmazonAPI {
             $dom->preserveWhiteSpace = false;
             $dom->formatOutput = true;
             $xml_data = $dom->saveXML();
-            // $this->logger->info('XML: '.print_r($xml_data,1));
+            // WPLA()->logger->info('XML: '.print_r($xml_data,1));
 
             $parsed_xml = $this->parseXML( $xml_data );
-            $this->logger->debug('parsed_xml: '.print_r($parsed_xml,1));
+            WPLA()->logger->debug('parsed_xml: '.print_r($parsed_xml,1));
             // echo "<pre>parsed_xml: ";print_r($parsed_xml);echo"</pre>";
 
             // unify results for single and multiple items - result is an array of items
@@ -765,7 +765,7 @@ class WPLA_AmazonAPI {
 
     // get order details (V2) (not working!)
     public function getOrder_v2( $OrderID ) {
-        $this->logger->info('getOrder() - '.$OrderID);
+        WPLA()->logger->info('getOrder() - '.$OrderID);
         $this->initAPI('Orders');
 
         $request = new MarketplaceWebServiceOrders_Model_GetOrderRequest();
@@ -996,10 +996,10 @@ class WPLA_AmazonAPI {
             // $dom->preserveWhiteSpace = false;
             // $dom->formatOutput = true;
             // $xml_data = $dom->saveXML();
-            // $this->logger->info('XML:'.print_r($xml_data,1));
+            // WPLA()->logger->info('XML:'.print_r($xml_data,1));
 
             // $parsed_xml = $this->parseXML( $xml_data );
-            // $this->logger->info('parsed_xml:'.print_r($parsed_xml,1));
+            // WPLA()->logger->info('parsed_xml:'.print_r($parsed_xml,1));
 
             // $res = $response->getGetMatchingProductForIdResult();
             // echo("ResponseHeaderMetadata: " . $response->getResponseHeaderMetadata() . "\n");              

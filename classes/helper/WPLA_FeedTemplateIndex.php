@@ -286,7 +286,8 @@ class WPLA_FeedTemplateIndex {
 						),
 					),
 
-					// Miscellaneous
+
+					// Miscellaneous (apparently broken? last updated in 2012...)
 					'Miscellaneous' => array(
 						'title' => 'Miscellaneous',
 						'templates' => array(
@@ -421,6 +422,91 @@ class WPLA_FeedTemplateIndex {
 							'watches_browse_tree_guide.csv',
 						),
 					),
+
+
+
+
+					// Industrial & Scientific
+
+					// Fasteners
+					'MechanicalFasteners' => array(
+						'title' => 'Industrial & Scientific: Fasteners',
+						'templates' => array(
+							'Flat.File.MechanicalFasteners-Template.csv',
+							'Flat.File.MechanicalFasteners-DataDefinitions.csv',	
+							'Flat.File.MechanicalFasteners-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'industrial_browse_tree_guide.csv',
+						),
+					),
+
+					// Food Service, Janitorial, Sanitation, Safety
+					'FoodServiceAndJanSan' => array(
+						'title' => 'Industrial & Scientific: Food Service, Janitorial, Sanitation, Safety',
+						'templates' => array(
+							'Flat.File.FoodServiceAndJanSan-Template.csv',
+							'Flat.File.FoodServiceAndJanSan-DataDefinitions.csv',	
+							'Flat.File.FoodServiceAndJanSan-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'industrial_browse_tree_guide.csv',
+						),
+					),
+
+					// Lab & Scientific Supplies
+					'LabSupplies' => array(
+						'title' => 'Industrial & Scientific: Lab & Scientific Supplies',
+						'templates' => array(
+							'Flat.File.LabSupplies-Template.csv',
+							'Flat.File.LabSupplies-DataDefinitions.csv',	
+							'Flat.File.LabSupplies-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'industrial_browse_tree_guide.csv',
+						),
+					),
+
+					// Power Transmission
+					'PowerTransmission' => array(
+						'title' => 'Industrial & Scientific: Power Transmission',
+						'templates' => array(
+							'Flat.File.PowerTransmission-Template.csv',
+							'Flat.File.PowerTransmission-DataDefinitions.csv',	
+							'Flat.File.PowerTransmission-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'industrial_browse_tree_guide.csv',
+						),
+					),
+
+					// Raw Materials
+					'RawMaterials' => array(
+						'title' => 'Industrial & Scientific: Raw Materials',
+						'templates' => array(
+							'Flat.File.RawMaterials-Template.csv',
+							'Flat.File.RawMaterials-DataDefinitions.csv',	
+							'Flat.File.RawMaterials-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'industrial_browse_tree_guide.csv',
+						),
+					),
+
+					// Other
+					'Industrial' => array(
+						'title' => 'Industrial & Scientific: Other',
+						'templates' => array(
+							'Flat.File.Industrial-Template.csv',
+							'Flat.File.Industrial-DataDefinitions.csv',	
+							'Flat.File.Industrial-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'industrial_browse_tree_guide.csv',
+						),
+					),
+
+
 
 
 					// ListingLoader
@@ -1026,6 +1112,19 @@ class WPLA_FeedTemplateIndex {
 						),
 						'btguides' => array(
 							'ca_beauty_browse_tree_guide.csv',
+						),
+					),
+
+					// Clothing & Accessories
+					'Clothing' => array(
+						'title' => 'Clothing & Accessories',
+						'templates' => array(
+							'Flat.File.Clothing.ca-Template.csv',
+							'Flat.File.Clothing.ca-DataDefinitions.csv',	
+							'Flat.File.Clothing.ca-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'ca_apparel_browse_tree_guide.csv',
 						),
 					),
 

@@ -28,7 +28,8 @@ class WPLA_API_Hooks {
 		// handle ajax requests from third party CSV import plugins
 		add_action( 'wp_ajax_woo-product-importer-ajax',      	array( &$this, 'handle_third_party_ajax_csv_import' ), 1, 1 );	// Woo Product Importer 		https://github.com/dgrundel/woo-product-importer
 		add_action( 'wp_ajax_woocommerce_csv_import_request', 	array( &$this, 'handle_third_party_ajax_csv_import' ), 1, 1 );	// Product CSV Import Suite 	http://www.woothemes.com/products/product-csv-import-suite/
-		add_action( 'wp_ajax_runImport',      					array( &$this, 'handle_third_party_ajax_csv_import' ), 1, 1 );	// WooCommerce CSV importer 	http://wordpress.org/plugins/woocommerce-csvimport/
+		add_action( 'wp_ajax_runImport',      					array( &$this, 'handle_third_party_ajax_csv_import' ), 1, 1 );	// WooCommerce CSV importer 2.x	http://wordpress.org/plugins/woocommerce-csvimport/
+		add_action( 'wp_ajax_run_import',      					array( &$this, 'handle_third_party_ajax_csv_import' ), 1, 1 );	// WooCommerce CSV importer 3.x	http://wordpress.org/plugins/woocommerce-csvimport/
 		// add_action( 'load-all-import_page_pmxi-admin-import', array( &$this, 'handle_third_party_ajax_csv_import' ), 1, 1 );	// WP All Import				
 		add_action( 'pmxi_saved_post', 							array( &$this, 'wpla_product_has_changed'           ),20, 1 );  // http://www.wpallimport.com/documentation/advanced/action-reference/
 
@@ -65,7 +66,6 @@ class WPLA_API_Hooks {
 
 	// process inventory changes from WP-Lister for eBay
 	public function wplister_inventory_status_changed( $post_id ) {
-		global $wpla_logger;
         $this->dblogger = new WPLA_AmazonLogger();
 
         // log to db - before request
@@ -82,7 +82,7 @@ class WPLA_API_Hooks {
 		// mark as modified
 		$listingsModel = new WPLA_ListingsModel();
 		$result = $listingsModel->markItemAsModified( $post_id );
-		$wpla_logger->info('marked item as modified: ' . $post_id . '');
+		WPLA()->logger->info('marked item as modified: ' . $post_id . '');
 
         // log to db 
         $this->dblogger->updateLog( array(
@@ -109,8 +109,7 @@ class WPLA_API_Hooks {
 	 */
 
 	function handle_third_party_ajax_csv_import() {
-		global $wpla_logger;
-		$wpla_logger->info("CSV import mode ENABLED");
+		WPLA()->logger->info("CSV import mode ENABLED");
 
 		// disable default action for save_post
 		// global $wplister_amazon;
@@ -127,8 +126,7 @@ class WPLA_API_Hooks {
 
 	// collect changed product IDs
 	function collect_updated_products( $post_id, $post ) {
-		// global $wpla_logger;
-		// $wpla_logger->info("collect_updated_products( $post_id )");
+		// WPLA()->logger->info("collect_updated_products( $post_id )");
 
 		if ( !$_POST ) return $post_id;
 		// if ( is_int( wp_is_post_revision( $post_id ) ) ) return;
@@ -141,7 +139,7 @@ class WPLA_API_Hooks {
 		// if ( $parent_id = WPLA_ProductWrapper::getVariationParent( $post_id ) ) {
 		if ( $post->post_type == 'product_variation' ) {
 			$parent_id = WPLA_ProductWrapper::getVariationParent( $post_id );
-			// $wpla_logger->info("single variation found - use parent $parent_id for $post_id");
+			// WPLA()->logger->info("single variation found - use parent $parent_id for $post_id");
 			$post_id = $parent_id;
 		}
 
@@ -153,7 +151,7 @@ class WPLA_API_Hooks {
 		if ( ! in_array( $post_id, $collected_products ) )
 			$collected_products[] = $post_id;
 
-		// $wpla_logger->info("collected products".print_r($collected_products,1));
+		// WPLA()->logger->info("collected products".print_r($collected_products,1));
 
 		// update queue
 		update_option( 'wpla_updated_products_queue', $collected_products );
@@ -166,8 +164,7 @@ class WPLA_API_Hooks {
 		if ( ! is_array( $collected_products ) ) $collected_products = array();
 
 		// DEBUG
-		// global $wpla_logger;
-		// $wpla_logger->info("update_products_on_shutdown() - collected_products: ".print_r($collected_products,1));
+		// WPLA()->logger->info("update_products_on_shutdown() - collected_products: ".print_r($collected_products,1));
 
 		// mark each queued product as modified
 		foreach ($collected_products as $post_id ) {

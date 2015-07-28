@@ -4,12 +4,12 @@ class WPLA_Model {
 	
 	const OptionPrefix = 'wpla_';
 
-	var $logger;
+	// var $logger;
 	public $result;
 	
 	public function __construct() {
-		global $wpla_logger;
-		$this->logger = &$wpla_logger;
+		// global $wpla_logger;
+		// $this->logger = &$wpla_logger;
 	}
 
 	// function loadAmazonClasses()
@@ -39,9 +39,9 @@ class WPLA_Model {
 		// $str = mb_check_encoding($str, 'UTF-8') ? $str : utf8_encode($str);
 
 		$str = json_encode( $obj );
-		#$this->logger->info('json_encode - input: '.print_r($obj,1));
-		#$this->logger->info('json_encode - output: '.$str);
-		#$this->logger->info('json_last_error(): '.json_last_error() );
+		#WPLA()->logger->info('json_encode - input: '.print_r($obj,1));
+		#WPLA()->logger->info('json_encode - output: '.$str);
+		#WPLA()->logger->info('json_last_error(): '.json_last_error() );
 
 		if ( $str == '{}' ) return serialize( $obj );
 		else return $str;
@@ -57,24 +57,24 @@ class WPLA_Model {
 
 		// json_decode
 		$obj = json_decode( $str, $assoc );
-		//$this->logger->info('json_decode: '.print_r($obj,1));
+		//WPLA()->logger->info('json_decode: '.print_r($obj,1));
 		if ( is_object($obj) || is_array($obj) ) return $obj;
 		
 		// unserialize fallback
 		$obj = maybe_unserialize( $str );
-		//$this->logger->info('unserialize: '.print_r($obj,1));
+		//WPLA()->logger->info('unserialize: '.print_r($obj,1));
 		if ( is_object($obj) || is_array($obj) ) return $obj;
 		
 		// mb_unserialize fallback
 		$obj = $this->mb_unserialize( $str );
-		// $this->logger->info('mb_unserialize: '.print_r($obj,1));
+		// WPLA()->logger->info('mb_unserialize: '.print_r($obj,1));
 		if ( is_object($obj) || is_array($obj) ) return $obj;
 
 		// log error
 		$e = new Exception;
-		$this->logger->error('backtrace: '.$e->getTraceAsString());
-		$this->logger->error('mb_unserialize returned: '.print_r($obj,1));
-		$this->logger->error('decodeObject() - not an valid object: '.$str);
+		WPLA()->logger->error('backtrace: '.$e->getTraceAsString());
+		WPLA()->logger->error('mb_unserialize returned: '.print_r($obj,1));
+		WPLA()->logger->error('decodeObject() - not an valid object: '.$str);
 		return $str;
 	}	
 
@@ -153,56 +153,5 @@ class WPLA_Model {
 	}
 
 
-
-	public function convertTimestampToLocalTime( $timestamp ) {
-
-		// set this to the time zone provided by the user
-		// $tz = get_option('wpla_local_timezone');
-		$tz = get_option('timezone_string');
-		if ( ! $tz ) $tz = wc_timezone_string(); // 'Europe/London'
-		 
-		// create the DateTimeZone object for later
-		$dtzone = new DateTimeZone($tz);
-		 
-		// first convert the timestamp into a string representing the local time
-		$time = date('r', $timestamp);
-		 
-		// now create the DateTime object for this time
-		$dtime = new DateTime($time);
-		 
-		// convert this to the user's timezone using the DateTimeZone object
-		$dtime->setTimeZone($dtzone);
-		 
-		// print the time using your preferred format
-		// $time = $dtime->format('g:i A m/d/y');
-		$time = $dtime->format('Y-m-d H:i:s'); // SQL date format
-
-		return $time;
-	}
-
-	public function convertLocalTimeToTimestamp( $time ) {
-
-		// time to convert (just an example)
-		// $time = 'Tuesday, April 21, 2009 2:32:46 PM';
-		 
-		// set this to the time zone provided by the user
-		// $tz = get_option('wpla_local_timezone');
-		$tz = get_option('timezone_string');
-		if ( ! $tz ) $tz = wc_timezone_string(); // 'Europe/London'
-		 
-		// create the DateTimeZone object for later
-		$dtzone = new DateTimeZone($tz);
-		 
-		// now create the DateTime object for this time and user time zone
-		$dtime = new DateTime($time, $dtzone);
-		 
-		// print the timestamp
-		$timestamp = $dtime->format('U');
-
-		return $timestamp;
-	}
-
-
-
-}
+} // class WPLA_Model
 

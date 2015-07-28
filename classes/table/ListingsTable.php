@@ -788,7 +788,7 @@ class WPLA_ListingsTable extends WP_List_Table {
         }
 
         // check if SKU in WooCommerce and WP-Lister are the same
-        if ( $item_sku !== $prod_sku && $item['status'] != 'imported' ) {
+        if ( $item_sku !== $prod_sku && $item['status'] != 'imported' && ! empty($prod_sku) ) {
             $tip_msg = 'The SKU for this item is different in WooCommerce. You need to make sure the SKU is the same as on Amazon or feed processing will fail.';
             $img_url = WPLA_URL . '/img/error.gif';
             $tip_msg = '&nbsp;<img src="'.$img_url.'" style="height:12px; padding:0;" class="tips" data-tip="'.$tip_msg.'"/>&nbsp;';
@@ -797,6 +797,18 @@ class WPLA_ListingsTable extends WP_List_Table {
             $sku .= '<br>'.$item_sku;
             $sku .= '<br>'.$prod_sku;
             $sku .= '<br>SKU mismatch!';
+
+            $sku = '<span style="color:darkred">'.$sku.'</span>';            
+        }
+
+        // check if SKU in WooCommerce is empty
+        if ( $item_sku !== $prod_sku && $item['status'] != 'imported' && empty($prod_sku) ) {
+            $tip_msg = 'The SKU for this product is empty in WooCommerce.<br><br> You need to make sure each product and each variation has a unique SKU. This SKU needs to be same as on Amazon or feed processing will fail.';
+            $img_url = WPLA_URL . '/img/error.gif';
+            $tip_msg = '&nbsp;<img src="'.$img_url.'" style="height:12px; padding:0;" class="tips" data-tip="'.$tip_msg.'"/>&nbsp;';
+
+            $sku  = 'No SKU'.$tip_msg;
+            $sku .= '<br>'.$item_sku;
 
             // show warning if WooCommerce product has been deleted
             if ( ! $this->getProduct( $item['post_id'] ) && ($item['status'] != 'imported') ) {
@@ -929,6 +941,8 @@ class WPLA_ListingsTable extends WP_List_Table {
         $sortable_columns = array(
             'date_published'  	=> array('date_published',false),     //true means its already sorted
             'listing_title'     => array('listing_title',false),
+            'quantity'          => array('quantity',false),
+            'price'             => array('price',false),
             'status'            => array('status',false)
         );
         return $sortable_columns;

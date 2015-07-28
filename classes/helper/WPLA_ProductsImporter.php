@@ -3,7 +3,7 @@
 class WPLA_ProductsImporter {
 	
 	var $account;
-	var $logger;
+	// var $logger;
 	public $result;
 	public $message = '';
 	public $lastError;
@@ -15,8 +15,8 @@ class WPLA_ProductsImporter {
 	const TABLENAME = 'amazon_listings';
 
 	public function __construct() {
-		global $wpla_logger;
-		$this->logger = &$wpla_logger;
+		// global $wpla_logger;
+		// $this->logger = &$wpla_logger;
 	}
 
 
@@ -28,7 +28,7 @@ class WPLA_ProductsImporter {
 		}
 		if ( ! $listing ) return false;
 		$listing_id = $listing['id'];
-		$this->logger->info('--- createProductFromAmazonListing() - ID: '.$listing['id'].' / ASIN '.$listing['asin'] );
+		WPLA()->logger->info('--- createProductFromAmazonListing() - ID: '.$listing['id'].' / ASIN '.$listing['asin'] );
 
 		$account = WPLA_AmazonAccount::getAccount( $listing['account_id'] );
 		if ( ! $account ) return false;
@@ -55,7 +55,7 @@ class WPLA_ProductsImporter {
 		// first check if product already exists in WooCommerce...
 		$post_id = WPLA_ProductBuilder::getProductIdBySKU( $listing['sku'] );
 		if ( $post_id ) {
-			$this->logger->info('found existing product by SKU '.$listing['sku'].' - post_id: '.$post_id );
+			WPLA()->logger->info('found existing product by SKU '.$listing['sku'].' - post_id: '.$post_id );
 			$this->message = "Found existing product for SKU ".$listing['sku'];
 
 			// if this SKU exists, check whether it is a variation or not
@@ -78,7 +78,7 @@ class WPLA_ProductsImporter {
 			// SKU does not exist in WC...
 			$variation_type = $result->success ? $result->product->variation_type : '_unknown_';
 			$variation_type = is_string( $variation_type ) ? $variation_type : '_none_'; // convert empty object to string
-			$this->logger->info('no WC product found for SKU '.$listing['sku'].' - type: '.$variation_type );
+			WPLA()->logger->info('no WC product found for SKU '.$listing['sku'].' - type: '.$variation_type );
 
 			// process child variation - fetch parent item instead
 			if ( $result->success && $result->product->variation_type == 'child' ) {
@@ -96,7 +96,7 @@ class WPLA_ProductsImporter {
 				$api    = new WPLA_AmazonAPI( $account->id ); // new log record
 				$result = $api->getMatchingProductForId( $parent_asin, 'ASIN' );
 				$this->request_count++;
-				$this->logger->info( $listing['asin']." is a child of parent ASIN $parent_asin" );
+				WPLA()->logger->info( $listing['asin']." is a child of parent ASIN $parent_asin" );
 
 			}
 
@@ -189,11 +189,11 @@ class WPLA_ProductsImporter {
 		$lm = new WPLA_ListingsModel();
 
 		$parent_asin = $result->product->ASIN;
-		$this->logger->info( "processing parent variation $parent_asin" );
+		WPLA()->logger->info( "processing parent variation $parent_asin" );
 
 		// find existing parent variation listing
 		if ( $parent_listing = $lm->getItemByASIN( $parent_asin ) ) {
-			$this->logger->info( "Found existing parent for ASIN $parent_asin" );
+			WPLA()->logger->info( "Found existing parent for ASIN $parent_asin" );
 			$this->message = "Found existing variable parent listing for ASIN $parent_asin";
 			$parent_id = $parent_listing->id;
 		} else {
@@ -212,7 +212,7 @@ class WPLA_ProductsImporter {
 			$lm->updateItemAttributes( $result->product->AttributeSets->ItemAttributes, $parent_id );
 
 			$parent_listing = $lm->getItem( $parent_id, OBJECT ); // load listing object
-			$this->logger->info( "Created new parent for ASIN $parent_asin with ID $parent_id");
+			WPLA()->logger->info( "Created new parent for ASIN $parent_asin with ID $parent_id");
 			$this->message = "Created new variable product for ASIN $parent_asin with ID $parent_id";
 		}
 
@@ -221,7 +221,7 @@ class WPLA_ProductsImporter {
 
 
 	public function parseVariationChildNodes( $product_node, $parent_listing, $account ) {
-		$this->logger->info( "parseVariationChildNodes()" );
+		WPLA()->logger->info( "parseVariationChildNodes()" );
 
 		if ( !    isset( $product_node->Relationships->VariationChild ) ) return $product_node;
 		// if ( ! is_array( $product_node->Relationships->VariationChild ) ) return $product_node;
@@ -240,7 +240,7 @@ class WPLA_ProductsImporter {
 			}
 			$number_of_attributes = max( $number_of_attributes, $attribute_count );
 		}
-		$this->logger->info( "number of attributes: ".$number_of_attributes );
+		WPLA()->logger->info( "number of attributes: ".$number_of_attributes );
 
 		// loop variations
 		$lm = new WPLA_ListingsModel();
@@ -268,7 +268,7 @@ class WPLA_ProductsImporter {
 
 			// skip variations with missing attributes
 			if ( sizeof($newvar->attributes) < $number_of_attributes ) {
-				$this->logger->info( "skipped variation {$newvar->asin} because it has less than the required number of attributes: ".$number_of_attributes );
+				WPLA()->logger->info( "skipped variation {$newvar->asin} because it has less than the required number of attributes: ".$number_of_attributes );
 				continue;
 			}
 
@@ -282,7 +282,7 @@ class WPLA_ProductsImporter {
 				$newvar->price           = $var_item->price;
 				$newvar->variation_image = '';
 
-				$this->logger->info( "Found existing variation child for ASIN {$newvar->asin} - id: ".$var_item->id );
+				WPLA()->logger->info( "Found existing variation child for ASIN {$newvar->asin} - id: ".$var_item->id );
 
 				// convert items from report to real variation listing
 				$data = array();
@@ -305,7 +305,7 @@ class WPLA_ProductsImporter {
 				// variation (ASIN) does not exist in listings table - which means it does not exist in the inventory report / ASIN list
 				// unless "create all variations" is enabled, skip this variation
 				if ( get_option('wpla_import_creates_all_variations') != 1 ) {
-					$this->logger->info( "SKIPPED foreign variation - ASIN {$newvar->asin}");
+					WPLA()->logger->info( "SKIPPED foreign variation - ASIN {$newvar->asin}");
 					continue;
 				}
 
@@ -314,7 +314,7 @@ class WPLA_ProductsImporter {
 				$newvar->variation_image = '';
 
 				$id = $this->insertVariationListing( $newvar, $product_node, $parent_listing, $account );
-				$this->logger->info( "Created new variation child for ASIN {$newvar->asin} - id: $id");
+				WPLA()->logger->info( "Created new variation child for ASIN {$newvar->asin} - id: $id");
 				$newvar->listing_id = $id;
 			}
 
@@ -344,7 +344,7 @@ class WPLA_ProductsImporter {
 		// get product details from amazon
 		$result = $api->getMatchingProductForId( $asin, 'ASIN' );
 		$this->request_count++;
-		$this->logger->debug( 'getMatchingProductForId() returned:'.print_r($result,1));
+		WPLA()->logger->debug( 'getMatchingProductForId() returned:'.print_r($result,1));
 
 		// handle empty result error
 		if ( $result->success && ! empty( $result->product->AttributeSets->ItemAttributes->SmallImage->URL ) ) {
@@ -358,18 +358,18 @@ class WPLA_ProductsImporter {
 
 			// get 600px image instead of 75px
 			$img_url = str_replace('_SL75_', '_SL600_', $img_url );
-			$this->logger->info( "variation image for ASIN {$asin}: $img_url");
+			WPLA()->logger->info( "variation image for ASIN {$asin}: $img_url");
 
 			return $img_url;
 		}
-		$this->logger->warn( "no variation image found for ASIN {$asin}");
+		WPLA()->logger->warn( "no variation image found for ASIN {$asin}");
 
 		return '';
 	} // getVariationImageForASIN()
 
 
 	public function fixNewVariationListings( $variations, $parent_listing ) {
-		$this->logger->info( "fixNewVariationListings()" );
+		WPLA()->logger->info( "fixNewVariationListings()" );
 
 		$lm = new WPLA_ListingsModel();
 
@@ -379,9 +379,9 @@ class WPLA_ProductsImporter {
 
 		// catch Invalid argument error
 		if ( ! is_array($variations) ) {
-			$this->logger->error( "no variations found for parent variable ASIN {$parent_listing->asin} (not checked)");
-			$this->logger->error( "no variations found for parent variable SKU  {$parent_listing->sku}");
-			$this->logger->error( 'variations:'.print_r($variations,1));
+			WPLA()->logger->error( "no variations found for parent variable ASIN {$parent_listing->asin} (not checked)");
+			WPLA()->logger->error( "no variations found for parent variable SKU  {$parent_listing->sku}");
+			WPLA()->logger->error( 'variations:'.print_r($variations,1));
 			// echo 'Error: no variations found for variable ASIN '.$parent_listing->asin.'<br>';
 			// echo "<pre>variations: ";print_r($variations);echo"</pre>";#die();
 			return;
@@ -390,7 +390,7 @@ class WPLA_ProductsImporter {
 		foreach ($variations as $var) {
 			$post_id = WPLA_ProductBuilder::getProductIdBySKU( $var->sku );
 			if ( ! $post_id ) {
-				$this->logger->warn( "fixing SKU {$var->sku} ... no product found for this SKU!!" );
+				WPLA()->logger->warn( "fixing SKU {$var->sku} ... no product found for this SKU!!" );
 				continue;	
 			} 
 
@@ -399,7 +399,7 @@ class WPLA_ProductsImporter {
 				'parent_id' => $parent_listing->post_id,
 			);
 			$lm->updateListing( $var->listing_id, $data );
-			$this->logger->info( "fixed SKU {$var->sku} - post_id: $post_id" );
+			WPLA()->logger->info( "fixed SKU {$var->sku} - post_id: $post_id" );
 		}
 
 	} // fixNewVariationListings()

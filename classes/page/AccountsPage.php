@@ -21,7 +21,7 @@ class WPLA_AccountsPage extends WPLA_Page {
 
 	
 	public function handleActions() {
-        // $this->logger->debug("handleActions()");
+        // WPLA()->logger->debug("handleActions()");
 
 		// save accounts
 		if ( $this->requestAction() == 'wpla_add_account' ) {

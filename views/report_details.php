@@ -66,11 +66,32 @@
 
 <body class="wp-core-ui">
 
-    <h2>Amazon Seller Report <?php echo $wpl_report->ReportRequestId ?></h2>
+    <form action="<?php echo $report_permalink ?>" method="POST" style="float:right;">
+        <input id="wpla_filter_query" name="query" type="text" class="search" 
+            value="<?php echo $wpl_query ?>" 
+            placeholder="Search report for..." 
+            style="float: left; height: 28px; margin: 0 4px 0 0; border: 1px solid #ccc; padding: 2px 5px; width: 230px;" />
+        <input type="submit" class="button" style="float:right;" value="Search" />
+        <!-- <a href="#" onclick="wpla_btn_filter_report();return false;" class="button" style="float:right;">Filter</a> -->
+    </form>
+
+    <h2>
+        Amazon Seller Report <?php echo $wpl_report->ReportRequestId ?>
+        <?php if ( $wpl_query ) : ?>
+            - showing matches for "<?php echo $wpl_query ?>"
+        <?php endif; ?>
+    </h2>
 
     <!-- <h3>Details</h3> -->
     Report Request ID: <?php echo $wpl_report->ReportRequestId ?><br>
-    Report Type: <?php echo $wpl_report->ReportType ?><br>
+    Report Type: <?php echo $wpl_report->ReportType ?> 
+    <?php if ( $wpl_total_rows == sizeof($wpl_rows) ) : ?>
+        (<?php echo $wpl_total_rows ?> rows)
+    <?php else : ?>
+        (<?php echo sizeof($wpl_rows) ?> of <?php echo $wpl_total_rows ?> rows)
+    <?php endif; ?>
+
+    <br>
     <br>
 
     <!-- <h3>CSV Data</h3> -->
@@ -115,6 +136,10 @@
         <?php endforeach; ?>
         </tbody>
     </table>
+    <?php elseif ( $wpl_query ) : ?>
+        <p>
+            <b>No matching rows were found int this report.</b>
+        </p>
     <?php else : ?>
         <p>
             <b>This report has no content - either it's empty or its content hasn't been loaded yet.</b>
@@ -127,6 +152,19 @@
     <a href="<?php echo $report_permalink ?>" class="button">Permalink</a> &nbsp;
     <a href="admin.php?page=wpla-reports&amp;action=wpla_download_report&amp;amazon_report=<?php echo $wpl_report->id ?>" class="button button-primary">Download Report</a>
 
+
+<script type="text/javascript">
+    function wpla_btn_filter_report() {
+
+        var Table      = jQuery('#wpla_feed_data_table').first();
+        var Columns    = jQuery('#wpla_feed_data_table th');
+        var Rows       = jQuery('#wpla_feed_data_table td');
+        var key        = '';
+        var has_values = null;
+
+    };
+
+</script>
 
 </body>
 </html>

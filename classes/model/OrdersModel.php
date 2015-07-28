@@ -29,8 +29,8 @@ class WPLA_OrdersModel extends WPLA_Model {
 	var $current_lastdate;
 
 	function WPLA_OrdersModel() {
-		global $wpla_logger;
-		$this->logger = &$wpla_logger;
+		// global $wpla_logger;
+		// $this->logger = &$wpla_logger;
 
 		global $wpdb;
 		$this->tablename = $wpdb->prefix . self::TABLENAME;

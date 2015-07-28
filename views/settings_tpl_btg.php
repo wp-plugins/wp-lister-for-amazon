@@ -126,7 +126,8 @@
 								
 								<?php
 									$field_name = 'wpla_cat-'.$site_code.'-'.$category_name;
-									$category_file_name = $category_name == 'CE' ? 'ConsumerElectronics' : $category_name; // template name is ConsumerElectronics, but file name is CE :-(
+									$category_file_name = $category_name == 'CE'   ? 'ConsumerElectronics' : $category_name; // template name is ConsumerElectronics, but file name is CE :-(
+									$category_file_name = $category_name == 'SWVG' ? 'SoftwareVideoGames'  : $category_name; // template name is SoftwareVideoGames, but file name is SWVG
 									$checked = in_array( $site_id.$category_file_name, $wpl_active_templates ) ? 'checked' : '';
 								?>
 								

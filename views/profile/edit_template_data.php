@@ -71,10 +71,13 @@
 		function loadTemplateData() {
 			var tpl_id = jQuery('#wpl-text-tpl_id')[0].value;
 			var profile_id = '<?php echo $wpl_profile->id ?>';
+			var wpla_plugin_url = '<?php echo WPLA_URL ?>';
 
 			// jQuery('#FeedDataBox .inside').slideUp(500);
 			// jQuery('#FeedDataBox .loadingMsg').slideDown(500);
-			jQuery('#FeedDataBox .inside').html('<p><i>loading feed template...</i></p>');
+
+			var loading_img = '<img src="'+wpla_plugin_url+'img/ajax-loader.gif" class="loading"/>';
+			jQuery('#FeedDataBox .inside').html( '<div style="text-align:center;">' + loading_img + '<p><i>loading feed template...</i></p></div>' );
 
 	        // fetch category conditions
 	        var params = {

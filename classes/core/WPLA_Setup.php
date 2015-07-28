@@ -37,7 +37,7 @@ class WPLA_Setup extends WPLA_Core {
 			$link = '<a href="admin.php?page=wpla-settings">'.__('Settings','wpla').'</a>';
 			$msg2 = sprintf($msg2, $link);
 			$msg = "<p><b>$msg1</b></p><p>$msg2</p>";
-			$this->showMessage($msg);
+			wpla_show_message($msg);
 		
 			// update_option('wpla_setup_next_step', '0');
 		
@@ -75,7 +75,7 @@ class WPLA_Setup extends WPLA_Core {
 	public function isCurlLoaded() {
 
 		if( ! extension_loaded('curl') ) {
-			$this->showMessage("
+			wpla_show_message("
 				<b>Required PHP extension missing</b><br>
 				<br>
 				Your server doesn't seem to have the <a href='http://www.php.net/curl' target='_blank'>cURL</a> php extension installed.<br>
@@ -93,7 +93,7 @@ class WPLA_Setup extends WPLA_Core {
 				If you are on a shared host, you need to ask your hoster to enable the cURL php extension for you.<br>
 				<br>
 				For more information on how to install the cURL php extension on other servers check <a href='http://stackoverflow.com/questions/1347146/how-to-enable-curl-in-php' target='_blank'>this page on stackoverflow</a>.
-			",1);
+			",'error');
 			return false;
 		}
 
@@ -107,12 +107,12 @@ class WPLA_Setup extends WPLA_Core {
 
 		if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
 
-			$this->showMessage("
+			wpla_show_message("
 				<b>Warning: Server requirements not met - this server runs on windows.</b><br>
 				<br>
 				WP-Lister currently only supports unixoid operating systems like Linux, FreeBSD and OS X.<br>
 				Support for windows servers is still experimental and should not be used on production sites!
-			");
+			",'warn');
 			return true;
 		}
 
@@ -124,10 +124,11 @@ class WPLA_Setup extends WPLA_Core {
 
 		$cron_interval  = get_option( 'wpla_cron_schedule' );
 		$next_scheduled = wp_next_scheduled( 'wpla_update_schedule' ) ;
+		if ( 'external' == $cron_interval ) $cron_interval = false;
 
 		if ( $cron_interval && ! $next_scheduled ) {
 
-			$this->showMessage( 
+			wpla_show_message( 
 				'<p>'
 				. '<b>Warning: WordPress Cron Job has been disabled - scheduled WP-Lister tasks are not executed!</b>'
 				. '<br><br>'
@@ -135,7 +136,7 @@ class WPLA_Setup extends WPLA_Core {
 				. '<br><br>'
 				. 'If this message does not disappear, please visit the <a href="admin.php?page=wpla-settings&tab=settings">Settings</a> page and click <i>Save Settings</i> or contact support.'
 				. '</p>'
-			,1);
+			,'warn');
 
 			// this should fix it:
 			wp_schedule_event( time(), $cron_interval, 'wpla_update_schedule' );
@@ -160,30 +161,30 @@ class WPLA_Setup extends WPLA_Core {
 
 		// WP-Lister for eBay 1.6+
 		if ( defined('WPLISTER_VERSION') && version_compare( WPLISTER_VERSION, '1.6', '<') ) {
-			$this->showMessage( 
+			wpla_show_message( 
 				'<p>'
 				. '<b>Warning: Your version of WP-Lister for eBay '.WPLISTER_VERSION.' is not fully compatible with WP-Lister for Amazon.</b>'
 				. '<br><br>'
 				. 'To prevent any issues, please update to WP-Lister for eBay 1.6 or better.'
 				. '</p>'
-			,2,1);
+			,'warn');
 		}
 
 		// check if WooCommerce is up to date
 		$required_version    = '2.2.4';
 		$woocommerce_version = defined('WC_VERSION') ? WC_VERSION : WOOCOMMERCE_VERSION;
 		if ( version_compare( $woocommerce_version, $required_version ) < 0 ) {
-			$this->showMessage("
+			wpla_show_message("
 				<b>Warning: Your WooCommerce version is outdated.</b><br>
 				<br>
 				WP-Lister requires WooCommerce $required_version to be installed. You are using WooCommerce $woocommerce_version.<br>
 				You should always keep your site and plugins updated.<br>
-			",2,1);
+			",'warn');
 		}
 
 		// PHP 5.3+
 		if ( version_compare(phpversion(), '5.3', '<')) {
-			$this->showMessage( 
+			wpla_show_message( 
 				'<p>'
 				. '<b>Warning: Your PHP version '.phpversion().' is outdated.</b>'
 				. '<br><br>'
@@ -191,7 +192,7 @@ class WPLA_Setup extends WPLA_Core {
 				. ' '
 				. 'Please contact your hosting support and ask them to update your PHP version.'
 				. '</p>'
-			,2,1);
+			,'warn');
 		}
 
 	}
@@ -207,9 +208,9 @@ class WPLA_Setup extends WPLA_Core {
 				require_once( ABSPATH . '/wp-admin/includes/plugin.php' );
 
 			if ( function_exists('is_network_admin') && is_plugin_active_for_network( plugin_basename( WPLA_PATH.'/wp-lister-amazon.php' ) ) )
-				$this->showMessage("network activated!",1);
+				wpla_show_message("network activated!");
 			else
-				$this->showMessage("not network activated!");
+				wpla_show_message("not network activated!");
 
 
 			// $this->showMessage("

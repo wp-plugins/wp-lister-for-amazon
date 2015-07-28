@@ -3,6 +3,7 @@
 class WPLA_FeedTemplateHelper extends WPLA_Core {
 	
 	var $logger;
+	var $tpl_id;
 	var $site_id;
 	var $site_code;
 	public $imported_count = 0;
@@ -13,7 +14,7 @@ class WPLA_FeedTemplateHelper extends WPLA_Core {
 
 
 	public function importTemplatesForCategory( $category_name, $site_code ) {
-		$this->logger->info("importTemplatesForCategory( {$category_name} , {$site_code} )");
+		WPLA()->logger->info("importTemplatesForCategory( {$category_name} , {$site_code} )");
 
 		$file_index = WPLA_FeedTemplateIndex::get_file_index();
 		$this->imported_count = 0;
@@ -36,7 +37,7 @@ class WPLA_FeedTemplateHelper extends WPLA_Core {
 		// echo "<pre>";print_r($template_files);echo"</pre>";
 		// echo "<pre>";print_r($btguides_files);echo"</pre>";
 
-		$this->logger->info("importing files for {$this->site_id} / {$this->site_code}");
+		WPLA()->logger->info("importing files for {$this->site_id} / {$this->site_code}");
 		$this->importTemplates( $category['templates'], $site_code );
 		$this->importBrowseTreeGuides( $category['btguides'], $site_code );
 
@@ -49,9 +50,9 @@ class WPLA_FeedTemplateHelper extends WPLA_Core {
 	function cleanupTempFiles() {
 		foreach ($this->temporary_files as $file) {
 			unlink( $file );
-			$this->logger->info("removed ".basename($file));			
+			WPLA()->logger->info("removed ".basename($file));			
 		}
-		$this->logger->info("-------------------------------");			
+		WPLA()->logger->info("-------------------------------");			
 	}
 
 
@@ -61,7 +62,7 @@ class WPLA_FeedTemplateHelper extends WPLA_Core {
 
 	public function fetchRemoteFile( $url ) {
 		// echo "<pre>fetching URL ";print_r($url);echo"</pre>";
-		$this->logger->info("fetching URL: {$url}");
+		WPLA()->logger->info("fetching URL: {$url}");
 
 		// get uploads folder
 		$upload_dir  = wp_upload_dir();
@@ -74,14 +75,14 @@ class WPLA_FeedTemplateHelper extends WPLA_Core {
 		if ( is_wp_error( $response ) ) {
 			// echo "<pre>";print_r($response);echo"</pre>";	
 			$this->showMessage( "Couldn't fetch URL $url - ".$response->get_error_message(), 1, 1 );
-			$this->logger->error("Couldn't fetch URL $url - ".$response->get_error_message());
+			WPLA()->logger->error("Couldn't fetch URL $url - ".$response->get_error_message());
 			return false;			
 		}
 
 		if ( $response['response']['code'] != 200 ) {
 			// echo "<pre>Couldn't fetch URL $url - server returned error code ".$response['response']['code']."</pre>";
 			$this->showMessage( "Couldn't fetch URL $url - server returned error code ".$response['response']['code'], 1, 1 );
-			$this->logger->error("Couldn't fetch URL $url - server returned error code ".$response['response']['code'] );
+			WPLA()->logger->error("Couldn't fetch URL $url - server returned error code ".$response['response']['code'] );
 			return false;
 		}
 
@@ -89,7 +90,7 @@ class WPLA_FeedTemplateHelper extends WPLA_Core {
 		$local_file = trailingslashit( $upload_path ) . basename( $url );
 		if ( ! file_put_contents( $local_file, $response['body'] ) ) {
 			$this->showMessage( "Couldn't write file $localfile - please check upload folder permissions.", 1, 1 );
-			$this->logger->error("Couldn't write file $localfile");
+			WPLA()->logger->error("Couldn't write file $localfile");
 			return false;			
 		}
 
@@ -106,6 +107,7 @@ class WPLA_FeedTemplateHelper extends WPLA_Core {
 	 */
 
 	public function importTemplates( $template_files, $site_code ) {
+		$this->tpl_id = 0;
 
 		foreach ( $template_files as $filename ) {
 			$local_file = $this->fetchRemoteFile( self::UPDATEURL . 'tpl/' . $site_code .'/'. $filename );
@@ -125,7 +127,7 @@ class WPLA_FeedTemplateHelper extends WPLA_Core {
 	 * runs the appropiate parser based on file type
 	 */
 	function importTplFile( $file ) {
-		$this->logger->info("importTplFile(): ".basename($file));
+		WPLA()->logger->info("importTplFile(): ".basename($file));
 
 		// detect file type
 		$mode = 'template';
@@ -141,7 +143,9 @@ class WPLA_FeedTemplateHelper extends WPLA_Core {
 		if (strpos($feed_type, '_')) list( $feed_type, $dummy ) = explode('_',$feed_type);	// remove _de (if present)
 		if ( $feed_type == 'ListingLoader') $feed_type = 'Offer';
 		if ( $feed_type == 'CE')            $feed_type = 'ConsumerElectronics';
-		$this->logger->info("detected type: {$feed_type}");
+		if ( $feed_type == 'SWVG')          $feed_type = 'SoftwareVideoGames';
+		if ( $feed_type == 'sports')        $feed_type = 'Sports';
+		WPLA()->logger->info("detected type: {$feed_type}");
 
 		switch ($mode) {
 			case 'template':
@@ -151,7 +155,7 @@ class WPLA_FeedTemplateHelper extends WPLA_Core {
 				// echo "<pre>";print_r($tpl);echo"</pre>";#die();
 
 				// parse browse tree guide data
-				$tpl_id = $this->parseFeedTemplate( $tpl );
+				$this->tpl_id = $this->parseFeedTemplate( $tpl );
 				$result = 1;
 				break;
 			
@@ -185,7 +189,7 @@ class WPLA_FeedTemplateHelper extends WPLA_Core {
 
 	// store allowed values in amazon_feed_tpl_values
 	function parseFeedValues( $fields, $feed_type ) {
-		$this->logger->info("parseFeedValues(): {$feed_type}");
+		WPLA()->logger->info("parseFeedValues(): {$feed_type}");
 		global $wpdb;
 		$templates_table = $wpdb->prefix . 'amazon_feed_templates';
 		$values_table    = $wpdb->prefix . 'amazon_feed_tpl_values';
@@ -193,7 +197,7 @@ class WPLA_FeedTemplateHelper extends WPLA_Core {
 
 		// get template id 
 		$tpl_id = $wpdb->get_var( "SELECT id FROM $templates_table WHERE name = '$feed_type' and site_id = '{$this->site_id}' ");
-		$this->logger->info("TPL_ID: {$tpl_id}");
+		WPLA()->logger->info("TPL_ID: {$tpl_id}");
 
 		// get all template field names
 		$data_field_index = $wpdb->get_col( "SELECT field FROM $data_table WHERE tpl_id = '$tpl_id' and site_id = '{$this->site_id}' ");
@@ -295,14 +299,14 @@ class WPLA_FeedTemplateHelper extends WPLA_Core {
 
 	// store data defitions in amazon_feed_tpl_data
 	function parseFeedData( $fields, $feed_type ) {
-		$this->logger->info("parseFeedData(): {$feed_type}");
+		WPLA()->logger->info("parseFeedData(): {$feed_type}");
 		global $wpdb;
 		$templates_table = $wpdb->prefix . 'amazon_feed_templates';
 		$fields_table    = $wpdb->prefix . 'amazon_feed_tpl_data';
 
 		// get template id 
 		$tpl_id = $wpdb->get_var( "SELECT id FROM $templates_table WHERE name = '$feed_type' and site_id = '{$this->site_id}' ");
-		$this->logger->info("TPL_ID: {$tpl_id}");
+		WPLA()->logger->info("TPL_ID: {$tpl_id}");
 
 		foreach ( $fields as $key => $field_data ) {
 
@@ -415,7 +419,7 @@ class WPLA_FeedTemplateHelper extends WPLA_Core {
 
 
 	function parseFeedTemplate( $tpl ) {
-		$this->logger->info("parseFeedTemplate( tpl {$tpl->type} )");
+		WPLA()->logger->info("parseFeedTemplate( tpl {$tpl->type} )");
 
 		global $wpdb;
 		$templates_table = $wpdb->prefix . 'amazon_feed_templates';
@@ -423,10 +427,10 @@ class WPLA_FeedTemplateHelper extends WPLA_Core {
 		$values_table    = $wpdb->prefix . 'amazon_feed_tpl_values';
 
 		// remove old data 
-		$this->logger->info("trying to find existing template WHERE name = '{$tpl->type}' AND site_id = '{$this->site_id}'");
+		WPLA()->logger->info("trying to find existing template WHERE name = '{$tpl->type}' AND site_id = '{$this->site_id}'");
 		$tpl_id = $wpdb->get_var( "SELECT id FROM $templates_table WHERE name = '$tpl->type' AND site_id = '$this->site_id' ");
 		if ( $tpl_id ) {
-			$this->logger->info("removing data for tpl_id {$tpl_id}");
+			WPLA()->logger->info("removing data for tpl_id {$tpl_id}");
 			// $wpdb->delete( $templates_table, array( 'id'     => $tpl_id, 'site_id' => $this->site_id ) );
 			$wpdb->delete( $fields_table,    array( 'tpl_id' => $tpl_id, 'site_id' => $this->site_id ) );
 			$wpdb->delete( $values_table,    array( 'tpl_id' => $tpl_id, 'site_id' => $this->site_id ) );
@@ -442,11 +446,11 @@ class WPLA_FeedTemplateHelper extends WPLA_Core {
 		// insert to wp_amazon_feed_templates - or update
 		if ( $tpl_id ) {
 			$result = $wpdb->update( $templates_table, $data, array( 'id' => $tpl_id, 'site_id' => $this->site_id ) );
-			$this->logger->info("updated existing template - id {$tpl_id}");
+			WPLA()->logger->info("updated existing template - id {$tpl_id}");
 		} else {
 			$result = $wpdb->insert( $templates_table, $data );
 			$tpl_id = $wpdb->insert_id;
-			$this->logger->info("added new feed template - id {$tpl_id}");
+			WPLA()->logger->info("added new feed template - id {$tpl_id}");
 		}
 
 		// store fields
@@ -467,7 +471,7 @@ class WPLA_FeedTemplateHelper extends WPLA_Core {
 	} // parseFeedTemplate()
 
 	function readFeedTemplateCSV( $filename, $delimiter = ',' ) {
-		$this->logger->info("readFeedTemplateCSV(): {$filename}");
+		WPLA()->logger->info("readFeedTemplateCSV(): {$filename}");
 
 	    if ( ! file_exists($filename) || ! is_readable($filename) ) {
 	    	echo "<pre>Could not read $filename</pre>";
@@ -491,14 +495,15 @@ class WPLA_FeedTemplateHelper extends WPLA_Core {
 	            	// first row contains template type and version
 	                $tpl->type    = str_replace( 'TemplateType=', '', $row[0] );
 	                $tpl->version = str_replace( 'Version=', '', $row[1] );
-					$this->logger->info("TemplateType: {$tpl->type}");
-					$this->logger->info("Version: {$tpl->version}");
+					if ( $tpl->type == 'sports') $tpl->type = 'Sports'; // fix Sports UK tpl
+					WPLA()->logger->info("TemplateType: {$tpl->type}");
+					WPLA()->logger->info("Version: {$tpl->version}");
 
 	            } elseif ( $line == 1 ) {
 
 	            	// second row contains field labels
 	                $header_labels = $row;
-					// $this->logger->info("header labels: ".print_r($header_labels,1));
+					// WPLA()->logger->info("header labels: ".print_r($header_labels,1));
 
 	            } elseif ( $line == 2 ) {
 
@@ -555,10 +560,14 @@ class WPLA_FeedTemplateHelper extends WPLA_Core {
 		$path_cache  = array();
 		$child_cache = array();
 
-		// first remove all nodes with this file's top id
+		// first remove all nodes with this file's top id (v1)
 		$wpdb->delete( $table, array('top_id' => $csv_rows[0][0], 'site_id' => $this->site_id ) );
 		$wpdb->delete( $table, array('node_id' => $csv_rows[0][0], 'site_id' => $this->site_id ) );
 		// echo "<pre>";print_r( $csv_rows[0][0] );echo"</pre>";die();
+
+		// first remove all nodes for current tpl_id (v2)
+		$wpdb->delete( $table, array('tpl_id' => $this->tpl_id, 'site_id' => $this->site_id ) );
+		$wpdb->delete( $table, array('tpl_id' => 0, 'site_id' => $this->site_id ) ); // remove unassigned/stale items from old version
 
 
 		foreach ($csv_rows as $line => $row) {
@@ -624,12 +633,14 @@ class WPLA_FeedTemplateHelper extends WPLA_Core {
 			$data['top_id']    = $top_id;
 			$data['level']     = $level;
 			$data['leaf']      = $leaf;
+			$data['tpl_id']    = $this->tpl_id;
 			$data['site_id']   = $this->site_id;
 
 			// echo "<pre>";print_r($data);echo"</pre>";#die();
 
 			// insert to db...
 			$result = $wpdb->insert( $table, $data );
+			// WPLA()->logger->info("inserted browse tree node $node_id: $node_path");
 
 			// add to cache
 			$path_cache[ $node_path ] = $node_id;
@@ -642,7 +653,7 @@ class WPLA_FeedTemplateHelper extends WPLA_Core {
 			$result = $wpdb->update( $table, $data, $where );
 		}
 
-		$this->logger->info("browse tree nodes processed: ".sizeof($path_cache));
+		WPLA()->logger->info("browse tree nodes processed: ".sizeof($path_cache));
 		return sizeof($path_cache);
 	} // parseBTG()
 

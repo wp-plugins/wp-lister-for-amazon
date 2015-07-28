@@ -22,7 +22,6 @@
         <tbody>
         <?php foreach ($wpl_rows as $row) : ?>
         <?php
-        	$row_count++;
         	if ( $row_count > 100 ) continue;
 
 
@@ -42,10 +41,13 @@
 
             // handle search query
             if ( $wpl_query && (
-                 ! stripos( $row['item-name'], $wpl_query )   &&
-                 ! stripos( $row['seller-sku'], $wpl_query )  &&
-                 ! stripos( $row_asin, $wpl_query ) 
+                    stripos( $row['item-name'],  $wpl_query ) === false  &&
+                    stripos( $row['seller-sku'], $wpl_query ) === false  &&
+                    stripos( $row_asin,          $wpl_query ) === false
                 ) ) continue;
+
+            // count rows - after processing query
+            $row_count++;
 
 
         	$listing_exists = in_array( $listing_asin, $wpl_report_summary->listings_to_update ) ? true : false;

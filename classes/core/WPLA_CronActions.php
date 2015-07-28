@@ -31,6 +31,7 @@ class WPLA_CronActions {
 		add_action('wpla_update_pricing_info',  				array( &$this, 'action_update_pricing_info' ) );
 		add_action('wpla_update_missing_asins', 				array( &$this, 'action_update_missing_asins' ) );
 		add_action('wpla_clean_log_table', 						array( &$this, 'action_clean_log_table' ) );
+		add_action('wpla_clean_tables', 						array( &$this, 'action_clean_tables' ) );
 		add_action('wpla_reprice_products', 					array( &$this, 'action_reprice_products' ) );
 		add_action('wpla_autosubmit_fba_orders', 				array( &$this, 'action_autosubmit_fba_orders' ) );
 		add_action('wpla_request_daily_quality_report', 		array( &$this, 'request_daily_quality_report' ) );
@@ -49,17 +50,17 @@ class WPLA_CronActions {
 	}
 
 	function init() {
-		global $wpla_logger;
-		$this->logger = $wpla_logger;		
+		// global $wpla_logger;
+		// $this->logger = $wpla_logger;		
 	}
 
 	// run update schedule - called by wp_cron if activated
 	public function cron_update_schedule() {
-        $this->logger->info("*** WP-CRON: cron_update_schedule()");
+        WPLA()->logger->info("*** WP-CRON: cron_update_schedule()");
 
         // check if update is already running
         if ( ! $this->checkLock() ) {
-	        $this->logger->error("WP-CRON: already running! terminating execution...");
+	        WPLA()->logger->error("WP-CRON: already running! terminating execution...");
         	return;
         }
 
@@ -90,12 +91,12 @@ class WPLA_CronActions {
 		// store timestamp
 		update_option( 'wpla_cron_last_run', time() );
 
-        $this->logger->info("*** WP-CRON: cron_update_schedule() finished");
+        WPLA()->logger->info("*** WP-CRON: cron_update_schedule() finished");
 	}
 
 	// run daily schedule - called by wp_cron
 	public function cron_daily_schedule() {
-        $this->logger->info("*** WP-CRON: cron_daily_schedule()");
+        WPLA()->logger->info("*** WP-CRON: cron_daily_schedule()");
 
 		// request daily FBA inventory report
 		if ( get_option( 'wpla_fba_enabled' ) )
@@ -113,18 +114,19 @@ class WPLA_CronActions {
 		if ( get_option( 'wpla_autofetch_listing_quality_feeds', 1 ) )
 			do_action('wpla_request_daily_quality_report');
 
-		// clean log table
+		// clean tables
 		do_action('wpla_clean_log_table');
+		do_action('wpla_clean_tables');
 
 		// store timestamp
 		update_option( 'wpla_daily_cron_last_run', time() );
 
-        $this->logger->info("*** WP-CRON: cron_daily_schedule() finished");
+        WPLA()->logger->info("*** WP-CRON: cron_daily_schedule() finished");
 	}
 
 	// run FBA report schedule - called by wp_cron
 	public function cron_fba_report_schedule() {
-        $this->logger->info("*** WP-CRON: cron_fba_report_schedule()");
+        WPLA()->logger->info("*** WP-CRON: cron_fba_report_schedule()");
 
 		// request FBA shipments report
 		if ( get_option( 'wpla_fba_enabled' ) )
@@ -133,13 +135,13 @@ class WPLA_CronActions {
 		// store timestamp
 		update_option( 'wpla_fba_report_cron_last_run', time() );
 
-        $this->logger->info("*** WP-CRON: cron_fba_report_schedule() finished");
+        WPLA()->logger->info("*** WP-CRON: cron_fba_report_schedule() finished");
 	}
 
 
 	// fetch missing ASINs - called by do_action()
 	public function action_update_missing_asins() {
-        $this->logger->info("do_action: wpla_update_missing_asins");
+        WPLA()->logger->info("do_action: wpla_update_missing_asins");
 
 		$accounts      = WPLA_AmazonAccount::getAll();
 		$listingsModel = new WPLA_ListingsModel();
@@ -153,7 +155,7 @@ class WPLA_CronActions {
 
 			// process one listing at a time (for now)
 			foreach ( $listings as $listing ) {
-				$this->logger->info('fetching ASIN for SKU '.$listing->sku.' ('.$listing->id.') - type: '.$listing->product_type );
+				WPLA()->logger->info('fetching ASIN for SKU '.$listing->sku.' ('.$listing->id.') - type: '.$listing->product_type );
 	
 				$api    = new WPLA_AmazonAPI( $account->id );
 				$result = $api->getMatchingProductForId( $listing->sku, 'SellerSKU' );
@@ -164,14 +166,14 @@ class WPLA_CronActions {
 
 						// update listing ASIN
 						$listingsModel->updateWhere( array( 'id' => $listing->id ), array( 'asin' => $result->product->ASIN ) );
-						$this->logger->info('new ASIN for listing #'.$listing->id . ': '.$result->product->ASIN );
+						WPLA()->logger->info('new ASIN for listing #'.$listing->id . ': '.$result->product->ASIN );
 
 					} else {
 
 						// this is what happens when new products are listed but Amazon fails to assign an ASIN
 						// in which case the user might have to contact Amazon seller support...
 						$error_msg  = sprintf( __('There was a problem fetching product details for %s.','wpla'), $listing->sku );
-						$this->logger->error( $error_msg . ' - empty product data!');
+						WPLA()->logger->error( $error_msg . ' - empty product data!');
 
 						$error_msg  .= ' This SKU does not seem to exist in your inventory on Seller Central. You can try to submit this listing again, but you may have to report this to Amazon Seller Support.';
 
@@ -215,10 +217,10 @@ class WPLA_CronActions {
 
 				} elseif ( $result->Error->Message ) {
 					$errors  = sprintf( __('There was a problem fetching product details for %s.','wpla'), $listing->sku ) .'<br>Error: '. $result->Error->Message;
-					$this->logger->error( $errors );
+					WPLA()->logger->error( $errors );
 				} else {
 					$errors  = sprintf( __('There was a problem fetching product details for %s.','wpla'), $listing->sku );
-					$this->logger->error( $errors );
+					WPLA()->logger->error( $errors );
 				}
 	
 			} // foreach listing
@@ -230,7 +232,7 @@ class WPLA_CronActions {
 
 	// fetch lowest prices - called by do_action()
 	public function action_update_pricing_info() {
-        $this->logger->info("do_action: wpla_update_pricing_info");
+        WPLA()->logger->info("do_action: wpla_update_pricing_info");
 
 		$accounts = WPLA_AmazonAccount::getAll();
 		// $listingsModel = new WPLA_ListingsModel();
@@ -241,7 +243,7 @@ class WPLA_CronActions {
 			$account_id    = $account->id;
 			$listings      = WPLA_ListingQueryHelper::getItemsDueForPricingUpdateForAcccount( $account_id, $batch_size );
 			$listing_ASINs = array();
-			$this->logger->info( sprintf( '%s items with outdated pricing info found for account %s.', sizeof($listings), $account->title ) );
+			WPLA()->logger->info( sprintf( '%s items with outdated pricing info found for account %s.', sizeof($listings), $account->title ) );
 
 			// build array of ASINs
         	foreach ($listings as $listing) {
@@ -265,7 +267,7 @@ class WPLA_CronActions {
         		// run update
 	        	$this->update_pricing_info_for_asins( $ASINs_for_this_batch, $account_id );
 
-				$this->logger->info( sprintf( '%s ASINs had their pricing info updated - account %s.', sizeof($listing_ASINs), $account->title ) );
+				WPLA()->logger->info( sprintf( '%s ASINs had their pricing info updated - account %s.', sizeof($listing_ASINs), $account->title ) );
         	}
 
 
@@ -306,7 +308,7 @@ class WPLA_CronActions {
 
 	// fetch new orders - called by do_action()
 	public function action_update_orders() {
-        $this->logger->info("do_action: wpla_update_orders");
+        WPLA()->logger->info("do_action: wpla_update_orders");
 
 		$accounts = WPLA_AmazonAccount::getAll();
 		$importer = new WPLA_OrdersImporter();
@@ -318,7 +320,7 @@ class WPLA_CronActions {
 			// get date of last order
 			$om = new WPLA_OrdersModel();
 			$lastdate = $om->getDateOfLastOrder();
-			$this->logger->info('getDateOfLastOrder() returned: '.$lastdate);
+			WPLA()->logger->info('getDateOfLastOrder() returned: '.$lastdate);
 
 			$days = isset($_REQUEST['days']) && $_REQUEST['days'] ? $_REQUEST['days'] : false;
 			if ( ! $lastdate && ! $days ) $days = 1;
@@ -335,16 +337,16 @@ class WPLA_CronActions {
 				$msg  = sprintf( __('%s order(s) were processed for account %s.','wpla'), sizeof($orders), $account->title );
 				if ( $importer->updated_count  > 0 ) $msg .= "\n".'Updated orders: '.$importer->updated_count ;
 				if ( $importer->imported_count > 0 ) $msg .= "\n".'Created orders: '.$importer->imported_count;					
-				$this->logger->info( $msg );
+				WPLA()->logger->info( $msg );
 				$this->showMessage( nl2br($msg),0,1 );
 
 			} elseif ( $orders->Error->Message ) {
 				$msg = sprintf( __('There was a problem downloading orders for account %s.','wpla'), $account->title ) .' - Error: '. $orders->Error->Message;
-				$this->logger->error( $msg );
+				WPLA()->logger->error( $msg );
 				$this->showMessage( nl2br($msg),1,1 );
 			} else {
 				$msg = sprintf( __('There was a problem downloading orders for account %s.','wpla'), $account->title );
-				$this->logger->error( $msg );
+				WPLA()->logger->error( $msg );
 				$this->showMessage( nl2br($msg),1,1 );
 			}
 
@@ -356,7 +358,7 @@ class WPLA_CronActions {
 
 	// update submitted reports - called by do_action()
 	public function action_update_reports() {
-        $this->logger->info("do_action: wpla_update_reports");
+        WPLA()->logger->info("do_action: wpla_update_reports");
 
 		$accounts = WPLA_AmazonAccount::getAll();
 
@@ -376,16 +378,16 @@ class WPLA_CronActions {
 				WPLA_AmazonReport::processReportsRequestList( $reports, $account );
 
 				$msg  = sprintf( __('%s report request(s) were found for account %s.','wpla'), sizeof($reports), $account->title );
-				$this->logger->info( $msg );
+				WPLA()->logger->info( $msg );
 				$this->showMessage( nl2br($msg),0,1 );
 
 			} elseif ( $reports->Error->Message ) {
 				$msg = sprintf( __('There was a problem fetching report requests for account %s.','wpla'), $account->title ) .' - Error: '. $reports->Error->Message;
-				$this->logger->error( $msg );
+				WPLA()->logger->error( $msg );
 				$this->showMessage( nl2br($msg),1,1 );
 			} else {
 				$msg = sprintf( __('There was a problem fetching report requests for account %s.','wpla'), $account->title );
-				$this->logger->error( $msg );
+				WPLA()->logger->error( $msg );
 				$this->showMessage( nl2br($msg),1,1 );
 			}
 
@@ -396,7 +398,7 @@ class WPLA_CronActions {
 
 	// update submitted feeds - called by do_action()
 	public function action_update_feeds() {
-        $this->logger->info("do_action: wpla_update_feeds");
+        WPLA()->logger->info("do_action: wpla_update_feeds");
 
 		$accounts = WPLA_AmazonAccount::getAll();
 
@@ -413,16 +415,16 @@ class WPLA_CronActions {
 				WPLA_AmazonFeed::processFeedsSubmissionList( $feeds, $account );
 
 				$msg  = sprintf( __('%s feed submission(s) were found for account %s.','wpla'), sizeof($feeds), $account->title );
-				$this->logger->info( $msg );
+				WPLA()->logger->info( $msg );
 				$this->showMessage( nl2br($msg),0,1 );
 
 			} elseif ( $feeds->Error->Message ) {
 				$msg = sprintf( __('There was a problem fetching feed submissions for account %s.','wpla'), $account->title ) .' - Error: '. $feeds->Error->Message;
-				$this->logger->error( $msg );
+				WPLA()->logger->error( $msg );
 				$this->showMessage( nl2br($msg),1,1 );
 			} else {
 				$msg = sprintf( __('There was a problem fetching feed submissions for account %s.','wpla'), $account->title );
-				$this->logger->error( $msg );
+				WPLA()->logger->error( $msg );
 				$this->showMessage( nl2br($msg),1,1 );
 			}
 
@@ -433,7 +435,7 @@ class WPLA_CronActions {
 
 	// submit pending feeds - called by do_action()
 	public function action_submit_pending_feeds() {
-        $this->logger->info("do_action: wpla_submit_pending_feeds");
+        WPLA()->logger->info("do_action: wpla_submit_pending_feeds");
 
 		$accounts = WPLA_AmazonAccount::getAll();
 
@@ -444,7 +446,7 @@ class WPLA_CronActions {
 
 			// get pending feeds for account
 			$feeds = WPLA_AmazonFeed::getAllPendingFeedsForAccount( $account->id );
-	        $this->logger->info("found ".sizeof($feeds)." pending feeds for account {$account->id}");
+	        WPLA()->logger->info("found ".sizeof($feeds)." pending feeds for account {$account->id}");
 
 			foreach ($feeds as $feed) {
 
@@ -457,14 +459,14 @@ class WPLA_CronActions {
 				);
 
 				if ( ! in_array( $feed->FeedType, $autosubmit_feeds ) ) {
-			        $this->logger->info("skipped pending feed {$feed->id} ({$feed->FeedType}) for account {$account->id} - autosubmit disabled for feed type");
+			        WPLA()->logger->info("skipped pending feed {$feed->id} ({$feed->FeedType}) for account {$account->id} - autosubmit disabled for feed type");
 			        continue;
 				}
 
 				// submit feed
 				$feed->submit();
 
-		        $this->logger->info("submitted pending feed {$feed->id} ({$feed->FeedType}) for account {$account->id}");
+		        WPLA()->logger->info("submitted pending feed {$feed->id} ({$feed->FeedType}) for account {$account->id}");
 			}
 
 		}
@@ -594,6 +596,29 @@ class WPLA_CronActions {
 		// }
 	} // action_clean_log_table()
 
+	public function action_clean_tables() {
+		global $wpdb;
+
+		// clean feeds table (date_created)
+		$days_to_keep = get_option( 'wpla_feeds_days_limit', 90 );
+		if ( $days_to_keep ) {
+			$wpdb->query('DELETE FROM '.$wpdb->prefix.'amazon_feeds WHERE date_created < DATE_SUB(NOW(), INTERVAL '.$days_to_keep.' DAY )');
+		}
+
+		// clean reports table (SubmittedDate)
+		$days_to_keep = get_option( 'wpla_reports_days_limit', 90 );
+		if ( $days_to_keep ) {
+			$wpdb->query('DELETE FROM '.$wpdb->prefix.'amazon_reports WHERE SubmittedDate < DATE_SUB(NOW(), INTERVAL '.$days_to_keep.' DAY )');
+		}
+
+		// clean orders table (date_created)
+		$days_to_keep = get_option( 'wpla_orders_days_limit', '' );
+		if ( $days_to_keep ) {
+			$wpdb->query('DELETE FROM '.$wpdb->prefix.'amazon_orders WHERE date_created < DATE_SUB(NOW(), INTERVAL '.$days_to_keep.' DAY )');
+		}
+
+	} // action_clean_log_table()
+
 
 	public function checkLock() {
 
@@ -604,7 +629,7 @@ class WPLA_CronActions {
 
 		// skip locking if lockfile is not writeable
 		if ( ! is_writable( $lockfile ) && ! is_writable( dirname( $lockfile ) ) ) {
-	        $this->logger->error("lockfile not writable: ".$lockfile);
+	        WPLA()->logger->error("lockfile not writable: ".$lockfile);
 	        return true;
 		}
 
@@ -612,7 +637,7 @@ class WPLA_CronActions {
 		if ( ! file_exists( $lockfile ) ) {
 			$ts = time();
 			file_put_contents( $lockfile, $ts );
-	        $this->logger->info("lockfile created at TS $ts: ".$lockfile);
+	        WPLA()->logger->info("lockfile created at TS $ts: ".$lockfile);
 	        return true;
 		}
 
@@ -621,17 +646,17 @@ class WPLA_CronActions {
 
 		// check if TS is outdated (after 10min.)
 		if ( $ts < ( time() - 600 ) ) { 
-	        $this->logger->info("stale lockfile found for TS ".$ts.' - '.human_time_diff( $ts ).' ago' );
+	        WPLA()->logger->info("stale lockfile found for TS ".$ts.' - '.human_time_diff( $ts ).' ago' );
 
 	        // update lockfile 
 			$ts = time();
 			file_put_contents( $lockfile, $ts ); 
 	        
-	        $this->logger->info("lockfile updated for TS $ts: ".$lockfile);
+	        WPLA()->logger->info("lockfile updated for TS $ts: ".$lockfile);
 	        return true;
 		} else { 
 			// process is still alive - can not run twice
-	        $this->logger->info("SKIP CRON - sync already running with TS ".$ts.' - '.human_time_diff( $ts ).' ago' );
+	        WPLA()->logger->info("SKIP CRON - sync already running with TS ".$ts.' - '.human_time_diff( $ts ).' ago' );
 			return false; 
 		} 
 
@@ -641,7 +666,7 @@ class WPLA_CronActions {
 	public function removeLock() {
 		if ( file_exists( $this->lockfile ) ) {
 			unlink( $this->lockfile );
-	        $this->logger->info("lockfile was removed: ".$this->lockfile);
+	        WPLA()->logger->info("lockfile was removed: ".$this->lockfile);
 		}
 	}
 
@@ -661,6 +686,10 @@ class WPLA_CronActions {
 		$schedules['thirty_min'] = array(
 			'interval' => 60 * 30,
 			'display' => 'Once every thirty minutes'
+		);
+		$schedules['three_hours'] = array(
+			'interval' => 60 * 60 * 3,
+			'display' => 'Once every three hours'
 		);
 		$schedules['six_hours'] = array(
 			'interval' => 60 * 60 * 6,

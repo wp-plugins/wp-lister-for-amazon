@@ -202,7 +202,6 @@ class WPLA_ImportPage extends WPLA_Page {
 
 
 	public function importASINs() {
-		global $wpla_logger;
 
 		$asin_list = trim( $_REQUEST['wpla_asin_list'] );
 		if ( ! $asin_list ) {

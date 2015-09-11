@@ -71,8 +71,8 @@ class WPLA_ListingQueryHelper {
             WHERE       account_id = %d
               AND           status = 'online'
               AND             asin IS NOT NULL
-              AND NOT product_type = 'variable'
-              AND ( pricing_date < %s OR pricing_date IS NULL )
+              AND ( product_type <> 'variable' OR product_type IS NULL )
+              AND ( pricing_date  < %s         OR pricing_date IS NULL )
             ORDER BY pricing_date ASC
             LIMIT %d
         ", 

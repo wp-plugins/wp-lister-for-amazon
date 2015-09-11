@@ -119,6 +119,23 @@ class WPLA_AmazonReport {
 	}
 
 	// get all inventory reports within the last 24 hours
+	static function getSubmittedReportsForAccount( $account_id ) {
+		global $wpdb;
+		$table = $wpdb->prefix . self::TABLENAME;
+
+		$items = $wpdb->get_results( $wpdb->prepare("
+			SELECT *
+			FROM $table
+			WHERE account_id = %s
+			  AND ( ReportProcessingStatus = '_SUBMITTED_' OR  ReportProcessingStatus = '_IN_PROGRESS_' )
+			ORDER BY SubmittedDate DESC
+		", $account_id
+		), OBJECT_K);
+
+		return $items;
+	}
+
+	// get all inventory reports within the last 24 hours
 	static function getRecentInventoryReports() {
 		global $wpdb;
 		$table = $wpdb->prefix . self::TABLENAME;

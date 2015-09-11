@@ -6,14 +6,14 @@
 
 class WPLA_RepricingPage extends WPLA_Page {
 
-	const slug = 'repricing';
+	const slug = 'tools';
 
 	public function onWpInit() {
 
 		// Add custom screen options
-		// add_action( "load-toplevel_page_wpla", array( &$this, 'addScreenOptions' ) );
-		add_action( "load-amazon_page_wpla-tools", array( &$this, 'addScreenOptions' ) );
-		
+		$load_action = "load-".$this->main_admin_menu_slug."_page_wpla-".self::slug;
+		add_action( $load_action, array( &$this, 'addScreenOptions' ) );
+
 		// $this->handleSubmitOnInit();
 	}
 
@@ -86,7 +86,7 @@ class WPLA_RepricingPage extends WPLA_Page {
 		$item_ids = $_REQUEST['item_ids'] ? explode( ',', $_REQUEST['item_ids'] ) : array();
 		WPLA_MinMaxPriceWizard::updateMinMaxPrices( $item_ids );
 
-        $this->showMessage( count($item_ids) . ' minimum and maximum prices have been updated.');
+        $this->showMessage( count($item_ids) . ' minimum and / or maximum prices have been updated.');
 	}
 	
 
@@ -124,7 +124,7 @@ class WPLA_RepricingPage extends WPLA_Page {
 				// set pnq status to changed (1)
 				$lm->updateWhere( array( 'id' => $item->id ), array( 'pnq_status' => 1 ) );
 			}
-			$this->showMessage( sprintf( __('%s failed prices were schedules for resubmission.','wpla'), count($items) ) );
+			$this->showMessage( sprintf( __('%s failed prices were scheduled for resubmission.','wpla'), count($items) ) );
 		}
 
 

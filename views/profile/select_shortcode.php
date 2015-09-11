@@ -10,7 +10,7 @@
 		'[product_msrp]'           => 'MSRP price',
 		'[product_quantity]'       => 'Quantity',
 		'[product_content]'        => 'Product description',
-		'[product_excerpt]'        => 'Additional description',
+		'[product_excerpt]'        => 'Product short description',
 		'[product_length]'         => 'Product length',
 		'[product_width]'          => 'Product width',
 		'[product_height]'         => 'Product height',

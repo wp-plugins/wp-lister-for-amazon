@@ -207,6 +207,7 @@
 								<option value="" <?php if ( $wpl_item['fba_fcid'] == '' ): ?>selected="selected"<?php endif; ?>><?php echo 'DEFAULT' ?></option>
 								<option value="AMAZON_NA" <?php if ( $wpl_item['fba_fcid'] == 'AMAZON_NA' ): ?>selected="selected"<?php endif; ?>><?php echo 'AMAZON_NA' ?></option>
 								<option value="AMAZON_EU" <?php if ( $wpl_item['fba_fcid'] == 'AMAZON_EU' ): ?>selected="selected"<?php endif; ?>><?php echo 'AMAZON_EU' ?></option>
+								<option value="AMAZON_IN" <?php if ( $wpl_item['fba_fcid'] == 'AMAZON_IN' ): ?>selected="selected"<?php endif; ?>><?php echo 'AMAZON_IN' ?></option>
 							</select>
 							<br class="clear" />
 

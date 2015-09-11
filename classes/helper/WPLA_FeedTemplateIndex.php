@@ -1089,6 +1089,22 @@ class WPLA_FeedTemplateIndex {
 				'code'  => 'CA',
 				'categories' => array(
 
+					// Automotive Parts & Accessories
+					'AutoAccessory' => array(
+						'title' => 'Automotive Parts & Accessories',
+						'templates' => array(
+							'Flat.File.AutoAccessory.ca-Template.csv',
+							'Flat.File.AutoAccessory.ca-DataDefinitions.csv',	
+							'Flat.File.AutoAccessory.ca-ValidValues.csv',								
+							'Flat.File.TiresAndWheels.ca-Template.csv',
+							'Flat.File.TiresAndWheels.ca-DataDefinitions.csv',	
+							'Flat.File.TiresAndWheels.ca-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'ca_automotive_browse_tree_guide.csv',
+						),
+					),
+
 					// Baby
 					'Baby' => array(
 						'title' => 'Baby',
@@ -1112,6 +1128,32 @@ class WPLA_FeedTemplateIndex {
 						),
 						'btguides' => array(
 							'ca_beauty_browse_tree_guide.csv',
+						),
+					),
+
+					// Camera & Photo
+					'CameraAndPhoto' => array(
+						'title' => 'Camera & Photo',
+						'templates' => array(
+							'Flat.File.CameraAndPhoto.ca-Template.csv',
+							'Flat.File.CameraAndPhoto.ca-DataDefinitions.csv',	
+							'Flat.File.CameraAndPhoto.ca-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'ca_ce_browse_tree_guide.csv',
+						),
+					),
+
+					// Cell Phones
+					'Wireless' => array(
+						'title' => 'Cell Phones',
+						'templates' => array(
+							'Flat.File.Wireless.ca-Template.csv',
+							'Flat.File.Wireless.ca-DataDefinitions.csv',	
+							'Flat.File.Wireless.ca-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'ca_ce_browse_tree_guide.csv',
 						),
 					),
 
@@ -1154,6 +1196,19 @@ class WPLA_FeedTemplateIndex {
 						),
 					),
 
+					// Health & Personal Care
+					'Health' => array(
+						'title' => 'Health & Personal Care',
+						'templates' => array(
+							'Flat.File.Health.ca-Template.csv',
+							'Flat.File.Health.ca-DataDefinitions.csv',	
+							'Flat.File.Health.ca-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'ca_hpc_browse_tree_guide.csv',
+						),
+					),
+
 					// Home & Garden
 					'Home' => array(
 						'title' => 'Home & Garden',
@@ -1165,6 +1220,58 @@ class WPLA_FeedTemplateIndex {
 						'btguides' => array(
 							'ca_garden_browse_tree_guide.csv',
 							'ca_kitchen_browse_tree_guide.csv',
+						),
+					),
+
+					// Luggage & Bags
+					'Luggage' => array(
+						'title' => 'Luggage & Bags',
+						'templates' => array(
+							'Flat.File.Luggage.ca-Template.csv',
+							'Flat.File.Luggage.ca-DataDefinitions.csv',	
+							'Flat.File.Luggage.ca-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'ca_luggage_browse_tree_guide.csv',
+						),
+					),
+
+					// Pet Supplies
+					'PetSupplies' => array(
+						'title' => 'Pet Supplies',
+						'templates' => array(
+							'Flat.File.PetSupplies.ca-Template.csv',
+							'Flat.File.PetSupplies.ca-DataDefinitions.csv',	
+							'Flat.File.PetSupplies.ca-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'ca_pet-supplies_browse_tree_guide.csv',
+						),
+					),
+
+					// Sports & Outdoors
+					'Sports' => array(
+						'title' => 'Sports & Outdoors',
+						'templates' => array(
+							'Flat.File.Sports.ca-Template.csv',
+							'Flat.File.Sports.ca-DataDefinitions.csv',	
+							'Flat.File.Sports.ca-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'ca_sports_browse_tree_guide.csv',
+						),
+					),
+
+					// Tools & Building Supplies
+					'HomeImprovement' => array(
+						'title' => 'Tools & Building Supplies',
+						'templates' => array(
+							'Flat.File.HomeImprovement.ca-Template.csv',
+							'Flat.File.HomeImprovement.ca-DataDefinitions.csv',	
+							'Flat.File.HomeImprovement.ca-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'ca_tools_browse_tree_guide.csv',
 						),
 					),
 
@@ -1204,20 +1311,6 @@ class WPLA_FeedTemplateIndex {
 						),
 						'btguides' => array(
 							'ca_watches_browse_tree_guide.csv',
-						),
-					),
-
-
-					// Sports & Outdoors
-					'Sports' => array(
-						'title' => 'Sports & Outdoors',
-						'templates' => array(
-							'Flat.File.Sports.ca-Template.csv',
-							'Flat.File.Sports.ca-DataDefinitions.csv',	
-							'Flat.File.Sports.ca-ValidValues.csv',								
-						),
-						'btguides' => array(
-							'ca_sports_browse_tree_guide.csv',
 						),
 					),
 
@@ -1707,6 +1800,419 @@ class WPLA_FeedTemplateIndex {
 
 				),
 			), // amazon.co.jp
+                    
+                    
+            // amazon.in (IN)
+			'IN' => array(
+				'site'  => 'amazon.in',
+				'code'  => 'IN',
+				'categories' => array(
+
+					// Automotive Parts & Accessories
+					'AutoAccessory' => array(
+						'title' => 'Car & Motorbike',
+						'templates' => array(
+							'Flat.File.AutoAccessory.in-Template.csv',
+							'Flat.File.AutoAccessory.in-DataDefinitions.csv',	
+							'Flat.File.AutoAccessory.in-ValidValues.csv',															
+						),
+						'btguides' => array(
+							'in_automotive_browse_tree_guide.csv',
+						),
+					),
+
+					// Baby
+					'Baby' => array(
+						'title' => 'Baby',
+						'templates' => array(
+							'Flat.File.Baby.in-Template.csv',
+							'Flat.File.Baby.in-DataDefinitions.csv',	
+							'Flat.File.Baby.in-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'in_baby-products_browse_tree_guide.csv',
+						),
+					),
+
+					// Beauty
+					'Beauty' => array(
+						'title' => 'Beauty',
+						'templates' => array(
+							'Flat.File.Beauty.in-Template.csv',
+							'Flat.File.Beauty.in-DataDefinitions.csv',	
+							'Flat.File.Beauty.in-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'in_beauty_browse_tree_guide.csv',
+						),
+					),
+                                                      
+                    // BookLoader
+					'BookLoader' => array(
+						'title' => 'Books',
+						'templates' => array(
+							'Flat.File.BookLoader.in-Template.csv',
+							'Flat.File.BookLoader.in-DataDefinitions.csv',	
+							'Flat.File.BookLoader.in-ValidValues.csv',								
+						),
+						'btguides' => array(
+						'in_books_browse_tree_guide.csv',
+						),
+					),
+					
+					// Clothing & Accessories
+					'Clothing' => array(
+						'title' => 'Clothing & Accessories',
+						'templates' => array(
+							'Flat.File.Clothing.in-Template.csv',
+							'Flat.File.Clothing.in-DataDefinitions.csv',	
+							'Flat.File.Clothing.in-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'in_apparel_browse_tree_guide.csv',
+						),
+					),
+
+					// Computers
+					'Computers' => array(
+						'title' => 'Computers & Accessories',
+						'templates' => array(
+							'Flat.File.Computers.in-Template.csv',
+							'Flat.File.Computers.in-DataDefinitions.csv',	
+							'Flat.File.Computers.in-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'in_computers_browse_tree_guide.csv',
+						),
+					),
+                                    
+                    // Consumer Electronics
+					'ConsumerElectronics' => array(
+						'title' => 'Electronics',
+						'templates' => array(
+							'Flat.File.ConsumerElectronics.in-Template.csv',
+							'Flat.File.ConsumerElectronics.in-DataDefinitions.csv',	
+							'Flat.File.ConsumerElectronics.in-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'in_electronics_browse_tree_guide.csv',
+						),
+					),
+						
+					//Gift cards
+					'Gifts' => array(
+						'title' => 'Gift Cards',
+						'templates' => array(
+							'Gift_cards_flatfile-Template.csv',
+							'Gift_cards_flatfile-DataDefinitions.csv',
+							'Gift_cards_flatfile-ValidValues.csv',
+						),
+						'btguides' => array(
+							'in_gift-cards_browse_tree_guide.csv',
+						),
+					),
+
+					// Grocery & Beverages
+					'FoodAndBeverages' => array(
+						'title' => 'Grocery & Gourmet',
+						'templates' => array(
+							'Flat.File.FoodAndBeverages.in-Template.csv',
+							'Flat.File.FoodAndBeverages.in-DataDefinitions.csv',	
+							'Flat.File.FoodAndBeverages.in-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'in_grocery_browse_tree_guide.csv',
+						),
+					),
+						
+					// Kirana Now
+					'FoodServiceAndJanSan' => array(
+						'title' => 'Kirana Now',
+						'templates' => array(
+							'Flat.File.FoodServiceAndJanSan.in-Template.csv',
+							'Flat.File.FoodServiceAndJanSan.in-DataDefinitions.csv',
+							'Flat.File.FoodServiceAndJanSan.in-ValidValues.csv',
+						),
+						'btguides' => array(							
+						),
+					),
+					
+					// Furniture
+					'Furniture' => array(
+						'title' => 'Furniture',
+						'templates' => array(
+							'Flat.File.Furniture.in-Template.csv',
+							'Flat.File.Furniture.in-DataDefinitions.csv',
+							'Flat.File.Furniture.in-ValidValues.csv',
+						),
+						'btguides' => array(
+						),
+					),
+
+					// Health & Personal Care
+					'Health' => array(
+						'title' => 'Health & Personal Care',
+						'templates' => array(
+							'Flat.File.Health.in-Template.csv',
+							'Flat.File.Health.in-DataDefinitions.csv',	
+							'Flat.File.Health.in-ValidValues.csv',								
+						),
+						'btguides' => array(
+							 'in_health_browse_tree_guide.csv',
+						),
+					),
+
+					// Home & Kitchen
+					'Home' => array(
+						'title' => 'Home & Kitchen',
+						'templates' => array(
+							'Flat.File.Home.in-Template.csv',
+							'Flat.File.Home.in-DataDefinitions.csv',	
+							'Flat.File.Home.in-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'in_kitchen_browse_tree_guide.csv',
+						),
+					),
+						
+					
+					// Industrial
+					'Industrial' => array(
+						'title' => 'Industrial',
+						'templates' => array(
+							'Flat.File.Industrial.in-Template.csv',
+							'Flat.File.Industrial.in-DataDefinitions.csv',
+							'Flat.File.Industrial.in-ValidValues.csv',
+						),
+						'btguides' => array(
+						),
+					),
+					
+					
+					// Jewelry
+					'Jewelry' => array(
+						'title' => 'Jewelry',
+						'templates' => array(
+							'Flat.File.Jewelry.in-Template.csv',
+							'Flat.File.Jewelry.in-DataDefinitions.csv',
+							'Flat.File.Jewelry.in-ValidValues.csv',
+						),
+						'btguides' => array(
+							'in_jewelry_browse_tree_guide.csv',
+						),
+					),
+					
+					// Lab Supplies
+					'LabSupplies' => array(
+						'title' => 'Lab Supplies',
+						'templates' => array(
+							'Flat.File.LabSupplies.in-Template.csv',
+							'Flat.File.LabSupplies.in-DataDefinitions.csv',
+							'Flat.File.LabSupplies.in-ValidValues.csv',
+						),
+						'btguides' => array(
+						),
+					),
+					
+					// Large Appliances
+					'LargeAppliances' => array(
+						'title' => 'Large Appliances',
+						'templates' => array(
+							'Flat.File.LargeAppliances.in-Template.csv',
+							'Flat.File.LargeAppliances.in-DataDefinitions.csv',
+							'Flat.File.LargeAppliances.in-ValidValues.csv',
+						),
+						'btguides' => array(
+						),
+					),
+					
+					// Luxury Beauty
+					'LuxuryBeauty' => array(
+						'title' => 'Luxury Beauty',
+						'templates' => array(
+							'Flat.File.LuxuryBeauty.in-Template.csv',
+							'Flat.File.LuxuryBeauty.in-DataDefinitions.csv',
+							'Flat.File.LuxuryBeauty.in-ValidValues.csv',
+						),
+						'btguides' => array(
+						),
+					),
+					
+					// Mechanical Fasteners
+					'MechanicalFasteners' => array(
+						'title' => 'Mechanical Fasteners',
+						'templates' => array(
+							'Flat.File.MechanicalFasteners.in-Template.csv',
+							'Flat.File.MechanicalFasteners.in-DataDefinitions.csv',
+							'Flat.File.MechanicalFasteners.in-ValidValues.csv',
+						),
+						'btguides' => array(
+						),
+					),
+					
+					
+					// Musical Instruments
+					'MusicalInstruments' => array(
+						'title' => 'Musical Instruments',
+						'templates' => array(
+							'Flat.File.MusicalInstruments.in-Template.csv',
+							'Flat.File.MusicalInstruments.in-DataDefinitions.csv',
+							'Flat.File.MusicalInstruments.in-ValidValues.csv',
+						),
+						'btguides' => array(
+						),
+					),
+					
+					
+					// Office Products
+					'Office' => array(
+						'title' => 'Office Products',
+						'templates' => array(
+							'Flat.File.Office.in-Template.csv',
+							'Flat.File.Office.in-DataDefinitions.csv',
+							'Flat.File.Office.in-ValidValues.csv',
+						),
+						'btguides' => array(
+							'in_office_browse_tree_guide.csv',
+						),
+					),
+						
+
+					// Luggage & Bags
+					'Luggage' => array(
+						'title' => 'Luggage & Bags',
+						'templates' => array(
+							'Flat.File.Luggage.in-Template.csv',
+							'Flat.File.Luggage.in-DataDefinitions.csv',	
+							'Flat.File.Luggage.in-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'in_luggage_browse_tree_guide.csv',
+						),
+					),
+
+					// Shoes
+					'Shoes' => array(
+						'title' => 'Shoes & Handbags',
+						'templates' => array(
+							'Flat.File.Shoes.in-Template.csv',
+							'Flat.File.Shoes.in-DataDefinitions.csv',	
+							'Flat.File.Shoes.in-ValidValues.csv',								
+						),
+						'btguides' => array(
+							 'in_shoes_browse_tree_guide.csv',
+						),
+					),
+						
+					// Software
+					'SoftwareVideoGames' => array(
+						'title' => 'Software',
+						'templates' => array(
+							'Flat.File.SWVG.in-Template.csv',
+							'Flat.File.SWVG.in-DataDefinitions.csv',
+							'Flat.File.SWVG.in-ValidValues.csv',
+						),
+						'btguides' => array(
+							'in_software_browse_tree_guide.csv',
+							'in_videogames_browse_tree_guide.csv',
+						),
+					),
+					
+					// Pet Supplies
+					'PetSupplies' => array(
+						'title' => 'Pet Supplies',
+						'templates' => array(
+							'Flat.File.PetSupplies.in-Template.csv',
+							'Flat.File.PetSupplies.in-DataDefinitions.csv',
+							'Flat.File.PetSupplies.in-ValidValues.csv',
+						),
+						'btguides' => array(
+							'in_pet-supplies_browse_tree_guide.csv',
+						),
+					),
+					
+					// Pro Healthcare
+					'ProfessionalHealthCare' => array(
+						'title' => 'Professional Health Care',
+						'templates' => array(
+							'Flat.File.ProfessionalHealthCare.in-Template.csv',
+							'Flat.File.ProfessionalHealthCare.in-DataDefinitions.csv',
+							'Flat.File.ProfessionalHealthCare.in-ValidValues.csv',
+						),
+						'btguides' => array(
+						),
+					),
+
+					// Sports & Outdoors
+					'Sports' => array(
+						'title' => 'Sports, Fitness & Outdoors',
+						'templates' => array(
+							'Flat.File.Sports.in-Template.csv',
+							'Flat.File.Sports.in-DataDefinitions.csv',	
+							'Flat.File.Sports.in-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'in_sports_browse_tree_guide.csv',
+						),
+					),
+
+				
+
+					// Toys
+					'Toys' => array(
+						'title' => 'Toys & Games',
+						'templates' => array(
+							'Flat.File.Toys.in-Template.csv',
+							'Flat.File.Toys.in-DataDefinitions.csv',	
+							'Flat.File.Toys.in-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'in_toys_browse_tree_guide.csv',
+						),
+					),
+
+					
+					// Watches
+					'Watches' => array(
+						'title' => 'Watches',
+						'templates' => array(
+							'Flat.File.Watches.in-Template.csv',
+							'Flat.File.Watches.in-DataDefinitions.csv',	
+							'Flat.File.Watches.in-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'in_watches_browse_tree_guide.csv',
+						),
+					),
+						
+					// Video
+					'Video' => array(
+						'title' => 'Video',
+						'templates' => array(
+							'Flat.File.Video.in-Template.csv',
+							'Flat.File.Video.in-DataDefinitions.csv',
+							'Flat.File.Video.in-ValidValues.csv',
+						),
+						'btguides' => array(
+							'in_dvd_browse_tree_guide.csv',
+						),
+					),
+
+
+					// ListingLoader
+					'ListingLoader' => array(
+						'title' => 'ListingLoader',
+						'templates' => array(
+							'ListingLoader.in-Template.csv',
+							'ListingLoader.in-DataDefinitions.csv',	
+							'ListingLoader.in-ValidValues.csv',	
+						),
+						'btguides' => array(
+						),
+					),
+
+				),
+			), //amazon.in
 
 		);
 

@@ -257,6 +257,20 @@ class WPLA_ProductWrapper {
 		return $options;
 	}	
 
+	// sort variation attributes according to _product_attributes post meta field
+	static function sortVariationAttributes( $variation_attributes, $_product_attributes ) {
+		if ( empty($_product_attributes) ) return $variation_attributes;
+
+		$attributes = array();
+		foreach ( $_product_attributes as $term_key => $product_attribute ) {
+			if ( isset( $variation_attributes['attribute_'.$term_key] ) ) {
+				$attributes['attribute_'.$term_key] = $variation_attributes['attribute_'.$term_key];
+			}
+		}
+
+		return $attributes;
+	} // sortVariationAttributes()
+
 	// get all product variations
 	static function getVariations( $post_id ) {
 		global $product; // make $product globally available for some badly coded themes...		
@@ -266,7 +280,7 @@ class WPLA_ProductWrapper {
 
 		// force all variations to show, regardless if woocommerce_hide_out_of_stock_items is yes or no
 		// by forcing visibility to true - doesn't work with WC2.2 :-(
-		add_filter( 'woocommerce_product_is_visible', array( 'ProductWrapper', 'returnTrue' ), 999, 2 );
+		add_filter( 'woocommerce_product_is_visible', array( 'WPLA_ProductWrapper', 'returnTrue' ), 999, 2 );
 		// this works for WC2.2 as well:
 		// TODO: implement an alternative get_available_variations() method for better performance
 		if ( 'yes' === get_option( 'woocommerce_hide_out_of_stock_items' ) ) {
@@ -274,17 +288,21 @@ class WPLA_ProductWrapper {
 			$reenable_woocommerce_hide_out_of_stock_items = true;
 		}
 
+		// fix bug in woocommerce-woowaitlist (codecanyon version)
+		if ( class_exists('Woocommerce_Waitlist') ) remove_all_filters( 'woocommerce_get_availability' );
+
 		$available_variations  = $product->get_available_variations();
 		$variation_attributes  = $product->get_variation_attributes();
 		$default_attributes    = $product->get_variation_default_attributes();
 		$has_default_variation = false;
 
 		// remove filter again
-		remove_filter( 'woocommerce_product_is_visible', array( 'ProductWrapper', 'returnTrue' ), 999, 2 );
+		remove_filter( 'woocommerce_product_is_visible', array( 'WPLA_ProductWrapper', 'returnTrue' ), 999, 2 );
 		// reset wc option
 		if ( isset( $reenable_woocommerce_hide_out_of_stock_items ) ) {
 			update_option( 'woocommerce_hide_out_of_stock_items', 'yes' );
 		}
+
 
 		// echo "<pre>default_attributes: ";print_r($default_attributes);echo"</pre>";
 		// echo "<pre>available_variations: ";print_r($available_variations);echo"</pre>";
@@ -337,6 +355,12 @@ class WPLA_ProductWrapper {
 			$newvar['post_id'] = $var_id;
 			// $newvar['term_id'] = $var->term_id;
 			
+			// sort variation attributes according to _product_attributes
+			if ( sizeof( $var['attributes'] ) > 1 ) {
+				$_product_attributes = (array) maybe_unserialize( get_post_meta( $post_id, '_product_attributes', true ) );
+				$var['attributes']   = self::sortVariationAttributes( $var['attributes'], $_product_attributes );
+			}		
+			
 			$attributes = $var['attributes'];
 			$newvar['variation_attributes'] = array();
 			$attributes_without_values = array();
@@ -356,6 +380,7 @@ class WPLA_ProductWrapper {
 
 				// get attribute label
 				$attribute_label = isset( $attribute_labels[ $key ] ) ? $attribute_labels[ $key ] : false;
+				if ( ! $attribute_label ) continue;
 
 				if ( $term ) {
 					// handle proper attribute taxonomies
@@ -445,13 +470,14 @@ class WPLA_ProductWrapper {
 
 			}
 
-			// if no default variation was found, make the first on default
-			if ( ! $has_default_variation && sizeof($variations) ) {
-				$variations[0]['is_default'] = true;
-			}
-			
 		}
 
+
+		// if no default variation was found, make the first on default
+		if ( ! $has_default_variation && sizeof($variations) ) {
+			$variations[0]['is_default'] = true;
+		}
+			
 		// handle attribute merging
 		$variations = self::mergeVariationAttributes( $variations );
 

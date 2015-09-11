@@ -368,6 +368,9 @@ class WPLA_Product_MetaBox {
 
 		}
 
+        // create matched listing when ASIN is entered manually
+        $this->auto_match_ASIN( $post_id );
+
 		// update min/max prices in listings table
 		if ( isset( $_POST['wpl_amazon_minimum_price'] ) ) {
 
@@ -400,6 +403,40 @@ class WPLA_Product_MetaBox {
 		$lm->updateCustomListingTitle( $post_id );
 
 	} // save_meta_box()
+
+
+
+    // create matched listing when ASIN is entered manually
+    function auto_match_ASIN( $post_id ) {
+
+        // check if we have an ASIN
+        $asin = get_post_meta( $post_id, '_wpla_asin', true );
+        if ( ! $asin ) return;
+
+		// check if this ASIN / ID already exist - skip if it does
+		$lm = new WPLA_ListingsModel();
+		if ( $lm->getItemByASIN( $asin, false ) ) return;
+		if ( $lm->getItemByPostID( $post_id ) ) return;
+
+        // get default account
+		$default_account_id = get_option( 'wpla_default_account_id', 1 );
+		if ( ! $default_account_id ) return;
+
+		// insert matched listing
+		$success = $lm->insertMatchedProduct( $post_id, $asin, $default_account_id );
+
+		if ( $success ) {
+			$msg = isset($lm->lastError) ? $lm->lastError : '';
+			WPLA()->logger->info( "auto-matched product #$post_id - $msg" );
+		} else {
+			// TODO: implement persistent admin messages
+			$msg = isset($lm->lastError) ? $lm->lastError : '';
+			wpla_show_message( "Failed to match product #$post_id: $msg", 'error' ); // won't show because page is reloaded after saving
+			WPLA()->logger->warn( "Failed to match product #$post_id - please report this to support." );
+			// echo "Failed to match product #$post_id - please report this to support.";
+		}
+
+	} // auto_match_ASIN()
 
 
 
@@ -644,7 +681,7 @@ class WPLA_Product_MetaBox {
 
 
     public function process_product_meta_variable( $post_id ) {
-        // echo "<pre>";print_r($_POST);echo"</pre>";die();
+    	WPLA()->logger->info('process_product_meta_variable() - '.$post_id);
         if ( ! isset($_POST['variable_sku']) ) return;
 
 		$variable_post_id               = $_POST['variable_post_id'];
@@ -733,6 +770,9 @@ class WPLA_Product_MetaBox {
 
         } // each variation
 
+    	WPLA()->logger->info('Variations with ASIN: '.print_r($all_variations_with_ASIN,1));
+    	WPLA()->logger->info('Variations with SKU : '.print_r($all_variations_with_SKU,1));
+
         // process matched variations
         // check all variations with ASIN and add missing ones to listings table
         if ( ! empty( $all_variations_with_ASIN ) ) {
@@ -744,20 +784,24 @@ class WPLA_Product_MetaBox {
         	foreach ( $all_variations_with_ASIN as $variation_id => $asin ) {
 
         		// check if this ASIN / ID already exist - skip if it does
+		    	WPLA()->logger->info("searching for existing listing for #$variation_id / $asin");
 				if ( $lm->getItemByASIN( $asin, false ) ) continue;
 				if ( $lm->getItemByPostID( $variation_id ) ) continue;
+		    	WPLA()->logger->info("no listing found for variation #$variation_id / $asin");
 
 				// skip hidden variations
 				if ( get_post_meta( $variation_id, '_amazon_is_disabled', true ) == 'on' ) continue;
 
         		// insert matched listing
 				$success = $lm->insertMatchedProduct( $variation_id, $asin, $default_account_id );
+				$error_msg = isset($lm->lastError) ? $lm->lastError : '';
 
 				if ( $success ) {
-					$error_msg = isset($lm->lastError) ? $lm->lastError : false;
+					// TODO: use persistent admin message
+			    	WPLA()->logger->info("Matched variation #$variation_id / $asin - $error_msg");
 				} else {
-					if ( isset($lm->lastError) ) echo $lm->lastError."\n";
-					echo "Failed to match variation #$variation_id - please report this to support.";
+					echo "Failed to match variation #$variation_id - please report this to support: $error_msg";
+			    	WPLA()->logger->error("Failed to match variation #$variation_id / $asin - $error_msg");
 				}
 
         	} // each matched variation
@@ -779,6 +823,7 @@ class WPLA_Product_MetaBox {
         		// check if this SKU / ID already exist - skip if it does
 				if ( $lm->getItemBySKU( $sku, false ) ) continue;
 				if ( $lm->getItemByPostID( $variation_id ) ) continue;
+		    	WPLA()->logger->info("no listing found for missing variation #$variation_id / $sku");
 
 				// check if this variation has a UPC/EAN set - skip if empty (unless brand registry is enabled)
 				$_amazon_product_id = get_post_meta( $variation_id, '_amazon_product_id', true );
@@ -789,12 +834,14 @@ class WPLA_Product_MetaBox {
 
         		// insert variation listing
 				$success = $lm->insertMissingVariation( $variation_id, $sku, $parent_listing );
+				$error_msg = isset($lm->lastError) ? $lm->lastError : '';
 
 				if ( $success ) {
-					$error_msg = isset($lm->lastError) ? $lm->lastError : false;
+					// TODO: use persistent admin message
+			    	WPLA()->logger->info("Matched missing variation #$variation_id / $sku - $error_msg");
 				} else {
-					if ( isset($lm->lastError) ) echo $lm->lastError."\n";
-					echo "Failed to match variation #$variation_id - please report this to support.";
+					echo "Failed to match missing variation #$variation_id - please report this to support: $error_msg";
+			    	WPLA()->logger->error("Failed to match missing variation #$variation_id / $sku - $error_msg");
 				}
 
         	} // each variation

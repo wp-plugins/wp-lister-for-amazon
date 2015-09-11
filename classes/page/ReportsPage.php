@@ -131,7 +131,7 @@ class WPLA_ReportsPage extends WPLA_Page {
 
 				$api = new WPLA_AmazonAPI( $account->id );
 
-				// get report requests
+				// request report - returns request list as array on success
 				$reports = $api->requestReport( $_REQUEST['wpla_report_type']);
 
 				if ( is_array( $reports ) )  {

@@ -101,6 +101,11 @@ class WPLA_FbaHelper {
             if ( ! in_array( $_order->shipping_country, $allowed_countries ) ) {
                 return __('Shipping destination is not within the EU.', 'wpla');
             }
+        } elseif ( 'AMAZON_IN' == $fba_default_fcid ) {
+            $allowed_countries = array( 'IN' );
+            if ( ! in_array( $_order->shipping_country, $allowed_countries ) ) {
+                return __('Shipping destination is not within India.', 'wpla');
+            }
         }
 
         // check if ordered items are available on FBA

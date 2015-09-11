@@ -62,7 +62,7 @@
 								<?php wp_nonce_field( 'wpla_tools_page' ); ?>
 								<input type="hidden" name="action" value="wpla_refresh_minmax_prices_from_wc" />
 								<input type="submit" value="<?php echo __('Refresh Min./Max. Prices','wpla'); ?>" name="submit" class="button">
-								<p><?php echo __('Update minimum and maxmimum prices from WooCommerce.','wpla'); ?></p>
+								<p><?php echo __('Update minimum and maxmimum prices from WooCommerce and submit Price and Quantity feed to Amazon.','wpla'); ?></p>
 						</form>
 						<br style="clear:both;"/>
 

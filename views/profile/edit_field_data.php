@@ -30,7 +30,7 @@ $is_expert_mode      = $profile_editor_mode == 'expert' ? true : false;
 
 	<?php foreach ( $wpl_fields as $field ) : ?>
 
-		<?php if ( $field['group'] != $current_group ) : ?>
+		<?php if ( $field['group'] != $current_group && ! empty( $field['group'] ) ) : ?>
 			<?php
 				// skip specific groups that are handled internally - like Image or Variations
 				// if ( in_array( $field['group_id'], array('Image','Variation', 'Bild','Variations', 'Immagine','Varianti' ) ) )
@@ -111,6 +111,13 @@ $is_expert_mode      = $profile_editor_mode == 'expert' ? true : false;
 
 			if ( in_array( $field['field'], $internal_fields ) )
 				continue;
+
+			// if account is registered brand, external_product_id is not required
+			if ( $wpl_is_reg_brand ) {
+				if ( in_array( $field['field'], array('external_product_id','external_product_id_type') ) ) {
+					$field['required'] = '';
+				}
+			}
 
 			$is_preferred         = in_array( $field['required'], array('Preferred','Empfohlen','Recomendado') ); // TODO: add FR + IT
 			$is_maybe_required    = in_array( $field['required'], array('Required','Erforderlich','Obbligatorio','Obligatoire','Obligatorio') );

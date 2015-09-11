@@ -69,6 +69,10 @@ class MarketplaceWebService_Model_ReportRequestInfo extends MarketplaceWebServic
         'Scheduled' => array('FieldValue' => null, 'FieldType' => 'bool'),
         'SubmittedDate' => array('FieldValue' => null, 'FieldType' => 'DateTime'),
         'ReportProcessingStatus' => array('FieldValue' => null, 'FieldType' => 'string'),
+
+        'GeneratedReportId' => array('FieldValue' => null, 'FieldType' => 'string'),
+        'StartedProcessingDate' => array('FieldValue' => null, 'FieldType' => 'DateTime'),
+        'CompletedDate' => array('FieldValue' => null, 'FieldType' => 'DateTime'),
         );
         parent::__construct($data);
     }
@@ -389,6 +393,157 @@ class MarketplaceWebService_Model_ReportRequestInfo extends MarketplaceWebServic
         return !is_null($this->fields['ReportProcessingStatus']['FieldValue']);
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+    /**
+     * Gets the value of the GeneratedReportId property.
+     * 
+     * @return string GeneratedReportId
+     */
+    public function getGeneratedReportId() 
+    {
+        return $this->fields['GeneratedReportId']['FieldValue'];
+    }
+
+    /**
+     * Sets the value of the GeneratedReportId property.
+     * 
+     * @param string GeneratedReportId
+     * @return this instance
+     */
+    public function setGeneratedReportId($value) 
+    {
+        $this->fields['GeneratedReportId']['FieldValue'] = $value;
+        return $this;
+    }
+
+    /**
+     * Sets the value of the GeneratedReportId and returns this instance
+     * 
+     * @param string $value GeneratedReportId
+     * @return MarketplaceWebService_Model_ReportRequestInfo instance
+     */
+    public function withGeneratedReportId($value)
+    {
+        $this->setGeneratedReportId($value);
+        return $this;
+    }
+
+
+    /**
+     * Checks if GeneratedReportId is set
+     * 
+     * @return bool true if GeneratedReportId  is set
+     */
+    public function isSetGeneratedReportId()
+    {
+        return !is_null($this->fields['GeneratedReportId']['FieldValue']);
+    }
+
+
+
+    /**
+     * Gets the value of the CompletedDate property.
+     * 
+     * @return string CompletedDate
+     */
+    public function getCompletedDate() 
+    {
+        return $this->fields['CompletedDate']['FieldValue'];
+    }
+
+    /**
+     * Sets the value of the CompletedDate property.
+     * 
+     * @param string CompletedDate
+     * @return this instance
+     */
+    public function setCompletedDate($value) 
+    {
+        $this->fields['CompletedDate']['FieldValue'] = $value;
+        return $this;
+    }
+
+    /**
+     * Sets the value of the CompletedDate and returns this instance
+     * 
+     * @param string $value CompletedDate
+     * @return MarketplaceWebService_Model_ReportRequestInfo instance
+     */
+    public function withCompletedDate($value)
+    {
+        $this->setCompletedDate($value);
+        return $this;
+    }
+
+
+    /**
+     * Checks if CompletedDate is set
+     * 
+     * @return bool true if CompletedDate  is set
+     */
+    public function isSetCompletedDate()
+    {
+        return !is_null($this->fields['CompletedDate']['FieldValue']);
+    }
+
+
+
+
+    /**
+     * Gets the value of the StartedProcessingDate property.
+     * 
+     * @return string StartedProcessingDate
+     */
+    public function getStartedProcessingDate() 
+    {
+        return $this->fields['StartedProcessingDate']['FieldValue'];
+    }
+
+    /**
+     * Sets the value of the StartedProcessingDate property.
+     * 
+     * @param string StartedProcessingDate
+     * @return this instance
+     */
+    public function setStartedProcessingDate($value) 
+    {
+        $this->fields['StartedProcessingDate']['FieldValue'] = $value;
+        return $this;
+    }
+
+    /**
+     * Sets the value of the StartedProcessingDate and returns this instance
+     * 
+     * @param string $value StartedProcessingDate
+     * @return MarketplaceWebService_Model_ReportRequestInfo instance
+     */
+    public function withStartedProcessingDate($value)
+    {
+        $this->setStartedProcessingDate($value);
+        return $this;
+    }
+
+
+    /**
+     * Checks if StartedProcessingDate is set
+     * 
+     * @return bool true if StartedProcessingDate  is set
+     */
+    public function isSetStartedProcessingDate()
+    {
+        return !is_null($this->fields['StartedProcessingDate']['FieldValue']);
+    }
 
 
 

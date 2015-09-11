@@ -93,11 +93,11 @@
                 ?>
                 <a href="<?php echo $feed_permalink ?>" target="_blank"><?php echo $feed_linktitle ?></a>
             </td><td>
-                <?php echo number_format( $row['price'], 2 ) ?>
+                <?php echo number_format_i18n( $row['price'], 2 ) ?>
             </td><td>
-                <?php echo number_format( $row['minimum-seller-allowed-price'], 2 ) ?>
+                <?php echo number_format_i18n( $row['minimum-seller-allowed-price'], 2 ) ?>
             </td><td>
-                <?php echo number_format( $row['maximum-seller-allowed-price'], 2 ) ?>
+                <?php echo number_format_i18n( $row['maximum-seller-allowed-price'], 2 ) ?>
             </td><td>
                 <?php echo $row['quantity'] ?>
             </td><td style="text-align:center;">

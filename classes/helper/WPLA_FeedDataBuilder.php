@@ -162,6 +162,9 @@ class WPLA_FeedDataBuilder {
 			
 			case 'external_product_id_type':
 				$value = get_post_meta( $post_id, '_amazon_id_type', true );
+				// leave id type empty if there is no product id (parent variations)
+				$external_product_id = WPLA()->memcache->getColumnValue( $product->sku, 'external_product_id' );
+				if ( empty( $external_product_id ) ) $value = '[---]';
 				break;
 			
 			case 'sku':			// update feed
@@ -198,32 +201,52 @@ class WPLA_FeedDataBuilder {
 				$value = $value ? round($value,2) : $value;
 
 				// make sure sale_price is not higher than standard_price / price - Amazon might silently ignore price updates otherwise
-				$standard_price = WPLA()->memcache->getColumnValue( $product->sku, 'standard_price' );
-				$standard_price = $standard_price ? $standard_price : WPLA()->memcache->getColumnValue( $product->sku, 'price' );
+				$standard_price = self::getStandardPriceForRow( $product->sku );
 				if ( $standard_price && ( $value > $standard_price ) ) $value = '';
 
+				// if no sale price is set, send regular price with sale end date in the past to remove previously sent sale prices
+				if ( empty($value) ) $value = $standard_price;
+
 				break;
 
-			case 'sale_from_date':	// new items feed
+			case 'sale_from_date':		// new items feed
 			case 'sale-start-date':		// update feed
+
 				$date = get_post_meta( $post_id, '_sale_price_dates_from', true );
 				if ( $date ) $value = date( 'Y-m-d', $date );
-				// if sale_price column is set but no start date, fill in 2010-01-01
-				$sale_price = WPLA()->memcache->getColumnValue( $product->sku, 'sale_price' );
-				if ( ! $value && $sale_price ) $value = '2010-01-01';
-				$sale_price = WPLA()->memcache->getColumnValue( $product->sku, 'sale-price' );
-				if ( ! $value && $sale_price ) $value = '2010-01-01';
+
+				// if sale price exists but no start date, fill in 2011-01-01
+				$has_sale_price = self::hasActiveSalePrice( $product->sku );
+				if ( ! $value && $has_sale_price ) $value = '2011-01-01';
+
+				// fall back to default past date if standard price is set
+				$standard_price = self::getStandardPriceForRow( $product->sku );
+				if ( ! $value && $standard_price ) $value = '2000-01-01';  // default past date
+
+				// if sale price is intentionally left blank by [---] shortcode, leave sale date blank as well
+				$sale_price = self::getSalePriceForRow( $product->sku );
+				if ( ! $sale_price ) $value = '';
+
 				break;
 
-			case 'sale_end_date':	// new items feed
+			case 'sale_end_date':		// new items feed
 			case 'sale-end-date':		// update feed
+
 				$date = get_post_meta( $post_id, '_sale_price_dates_to', true );
 				if ( $date ) $value = date( 'Y-m-d', $date );
-				// if sale_price column is set but no start date, fill in 2029-12-31
-				$sale_price = WPLA()->memcache->getColumnValue( $product->sku, 'sale_price' );
-				if ( ! $value && $sale_price ) $value = '2029-12-31';
-				$sale_price = WPLA()->memcache->getColumnValue( $product->sku, 'sale-price' );
-				if ( ! $value && $sale_price ) $value = '2029-12-31';
+
+				// if sale price exists but no end date, fill in 2029-12-31
+				$has_sale_price = self::hasActiveSalePrice( $product->sku );
+				if ( ! $value && $has_sale_price ) $value = '2029-12-31';
+
+				// fall back to default past date if standard price is set
+				$standard_price = self::getStandardPriceForRow( $product->sku );
+				if ( ! $value && $standard_price ) $value = '2000-01-02';  // default past date
+
+				// if sale price is intentionally left blank by [---] shortcode, leave sale date blank as well
+				$sale_price = self::getSalePriceForRow( $product->sku );
+				if ( ! $sale_price ) $value = '';
+
 				break;
 
 			case 'minimum-seller-allowed-price':
@@ -466,6 +489,24 @@ class WPLA_FeedDataBuilder {
 			}
 		}
 
+		// parent variations should only have certain columns
+		// these three seem to work on Amazon CA / Automotive: item_sku, parent_child, variation_theme
+		// but on US and DE, more columns are required:
+		// $parent_var_columns = array('item_sku','parent_child','variation_theme'); // CA
+		$parent_var_columns = array(
+			'item_sku',
+			'parent_child',
+			'variation_theme',
+			'brand_name',
+			'item_name',
+			'department_name',
+			'product_description',
+			'item_type',
+		);
+		if ( $product->product_type == 'variable' && ! in_array( $column, $parent_var_columns ) ) {
+			$value = '';
+		}
+
 		wpla_logger_end_timer('parseProductColumn');
 		return $value;
 	} // parseProductColumn()
@@ -591,8 +632,7 @@ class WPLA_FeedDataBuilder {
 				$value = $value ? round($value,2) : $value;
 
 				// make sure sale_price is not higher than standard_price / price - Amazon might silently ignore price updates otherwise
-				$standard_price = WPLA()->memcache->getColumnValue( $product->sku, 'standard_price' );
-				$standard_price = $standard_price ? $standard_price : WPLA()->memcache->getColumnValue( $product->sku, 'price' );
+				$standard_price = self::getStandardPriceForRow( $product->sku );
 				if ( $standard_price && ( $value > $standard_price ) ) $value = '';
 				
 				break;
@@ -600,16 +640,18 @@ class WPLA_FeedDataBuilder {
 			case '[product_sale_start]':
 				$date = get_post_meta( $post_id, '_sale_price_dates_from', true );
 				$value = $date ? date( 'Y-m-d', $date ) : '';
-				// if sale_price column is set but no start date, fill in 2010-01-01
-				$sale_price = WPLA()->memcache->getColumnValue( $product->sku, 'sale_price' );
-				if ( ! $value && $sale_price ) $value = '2010-01-01';
+
+				// if sale price exists but no start date, fill in 2010-01-01
+				$has_sale_price = self::hasActiveSalePrice( $product->sku );
+				if ( ! $value && $has_sale_price ) $value = '2010-01-01';
 				break;
 			case '[product_sale_end]':
 				$date = get_post_meta( $post_id, '_sale_price_dates_to', true );
 				$value = $date ? date( 'Y-m-d', $date ) : '';
-				// if sale_price column is set but no start date, fill in 2010-01-01
-				$sale_price = WPLA()->memcache->getColumnValue( $product->sku, 'sale_price' );
-				if ( ! $value && $sale_price ) $value = '2010-01-01';
+
+				// if sale price exists but no end date, fill in 2019-01-01
+				$has_sale_price = self::hasActiveSalePrice( $product->sku );
+				if ( ! $value && $has_sale_price ) $value = '2019-01-01';
 				break;
 			
 			case '[product_msrp]':
@@ -702,6 +744,50 @@ class WPLA_FeedDataBuilder {
 
 		return $value;
 	} // parseProfileShortcode()
+
+
+	// get the standard price for current row (by SKU)
+	static public function getStandardPriceForRow( $product_sku ) {
+
+		// listing data feed
+		$standard_price = WPLA()->memcache->getColumnValue( $product_sku, 'standard_price' );
+		if ( $standard_price ) return $standard_price;
+
+		// ListingLoader feed
+		$standard_price = WPLA()->memcache->getColumnValue( $product_sku, 'price' );
+		if ( $standard_price ) return $standard_price;
+
+		return '';
+	} // getStandardPriceForSKU()
+
+	// get the sale price for current row (by SKU)
+	static public function getSalePriceForRow( $product_sku ) {
+
+		// listing data feed
+		$sale_price = WPLA()->memcache->getColumnValue( $product_sku, 'sale_price' );
+		if ( $sale_price ) return $sale_price;
+
+		// ListingLoader feed
+		$sale_price = WPLA()->memcache->getColumnValue( $product_sku, 'sale-price' );
+		if ( $sale_price ) return $sale_price;
+
+		return '';
+	} // getStandardPriceForSKU()
+
+
+	// check if there is an active sale price (different from the standard price) for current row / SKU
+	static public function hasActiveSalePrice( $product_sku ) {
+
+		// check if there is a sale price for this row
+		$sale_price = self::getSalePriceForRow( $product_sku );
+		if ( ! $sale_price ) return false;
+
+		// if there is a sale price, check if it's different from the standard price
+		if ( $sale_price == self::getStandardPriceForRow( $product_sku ) ) return false;
+
+		// yes, there is a sale price
+		return true;
+	} // hasActiveSalePrice()
 
 
 	static public function convertTitle( $value ) {
@@ -870,7 +956,7 @@ class WPLA_FeedDataBuilder {
 			foreach ( $matches[1] as $attribute ) {
 
 				$taxonomy_name = 'attribute_pa_'.$attribute;
-				if ( isset( $variation_attributes[ $taxonomy_name ] )){
+				if ( isset( $variation_attributes[ $taxonomy_name ] ) && $variation_attributes[ $taxonomy_name ] !== '' ){
 					$attribute_slug  = $variation_attributes[ $taxonomy_name ];
 					$attribute_value = WPLA_ProductWrapper::getAttributeValueFromSlug( $taxonomy_name, $attribute_slug );
 					$field_value     = str_replace( '[attribute_'.$attribute.']', $attribute_value,  $field_value );
@@ -1201,19 +1287,28 @@ class WPLA_FeedDataBuilder {
 				if ( ! $time ) {
 					$time = $dt->format('H:i:s'); // add current time in UTC
 					// $time .= '+00:00' 	      // UTC (works as well as 'Z')
-					$time .= 'Z'; 				  // Z stands for UTC timezone
+					// $time .= 'Z'; 			  // Z stands for UTC timezone
 				}
 
-				$value = $date . ' ' . $time; 
+				$value = $date . ' ' . $time . 'Z';
 				break;
 			
 			case 'carrier-code':
 				$value = get_post_meta( $post_id, '_wpla_tracking_provider', true );
+
+				if ( empty( $value ) && $tracking = self::getThirdPartyPluginTrackingData( $post_id ) ) {
+					$value = 'Other';
+				}
 				break;
 			
 			case 'carrier-name':
 				$carrier = WPLA()->memcache->getColumnValue( 'shipfeed_oid_'.$post_id, 'carrier-code' );				
 				$value   = get_post_meta( $post_id, '_wpla_tracking_service_name', true );
+
+				if ( empty( $value ) && $tracking = self::getThirdPartyPluginTrackingData( $post_id ) ) {
+					$value = $tracking->provider;
+				}
+
 				if ( empty($value) && $carrier == 'Other' ) {
 					$value = get_option( 'wpla_default_shipping_service_name', '' );
 					if ( empty($value) ) $value = 'N/A'; // we can't leave carrier-name empty if carrier-code is 'Other'
@@ -1222,6 +1317,10 @@ class WPLA_FeedDataBuilder {
 			
 			case 'tracking-number':
 				$value = get_post_meta( $post_id, '_wpla_tracking_number', true );
+
+				if ( empty( $value ) && $tracking = self::getThirdPartyPluginTrackingData( $post_id ) ) {
+					$value = $tracking->number;
+				}
 				break;
 			
 			default:
@@ -1233,6 +1332,29 @@ class WPLA_FeedDataBuilder {
 	} // parseOrderColumn()
 
 
+	// helper method to determine if tracking data was set by 3rd party plugins
+	static function getThirdPartyPluginTrackingData( $post_id ) {
+
+        // check meta fields used by WooCommerce Shipment Tracking plugin and Shipstation plugin
+		$_tracking_number   = get_post_meta( $post_id, '_tracking_number', true );
+		$_tracking_provider = get_post_meta( $post_id, '_tracking_provider', true );
+
+		// check custom carrier code used by Shipment Tracking
+		if ( empty( $_tracking_provider ) ) {
+			$_tracking_provider = get_post_meta( $post_id, '_custom_tracking_provider', true );
+		}
+
+		// return false unless both number and provider are set
+		if ( empty( $_tracking_number   ) ) return false;
+		if ( empty( $_tracking_provider ) ) return false;
+
+		// return value pair as object
+		$tracking = new stdClass();
+		$tracking->number   = $_tracking_number;
+		$tracking->provider = $_tracking_provider;
+
+		return $tracking;
+	}
 
 
 	/**

@@ -129,7 +129,6 @@ class WPLA_ProfilesPage extends WPLA_Page {
 		// $verified_listings  = $listingsModel->getAllVerifiedWithProfile( $item['profile_id'] );
 		// $published_listings = $listingsModel->getAllPublishedWithProfile( $item['profile_id'] );
 		// $ended_listings     = $listingsModel->getAllEndedWithProfile( $item['profile_id'] );
-		// $locked_listings    = $listingsModel->getAllLockedWithProfile( $item['profile_id'] );
 
 		$lm = new WPLA_ListingsModel();
 		$listings  = $profile->profile_id ? $lm->findAllListingsByColumn( $profile->profile_id, 'profile_id' ) : array();
@@ -165,7 +164,6 @@ class WPLA_ProfilesPage extends WPLA_Page {
 			// 'verified_listings'         => $verified_listings,
 			// 'published_listings'        => $published_listings,
 			// 'ended_listings'            => $ended_listings,
-			// 'locked_listings'           => $locked_listings,
 			
 			'form_action'				=> 'admin.php?page='.self::ParentMenuId.'-profiles'
 		);

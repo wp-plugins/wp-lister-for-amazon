@@ -7,6 +7,7 @@ class WPLA_OrdersImporter {
 	public $result;
 	public $updated_count = 0;
 	public $imported_count = 0;
+	public $throttling_is_active = false;
 
 	const TABLENAME = 'amazon_orders';
 
@@ -19,8 +20,23 @@ class WPLA_OrdersImporter {
 		global $wpdb;
 		$table = $wpdb->prefix . self::TABLENAME;
 
+		// skip processing if requests are throttled already
+		if ( $this->throttling_is_active == true ) return false;
+
 		// if ( ! is_object($order) )
 		// 	echo "<pre>order is not an object: ";print_r($order);echo"</pre>";die();
+
+		// check if order exists in WPLA and is already up to date (TODO: optimize)
+		if ( $id = $this->order_id_exists( $order->AmazonOrderId ) ) {			
+			$om = new WPLA_OrdersModel();
+			$amazon_order = $om->getItem( $id );
+			if ( $amazon_order['LastTimeModified'] == $this->convertIsoDateToSql( $order->LastUpdateDate ) ) {
+				WPLA()->logger->info('Order '.$order->AmazonOrderId.' has not been modified since '.$amazon_order['LastTimeModified'].' and is up to date.');				
+				wpla_show_message(   'Order '.$order->AmazonOrderId.' has not been modified since '.$amazon_order['LastTimeModified'].' and is up to date.');
+				return null;
+			}
+		}
+
 
 		$data = array(
 			'order_id'             => $order->AmazonOrderId,
@@ -42,6 +58,14 @@ class WPLA_OrdersImporter {
 		$this->api     = new WPLA_AmazonAPI( $account->id );
 		$items         = $this->api->getOrderLineItems( $order->AmazonOrderId );
 		$data['items'] = maybe_serialize( $items );
+
+		// check if ListOrderItems request is throttled
+		// if true, skip ALL further requests / order processing until next cron run
+        if ( is_object($items) && isset($items->Error->Message) ) {
+        	$this->throttling_is_active = true;
+        	wpla_show_message('ListOrderItems requests are throttled. Skipping further order processing until next run.','warn');
+        	return false;
+        }
 
 
 		// check if order exists in WPLA
@@ -432,7 +456,7 @@ class WPLA_OrdersImporter {
 
 	// convert 2013-02-14T08:00:58.000Z to 2013-02-14 08:00:58
 	public function convertIsoDateToSql( $iso_date ) {
-		$search = array( 'T', '.000Z' );
+		$search = array( 'T', '.000Z', 'Z' );
 		$replace = array( ' ', '' );
 		$sql_date = str_replace( $search, $replace, $iso_date );
 		return $sql_date;

@@ -57,7 +57,7 @@
                 <td>
 
                     <select id="wpla_min_base_price" name="min_base_price" class="select">
-                        <option value=""            <?php if ( $defaults['min_base_price'] == ''            ): ?>selected="selected"<?php endif; ?> >-- <?php echo __('no change','wpla'); ?> --</option>
+                        <option value="no_change"   <?php if ( $defaults['min_base_price'] == 'no_change'   ): ?>selected="selected"<?php endif; ?> >-- <?php echo __('no change','wpla'); ?> --</option>
                         <option value="price"       <?php if ( $defaults['min_base_price'] == 'price'       ): ?>selected="selected"<?php endif; ?> ><?php echo __('Regular Price','wpla'); ?></option>
                         <option value="sale_price"  <?php if ( $defaults['min_base_price'] == 'sale_price'  ): ?>selected="selected"<?php endif; ?> ><?php echo __('Sale Price','wpla');   ?></option>
                         <option value="msrp"        <?php if ( $defaults['min_base_price'] == 'msrp'        ): ?>selected="selected"<?php endif; ?> ><?php echo __('MSRP Price','wpla'); ?></option>
@@ -77,7 +77,7 @@
                 <td>
 
                     <select id="wpla_max_base_price" name="max_base_price" class="select">
-                        <option value=""            <?php if ( $defaults['max_base_price'] == ''            ): ?>selected="selected"<?php endif; ?> >-- <?php echo __('no change','wpla'); ?> --</option>
+                        <option value="no_change"   <?php if ( $defaults['max_base_price'] == 'no_change'   ): ?>selected="selected"<?php endif; ?> >-- <?php echo __('no change','wpla'); ?> --</option>
                         <option value="price"       <?php if ( $defaults['max_base_price'] == 'price'       ): ?>selected="selected"<?php endif; ?> ><?php echo __('Regular Price','wpla'); ?></option>
                         <option value="sale_price"  <?php if ( $defaults['max_base_price'] == 'sale_price'  ): ?>selected="selected"<?php endif; ?> ><?php echo __('Sale Price','wpla');   ?></option>
                         <option value="msrp"        <?php if ( $defaults['max_base_price'] == 'msrp'        ): ?>selected="selected"<?php endif; ?> ><?php echo __('MSRP Price','wpla'); ?></option>

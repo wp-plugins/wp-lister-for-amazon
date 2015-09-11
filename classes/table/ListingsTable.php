@@ -511,7 +511,7 @@ class WPLA_ListingsTable extends WP_List_Table {
         if ( ! $item['loffer_price'] )
             $loffer_price_color = '';
 
-        if ( $item['loffer_price'] ) {
+        if ( $item['loffer_price'] && isset($_REQUEST['page']) && $_REQUEST['page'] == 'wpla-tools' ) {
             // $loffer_price_link = sprintf('<a href="#" onclick="wpla_use_loffer_price(%3$s);return false;" style="color:%1$s">%2$s</a>', $loffer_price_color, $loffer_price, $item['id'] );
             $loffer_price_link = sprintf('<a href="#" data-id="%3$s" style="color:%1$s">%2$s</a>', $loffer_price_color, $loffer_price, $item['id'] );
 
@@ -524,7 +524,14 @@ class WPLA_ListingsTable extends WP_List_Table {
                     }
                 }
                 if ( $ListingsConsidered > 1 ) {
-                    $loffer_price_link .= '&nbsp;<span style="color:silver">('.$ListingsConsidered.')</span>';
+                    // $loffer_price_link .= '&nbsp;<span style="color:silver">('.$ListingsConsidered.')</span>';
+                    $tip_msg = 'According to the Amazon API, there are currently <b>'.$ListingsConsidered.' listings</b> at this price.<br><br>';
+                    $tip_msg .= 'Please note that this data can be unreliable. If you are in fact the only seller at that price, while according to the API there are multiple offers, unfortunately WP-Lister can <em>not</em> increase the price automatically.<br><br>';
+                    $tip_msg .= 'In that case, please adjust the minimum price in order to increase the final price on Amazon.';
+                    $img_url = WPLA_URL . '/img/info.png';
+                    $tip_msg = '&nbsp;<img src="'.$img_url.'" style="height:12px; padding:0;" class="tips" data-tip="'.$tip_msg.'"/>';
+                    $loffer_price_link .= $tip_msg;
+
                 }
             }
 
@@ -1161,6 +1168,7 @@ class WPLA_ListingsTable extends WP_List_Table {
 
             <select name="profile_id">
                 <option value=""><?php _e('All profiles','wpla') ?></option>
+                <option value="_NONE_" <?php if ( $profile_id == '_NONE_' ) echo 'selected'; ?> ><?php _e('No profile','wpla') ?></option>
                 <?php foreach ($wpl_profiles as $profile) : ?>
                     <option value="<?php echo $profile->profile_id ?>"
                         <?php if ( $profile_id == $profile->profile_id ) echo 'selected'; ?>

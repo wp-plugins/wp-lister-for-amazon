@@ -216,6 +216,7 @@
 							<select id="wpl-fba_fulfillment_center_id" name="wpla_fba_fulfillment_center_id" class="fba_option required-entry select">
 								<option value="AMAZON_NA"  <?php if ( $wpl_fba_fulfillment_center_id == 'AMAZON_NA'  ): ?>selected="selected"<?php endif; ?>><?php echo 'Amazon US' ?> </option>
 								<option value="AMAZON_EU"  <?php if ( $wpl_fba_fulfillment_center_id == 'AMAZON_EU'  ): ?>selected="selected"<?php endif; ?>><?php echo 'Amazon EU' ?> </option>
+								<option value="AMAZON_IN"  <?php if ( $wpl_fba_fulfillment_center_id == 'AMAZON_IN'  ): ?>selected="selected"<?php endif; ?>><?php echo 'Amazon IN' ?> </option>
 							</select>
 
 
@@ -234,8 +235,8 @@
 
 
 							<label for="wpl-fba_report_schedule" class="fba_option text_label">
-								<?php echo __('Request FBA shipment report','wpla') ?>
-                                <?php wpla_tooltip('If you use multi-channel fulfillment with eBay orders, you should set it to the minimum of 6 hours.') ?>
+								<?php echo __('Request FBA reports','wpla') ?>
+                                <?php wpla_tooltip('If you use multi-channel fulfillment with eBay orders, you should lower this option to 6 hours.') ?>
 							</label>
 							<select id="wpl-fba_report_schedule" name="wpla_fba_report_schedule" class="fba_option required-entry select">
 								<option value="daily"        <?php if ( $wpl_fba_report_schedule == 'daily'        ): ?>selected="selected"<?php endif; ?>><?php echo __('Daily','wpla') ?> (default)</option>
@@ -244,7 +245,7 @@
 								<option value="three_hours"  <?php if ( $wpl_fba_report_schedule == 'three_hours'  ): ?>selected="selected"<?php endif; ?>><?php echo __('Every 3 hours','wpla') ?></option>
 							</select>
 							<p class="desc fba_option" style="display: block;">
-								<?php echo __('Select how often WP-Lister should request an FBA Shipment Report from Amazon.','wpla'); ?>
+								<?php echo __('Select how often FBA Shipment and Inventory Reports should be fetched from Amazon.','wpla'); ?>
 							</p>
 
 						</div>

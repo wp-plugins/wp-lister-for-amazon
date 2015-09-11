@@ -67,6 +67,20 @@ class WPLA_OrdersModel extends WPLA_Model {
 		return $item;
 	}
 
+	static function getWhere( $column, $value ) {
+		global $wpdb;	
+		$table = $wpdb->prefix . self::TABLENAME;
+
+		$items = $wpdb->get_results( $wpdb->prepare("
+			SELECT *
+			FROM $table
+			WHERE $column = %s
+		", $value 
+		), OBJECT_K);		
+
+		return $items;
+	}
+
 	function getOrderByOrderID( $order_id ) {
 		global $wpdb;
 
@@ -79,13 +93,14 @@ class WPLA_OrdersModel extends WPLA_Model {
 		return $order;
 	}
 
-	function getDateOfLastOrder() {
+	function getDateOfLastOrder( $account_id ) {
 		global $wpdb;
-		$lastdate = $wpdb->get_var( "
+		$lastdate = $wpdb->get_var( $wpdb->prepare("
 			SELECT LastTimeModified
 			FROM $this->tablename
+			WHERE account_id = %s
 			ORDER BY LastTimeModified DESC LIMIT 1
-		" );
+		", $account_id ) );
 		return $lastdate;
 	}
 

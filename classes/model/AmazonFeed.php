@@ -845,9 +845,10 @@ class WPLA_AmazonFeed {
 
 		}
 
-		// update feed progress status
-		update_option( 'wpla_feeds_in_progress', $feeds_in_progress );
+		// // update feed progress status
+		// update_option( 'wpla_feeds_in_progress', $feeds_in_progress );
 
+		return $feeds_in_progress;
 	} // static processFeedsSubmissionList()
 
 

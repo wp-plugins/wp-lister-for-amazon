@@ -930,6 +930,7 @@ class MarketplaceWebService_Client implements MarketplaceWebService_Interface
                 'result'    => $e->getMessage(),
                 'success'   => $success
             ));
+            wpla_show_message( $actionName.' request failed with error: '.$e->getMessage(),'error');
 
             throw new MarketplaceWebService_Exception(array('Exception' => $e, 'Message' => $e->getMessage()));
         }

@@ -52,13 +52,14 @@ class WPLA_AjaxHandler extends WPLA_Core {
 	public function ajax_wpla_get_import_preview_table() {
 
 		$query = $_REQUEST['query'];
+		$page  = $_REQUEST['pagenum'];
 
 		// analyse report content
 		$report    = new WPLA_AmazonReport( $_REQUEST['report_id'] );
 		$account   = new WPLA_AmazonAccount( $report->account_id );
 		$summary   = WPLA_ImportHelper::analyzeReportForPreview( $report );
 
-		WPLA_ImportHelper::render_import_preview_table( $report->get_data_rows(), $summary, $query );
+		WPLA_ImportHelper::render_import_preview_table( $report->get_data_rows( $query ), $summary, $query, $page );
 
 		exit();
 	} // ajax_wpla_get_import_preview_table()
@@ -96,6 +97,7 @@ class WPLA_AjaxHandler extends WPLA_Core {
 		// get all feed IDs:
 		$feed_ids = WPLA_AmazonFeed::getAllPnqFeedsForSKU( $sku );
 		$log_rows = array();
+		$feed_currency_format = get_option('wpla_feed_currency_format');
 
 		// fetch all data rows for this SKU
 		foreach ( $feed_ids as $feed_id ) {
@@ -108,6 +110,13 @@ class WPLA_AjaxHandler extends WPLA_Core {
 			$data_row['SubmittedDate']           = $feed->SubmittedDate;
 			$data_row['CompletedProcessingDate'] = $feed->CompletedProcessingDate;
 			$data_row['FeedProcessingStatus']    = $feed->FeedProcessingStatus;
+
+			// maybe convert decimal comma to decimal point
+			if ( $feed_currency_format == 'force_comma' ) {
+				$data_row['price']                        = str_replace( ',', '.', $data_row['price'] );
+				$data_row['minimum-seller-allowed-price'] = str_replace( ',', '.', $data_row['minimum-seller-allowed-price'] );
+				$data_row['maximum-seller-allowed-price'] = str_replace( ',', '.', $data_row['maximum-seller-allowed-price'] );				
+			}
 
 			$log_rows[] = $data_row;
 		}
@@ -634,6 +643,10 @@ class WPLA_AjaxHandler extends WPLA_Core {
 				$data['profile_field_data'] = $profile ? maybe_unserialize( $profile->fields ) : array();
 				$data['product_attributes'] = WPLA_ProductWrapper::getAttributeTaxonomies();
 
+				// check if account is registered brand
+				$account = $profile ? new WPLA_AmazonAccount( $profile->account_id ) : false;
+				$data['is_reg_brand'] = $account ? $account->is_reg_brand : false;
+
 				@WPLA_Page::display( 'profile/edit_field_data', $data );
 				exit();
 
@@ -1121,7 +1134,23 @@ class WPLA_AjaxHandler extends WPLA_Core {
 	}
 
 	
+	public function addAdminMessagesToResult( $data ) {
+		if ( ! is_object($data) ) return $data;
+		if ( ! isset($data->errors) ) return $data;
+		if ( ! is_array($data->errors) ) $data->errors = array();
+
+		// merge admin notices with result errors
+		$admin_errors = WPLA()->messages->get_admin_notices_for_json_result();
+		$data->errors = array_merge( $data->errors, $admin_errors );
+
+		return $data;
+	}
+
 	public function returnJSON( $data ) {
+
+		// add WPLE admin messages to result errors
+		$data = $this->addAdminMessagesToResult( $data );
+
 		header('content-type: application/json; charset=utf-8');
 		echo json_encode( $data );
 	}

@@ -101,6 +101,7 @@ class WPLA_ImportPage extends WPLA_Page {
 			'reports_update_woo_price'      => get_option( 'wpla_reports_update_woo_price', 1 ),
 			'reports_update_woo_condition'  => get_option( 'wpla_reports_update_woo_condition', 1 ),
 			'import_creates_all_variations' => get_option( 'wpla_import_creates_all_variations', 0 ),
+			'import_variations_as_simple'   => get_option( 'wpla_import_variations_as_simple', 0 ),
 			'default_account_title'         => $default_account ? $default_account->title : 'invalid!',
 			'form_action'                   => 'admin.php?page='.self::ParentMenuId.'-import'
 		);
@@ -190,10 +191,11 @@ class WPLA_ImportPage extends WPLA_Page {
 
 	public function saveImportOptions() {
 
-		update_option( 'wpla_reports_update_woo_price', 		$this->getValueFromPost( 'reports_update_woo_price' ) );	
-		update_option( 'wpla_reports_update_woo_stock', 		$this->getValueFromPost( 'reports_update_woo_stock' ) );
-		update_option( 'wpla_reports_update_woo_condition', 	$this->getValueFromPost( 'reports_update_woo_condition' ) );
-		update_option( 'wpla_import_creates_all_variations', 	$this->getValueFromPost( 'import_creates_all_variations' ) );
+		update_option( 'wpla_reports_update_woo_price', 		$this->getValueFromPost( 'reports_update_woo_price' 	 ) ? 1 : 0 );	
+		update_option( 'wpla_reports_update_woo_stock', 		$this->getValueFromPost( 'reports_update_woo_stock' 	 ) ? 1 : 0 );
+		update_option( 'wpla_reports_update_woo_condition', 	$this->getValueFromPost( 'reports_update_woo_condition'  ) ? 1 : 0 );
+		update_option( 'wpla_import_creates_all_variations', 	$this->getValueFromPost( 'import_creates_all_variations' ) ? 1 : 0 );
+		update_option( 'wpla_import_variations_as_simple', 		$this->getValueFromPost( 'import_variations_as_simple' 	 ) ? 1 : 0 );
 
 		$this->showMessage( __('Report processing options were saved.','wpla') );
 
@@ -253,7 +255,7 @@ class WPLA_ImportPage extends WPLA_Page {
 
 			$api = new WPLA_AmazonAPI( $account->id );
 
-			// get report requests
+			// request report - returns request list as array on success
 			$reports = $api->requestReport( $report_type );
 
 			if ( is_array( $reports ) )  {

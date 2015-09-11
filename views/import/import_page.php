@@ -120,6 +120,12 @@
 								</tr>
 							<?php endforeach; ?>
 							</table>
+
+	                        <p>
+	                            <b><?php echo __('Note','wpla'); ?>:</b>
+	                            <?php echo __('Sale prices can not be imported from Amazon and will be <em>removed</em> when an imported product is updated.','wpla'); ?>
+	                        </p>
+
 						<?php elseif( $wpl_reports_in_progress ) : ?>
 
 								<p>
@@ -144,9 +150,8 @@
 
 								<input type="submit" value="<?php echo __('Request Inventory Report','wpla'); ?>" name="submit" class="button">
 							</form>
+							<br style="clear:both;"/>
 						<?php endif; ?>
-
-						<br style="clear:both;"/>
 
 					</div>
 				</div> <!-- postbox -->
@@ -186,6 +191,12 @@
 							<label for="wpla_import_creates_all_variations" class="text_label">
 								<?php echo __('Create all variations','wpla'); ?>
                                 <?php wpla_tooltip('When importing variable products, by default only variations which exist in your inventory report are created in WooCommerce.<br><br>Tick this box if you want to create <i>all</i> variations available on Amazon.<br>(backup your database first!)') ?>
+							</label><br>
+
+							<input type="checkbox" name="wpla_import_variations_as_simple" id="wpla_import_variations_as_simple" value="1" <?php if ($wpl_import_variations_as_simple) echo 'checked' ?> />
+							<label for="wpla_import_variations_as_simple" class="text_label">
+								<?php echo __('Create variations as simple products','wpla'); ?>
+                                <?php wpla_tooltip('Enable this option if you do not want the import process to create variable products in WooCommerce, but create a single product for each variation instead.') ?>
 							</label><br>
 
 						</form>

@@ -2,8 +2,24 @@
     // called as: WPLA_ImportHelper::render_import_preview_table( $wpl_data_rows, $wpl_report_summary ) 
 ?>  
 
+<?php 
+    // page size for import preview
+    $page_size = 100;
+
+    // get total counts
+    $total_rows  = count( $wpl_rows );
+    $total_pages = intval( $total_rows / $page_size ) + 1;
+
+    // slice results array
+    if ( ! $wpl_pagenum ) $wpl_pagenum = 1;    
+    $page     = $wpl_pagenum - 1;
+    $offset   = $page * $page_size;
+    $wpl_rows = array_slice( $wpl_rows, $offset, $page_size );
+
+?>  
+
     <?php if ( $wpl_query ) : ?>
-        <h4>You searched for report rows containing '<?php echo $wpl_query ?>':</h4>
+        <h4>You searched for report rows containing '<?php echo $wpl_query ?>' - page <?php echo $wpl_pagenum ?> of <?php echo $total_pages ?>:</h4>
     <?php endif; ?>
 
     <table id="wpla_import_preview_table" class="csv-table">
@@ -22,8 +38,7 @@
         <tbody>
         <?php foreach ($wpl_rows as $row) : ?>
         <?php
-        	if ( $row_count > 100 ) continue;
-
+        	// if ( $row_count > $page_size ) continue;
 
         	// $listing_asin = $row['product-id'];
         	// $listing_asin   = isset( $row['asin1'] ) ? $row['asin1'] : $row['asin'];
@@ -39,15 +54,15 @@
             }
             $listing_asin = $row_asin;
 
-            // handle search query
-            if ( $wpl_query && (
-                    stripos( $row['item-name'],  $wpl_query ) === false  &&
-                    stripos( $row['seller-sku'], $wpl_query ) === false  &&
-                    stripos( $row_asin,          $wpl_query ) === false
-                ) ) continue;
+            // // handle search query
+            // if ( $wpl_query && (
+            //         stripos( $row['item-name'],  $wpl_query ) === false  &&
+            //         stripos( $row['seller-sku'], $wpl_query ) === false  &&
+            //         stripos( $row_asin,          $wpl_query ) === false
+            //     ) ) continue;
 
-            // count rows - after processing query
-            $row_count++;
+            // // count rows - after processing query
+            // $row_count++;
 
 
         	$listing_exists = in_array( $listing_asin, $wpl_report_summary->listings_to_update ) ? true : false;
@@ -62,7 +77,7 @@
         <tr>
             <th scope="row" class="check-column"><input type="checkbox" name="row[]" value="<?php echo $row['seller-sku'] ?>"></th>
             <!-- <td><?php echo utf8_encode( $row['item-name'] ) ?></td> -->
-            <td><?php echo $row['item-name'] ?></td>
+            <td><?php echo WPLA_ListingsModel::convertToUTF8( $row['item-name'] ) ?></td>
             <td><?php echo $product_sku ?></td>
             <td><?php echo $listing_asin ?></td>
             <td style="text-align:right;">
@@ -101,3 +116,5 @@
         <?php endforeach; ?>
         </tbody>
     </table>
+
+    <p>Displaying rows <?php echo $offset + 1 ?> - <?php echo min( $offset + $page_size, $total_rows ) ?> of <?php echo $total_rows ?> total rows.</h4>

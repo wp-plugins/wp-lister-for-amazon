@@ -1036,9 +1036,9 @@ class MarketplaceWebServiceProducts_Client implements MarketplaceWebServiceProdu
           $headers['x-mws-request-id'],
           $headers['x-mws-response-context'],
           $headers['x-mws-timestamp'],
-          $headers['x-mws-quota-max'],
-          $headers['x-mws-quota-remaining'],
-          $headers['x-mws-quota-resetsOn']);
+          @$headers['x-mws-quota-max'],
+          @$headers['x-mws-quota-remaining'],
+          @$headers['x-mws-quota-resetsOn']);
 
         list($protocol, $code, $text) = explode(' ', trim(array_shift($other)), 3);
  

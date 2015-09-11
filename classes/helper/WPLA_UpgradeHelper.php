@@ -907,6 +907,23 @@ class WPLA_UpgradeHelper {
 
 		}
 
+		// upgrade to version 32  (0.9.6.10)
+		if ( 32 > $db_version ) {
+			$new_db_version = 32;
+
+			// add row to amazon_markets
+			$sql = "INSERT INTO `{$wpdb->prefix}amazon_markets` 
+				(`id`, `developer_id`, `title`, `code`, `url`, `enabled`, `sort_order`, `group_title`)
+				VALUES
+					(33,'','India','IN','amazon.in',1,8,'Asia / Pacific');
+			";
+			$wpdb->query($sql);
+						
+			update_option('wpla_db_version', $new_db_version);
+			$msg  = __('WP-Lister database was upgraded to version', 'wpla') .' '. $new_db_version . '.';
+
+		}
+
 		// show update message
 		if ( $msg && ! $hide_message ) self::showMessage( $msg );
 

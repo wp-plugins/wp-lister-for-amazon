@@ -587,6 +587,8 @@ class WPLA_AmazonAPI {
             $error->XML          = $ex->getXML();
             $error->HeaderMeta   = $ex->getResponseHeaderMetadata();
 
+            $error->success      = false;
+
             // log to db - parsed request
             $this->dblogger->updateLog( array(
                 'result'    => json_encode( $error ),
@@ -1153,7 +1155,8 @@ class WPLA_AmazonAPI {
         $section = 'Orders';
         $version = '2011-01-01';
         $params  = array();
-        $params['LastUpdatedAfter']   = gmdate("Y-m-d\TH:i:s.\\0\\0\\0\\Z", strtotime( $from_date ) + 1 );
+        // $params['LastUpdatedAfter'] = gmdate("Y-m-d\TH:i:s.\\0\\0\\0\\Z", strtotime( $from_date ) + 1 ); // 1sec offset causes trouble if throttling is active
+        $params['LastUpdatedAfter']    = gmdate("Y-m-d\TH:i:s.\\0\\0\\0\\Z", strtotime( $from_date ) + 0 ); // no offset - will return the most recent order(s) as well
         // $params['MarketplaceId.Id.1'] = $this->MarketplaceId; // 
         // $marketplaceIdArray = array("Id" => array( $this->MarketplaceId ) );
         // $request->setMarketplaceIdList( $marketplaceIdArray );
@@ -1267,6 +1270,121 @@ class WPLA_AmazonAPI {
         return $result;
     }
 
+
+    // fetch report requests list (V2)
+    public function getReportRequestList_v2( $ReportRequestId = false ) {
+        WPLA()->logger->info('getReportRequestList_v2()');
+        $this->initAPI();
+
+        $request = new MarketplaceWebService_Model_GetReportRequestListRequest();
+        $request->setMerchant( $this->SellerId );
+        $request->setMarketplace( $this->MarketplaceId );
+
+        if ( $ReportRequestId ) {
+            if ( ! is_array($ReportRequestId) ) $ReportRequestId = array( $ReportRequestId );
+            // $request->setReportRequestIdList( $ReportRequestId );            
+            $idList = new MarketplaceWebService_Model_IdList();
+            // $idList->withId('<Feed Submission Id>');
+            $idList->setId( $ReportRequestId );
+            $request->setReportRequestIdList($idList);
+        } else {
+            $request->setMaxCount( 10 );
+        }
+
+        $result = $this->invokeGetReportRequestList( $this->service, $request );
+        return $result;
+    }
+                                                          
+    /**
+    * Get Report List Action Sample
+    * returns a list of reports; by default the most recent ten reports,
+    * regardless of their acknowledgement status
+    *   
+    * @param MarketplaceWebService_Interface $service instance of MarketplaceWebService_Interface
+    * @param mixed $request MarketplaceWebService_Model_GetReportList or array of parameters
+    */
+    function invokeGetReportRequestList( MarketplaceWebService_Interface $service, $request ) {
+        $reports = array();
+
+        try {
+
+            $response = $service->getReportRequestList($request);
+                  
+            if ($response->isSetGetReportRequestListResult()) { 
+                $getReportRequestListResult = $response->getGetReportRequestListResult();
+                // if ($getReportRequestListResult->isSetNextToken()) 
+                // if ($getReportRequestListResult->isSetHasNext()) 
+
+                $reportRequestInfoList = $getReportRequestListResult->getReportRequestInfoList();
+                foreach ($reportRequestInfoList as $reportRequestInfo) {
+    
+                    $report = new stdClass();
+                    $report->ReportRequestId           = $reportRequestInfo->getReportRequestId();
+                    $report->ReportType                = $reportRequestInfo->getReportType();
+                    $report->ReportProcessingStatus    = $reportRequestInfo->getReportProcessingStatus();
+
+                    if ( $reportRequestInfo->isSetStartDate() ) 
+                        $report->StartDate              = $reportRequestInfo->getStartDate()->format(DATE_FORMAT);
+                    if ( $reportRequestInfo->isSetEndDate() ) 
+                        $report->EndDate                = $reportRequestInfo->getEndDate()->format(DATE_FORMAT);
+                    if ( $reportRequestInfo->isSetSubmittedDate() ) 
+                        $report->SubmittedDate          = $reportRequestInfo->getSubmittedDate()->format(DATE_FORMAT);
+
+                    if ( $reportRequestInfo->isSetCompletedDate() ) 
+                        $report->CompletedDate          = $reportRequestInfo->getCompletedDate()->format(DATE_FORMAT);
+                    if ( $reportRequestInfo->isSetStartedProcessingDate() ) 
+                        $report->StartedProcessingDate  = $reportRequestInfo->getStartedProcessingDate()->format(DATE_FORMAT);
+                    if ( $reportRequestInfo->isSetGeneratedReportId() ) 
+                        $report->GeneratedReportId      = $reportRequestInfo->getGeneratedReportId();
+
+                    $reports[] = $report;
+                }
+            } 
+
+        } catch (MarketplaceWebService_Exception $ex) {
+            // echo("Caught Exception: " . $ex->getMessage() . "\n");
+            // echo("Response Status Code: " . $ex->getStatusCode() . "\n");
+            // echo("Error Code: " . $ex->getErrorCode() . "\n");
+            // echo("Error Type: " . $ex->getErrorType() . "\n");
+            // echo("Request ID: " . $ex->getRequestId() . "\n");
+            // echo("XML: " . $ex->getXML() . "\n");
+            // echo("ResponseHeaderMetadata: " . $ex->getResponseHeaderMetadata() . "\n");
+
+            $error = new stdClass();
+            $error->ErrorMessage = $ex->getMessage();
+            $error->ErrorCode    = $ex->getErrorCode();
+            $error->StatusCode   = $ex->getStatusCode();
+            return $error;
+        }
+
+        // log to db - parsed request
+        $this->dblogger->updateLog( array(
+            'result'    => json_encode( $reports ),
+            'success'   => 'Success'
+        ));
+
+        return $reports;
+    }
+                                                                     
+    // request report (V2)
+    public function requestReport_v2( $ReportType ) {
+        WPLA()->logger->info('requestReport_v2()');
+        $this->initAPI();
+
+        $marketplaceIdArray = array("Id" => array( $this->MarketplaceId ) );
+
+        $request = new MarketplaceWebService_Model_RequestReportRequest();
+        $request->setMerchant( $this->SellerId );
+        $request->setMarketplaceIdList( $marketplaceIdArray );
+        $request->setReportType( $ReportType );
+        // $request->setReportOptions('ShowSalesChannel=true');
+
+        $result = $this->invokeRequestReport( $this->service, $request );
+
+        return $result;
+    }
+
+
     public function requestReport( $ReportType ) {
 
         $params  = array();
@@ -1279,6 +1397,9 @@ class WPLA_AmazonAPI {
             $startdate = date('Y-m-d', strtotime('-1 week') ); // hardcoded to one week for now
             $params['StartDate'] = $startdate . 'T00:00:00+00:00';
         }
+
+        // set MarketplaceId - otherwise Amazon defaults to home MarketplaceId
+        $params['MarketplaceIdList.Id.1'] = $this->MarketplaceId;
 
         // send request
         $result = $this->sendSignedRequest( 'RequestReport', null, $params, $version );
@@ -1295,8 +1416,15 @@ class WPLA_AmazonAPI {
 
     public function getReportRequestList() {
 
+        $params  = array();
+        $version = '2009-01-01';
+
+        // set MarketplaceId (has no effect)
+        // $params['MarketplaceId'] = $this->MarketplaceId;
+
         // send request
-        $result = $this->sendSignedRequest( 'GetReportRequestList' );
+        // $result = $this->sendSignedRequest( 'GetReportRequestList' );
+        $result = $this->sendSignedRequest( 'GetReportRequestList', null, $params, $version );
         $result = $this->processSimpleXmlResult( $result );
 
         // check if report requests were returned
@@ -1320,6 +1448,9 @@ class WPLA_AmazonAPI {
         // return raw CSV or XML result
         return $result;
     }
+
+
+
 
     public function setMerchantId( $merchant_id ) {
         $this->SellerId = $merchant_id;

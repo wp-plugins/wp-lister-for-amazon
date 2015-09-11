@@ -6,13 +6,13 @@
 
 class WPLA_SkuGenPage extends WPLA_Page {
 
-	const slug = 'skugen';
+	const slug = 'tools';
 
 	public function onWpInit() {
 
 		// Add custom screen options
-		// add_action( "load-toplevel_page_wpla", array( &$this, 'addScreenOptions' ) );
-		add_action( "load-amazon_page_wpla-tools", array( &$this, 'addScreenOptions' ) );
+		$load_action = "load-".$this->main_admin_menu_slug."_page_wpla-".self::slug;
+		add_action( $load_action, array( &$this, 'addScreenOptions' ) );
 		
 		// $this->handleSubmitOnInit();
 	}

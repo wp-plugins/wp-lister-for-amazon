@@ -106,6 +106,7 @@ class WPLA_API_Hooks {
 	 *
 	 *  Third party CSV import plugins usually call wp_update_post() before update_post_meta() so WP will trigger the save_post action before price and stock have been updated.
 	 *  We need to disable the original save_post hook and collect post IDs to mark them as modified at shutdown (including further processing for locked items)
+	 *  TODO: this can be simplified for WPLA as Amazon will be updated asynchronously - it should be okay to mark an item as changed right before its product is being updated.
 	 */
 
 	function handle_third_party_ajax_csv_import() {

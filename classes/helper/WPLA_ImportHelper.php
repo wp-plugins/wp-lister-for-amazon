@@ -239,6 +239,7 @@ class WPLA_ImportHelper {
 
 
         // process rows
+		if ( is_array($rows) )
 		foreach ($rows as $row) {
 
 			// skip error rows (single element array)
@@ -280,6 +281,7 @@ class WPLA_ImportHelper {
 					$woo_stock = get_post_meta( $post_id, '_stock', true );
 					if ( $woo_stock < $fba_quantity ) {
 						update_post_meta( $post_id, '_stock', $fba_quantity );
+						$woo_stock = $fba_quantity;
 
 						// // update out of stock attribute
 						// if ( $fba_quantity > 0 ) {
@@ -290,9 +292,9 @@ class WPLA_ImportHelper {
 
 					}
 
-					// update stock status - if required
-					$woo_stock_status = get_post_meta( $post_id, '_stock_status', true );
-					$new_stock_status = $fba_quantity > 0 ? 'instock' : 'outofstock';
+					// update stock status based on actual stock - if required
+					$woo_stock_status   = get_post_meta( $post_id, '_stock_status', true );
+					$new_stock_status   = $woo_stock > 0 ? 'instock' : 'outofstock';
 					if ( $new_stock_status != $woo_stock_status ) {
 						update_post_meta( $post_id, '_stock_status', $new_stock_status );
 					}
@@ -390,7 +392,7 @@ class WPLA_ImportHelper {
 
 
 	// render import preview table
-	public static function render_import_preview_table( $wpl_rows, $wpl_report_summary, $wpl_query = false ) {
+	public static function render_import_preview_table( $wpl_rows, $wpl_report_summary, $wpl_query = false, $wpl_pagenum = false ) {
 	    if ( ! is_array($wpl_rows) || ( ! sizeof($wpl_rows) ) ) return; 
 	    $row_count = 0;
 

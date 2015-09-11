@@ -96,7 +96,7 @@
         </div>
     <?php endif; ?>
 
-	<div style="width:100%" class="postbox-container">
+	<div class="postbox-container" style="width:100%; <?php if ( $is_invalid_report ) echo 'display:none;' ?>">
 		<div class="metabox-holder">
 			<div class="meta-box-sortables ui-sortable">
 
@@ -109,7 +109,8 @@
 								<?php echo __('First click on "Process Report" to update existing listings and products.','wpla'); ?><br>
 							<?php endif; ?>
 							<?php if ( $wpl_step == 3 ) : ?>
-								<?php echo sprintf( __('Great, %s rows of your inventory report have been processed.','wpla'), count($wpl_report_summary->report_skus), $wpl_account->title ); ?><br>
+                                <?php // echo sprintf( __('Great, %s rows of your inventory report have been processed.','wpla'), count($wpl_report_summary->report_skus), $wpl_account->title ); // TODO: show actual number of *selected* rows ?>
+                                <?php echo __('Your inventory report has been processed.','wpla'); ?><br>
 								<?php echo __('Next, click "Import Products" to create missing products in WooCommerce.','wpla'); ?><br>
 							<?php endif; ?>
 						</p>
@@ -175,6 +176,10 @@
 							</p>
 						<?php endif; ?>
 
+                        <p>
+                            <b><?php echo __('Please note','wpla'); ?>:</b>
+                            <?php echo __('Sale prices can not be imported from Amazon and will be <em>removed</em> when an imported product is updated.','wpla'); ?>
+                        </p>
 						
 						<!-- 
 						<h4><?php echo __('Totals','wpla') ?></h4>
@@ -196,7 +201,12 @@
 					<h3 class="hndle">
                         <span><?php echo __('Report Rows','wpla'); ?></span>
                         <div style="float:right;">
+                            <input id="wpla_current_page" type="hidden" value="1" />
+                            <input id="wpla_total_pages" type="hidden" value="<?php echo intval( count($wpl_report_summary->report_skus) / 100 ) ?>" />
+                            <a id="wpla_prev_page" class="button button-small" title="previous page">&laquo;</a>
+                            <a id="wpla_next_page" class="button button-small" title="next page">&raquo;</a>
                             <input id="wpla_import_preview_search_box" type="text" placeholder="Filter by SKU, ASIN or name..." style="font-size: 12px; font-weight: normal; width:200px;">
+                            <a href="#" id="wpla_btn_filter" class="button button-small" title="apply filter">Search</a>
                         </div>
                     </h3>
 					<div class="inside">
@@ -205,9 +215,21 @@
                             <?php WPLA_ImportHelper::render_import_preview_table( $wpl_data_rows, $wpl_report_summary ) ?>
                         </div>
 
-						<p>
-							Note: This preview shows a maxmimum of 100 rows only.
-						</p>
+						<!-- <p> -->
+							<!-- Note: This preview shows a maxmimum of 100 rows only. -->
+						<!-- </p> -->
+
+                        <?php
+                            // $max_num_pages = intval( count($wpl_report_summary->report_skus) / 100 );
+                            // $page = 1;
+
+                            // echo paginate_links( array(
+                            //     // 'base'    => str_replace( $big, '%#%', esc_url( get_pagenum_link( $big ) ) ),
+                            //     // 'format'  => '?paged=%#%',
+                            //     'current' => max( 1, $page ),
+                            //     'total'   => $max_num_pages
+                            // ) );
+                        ?>
 
 						<?php
 							// echo "<pre>";print_r($wpl_report_summary);echo"</pre>";#die();
@@ -239,36 +261,96 @@
         //     return event.keyCode != 13; 
         // });
 
-        // disable Enter key in filter field
+        // update rows when search box changes
         jQuery('#wpla_import_preview_search_box').change(function(event) { 
             wpla_update_preview();
+        });
+
+        // button: next page
+        jQuery('#wpla_next_page').click(function(event) { 
+            var next_page = parseInt( jQuery('#wpla_current_page').val() ) + 1;
+            // var total_pages = ...;
+            // if ( next_page > total_pages ) next_page = 1;
+            jQuery('#wpla_current_page').val( next_page );
+            wpla_update_preview();
+        });
+        // button: prev page
+        jQuery('#wpla_prev_page').click(function(event) { 
+            var prev_page = parseInt( jQuery('#wpla_current_page').val() ) - 1;
+            if ( prev_page < 1 ) prev_page = 1;
+            jQuery('#wpla_current_page').val( prev_page );
+            wpla_update_preview();
+        });
+
+        // button: search
+        jQuery('#wpla_btn_filter').click(function(event) { 
+            wpla_update_preview();
+            return false;
         });
 
         // handle field filter changes
         function wpla_update_preview() {
 
             var query = jQuery('#wpla_import_preview_search_box').val();
-            console.log(query);
+            var page  = jQuery('#wpla_current_page').val();
+            console.log('query',query);
+            console.log('page',query);
 
             var params = {
                 action: 'wpla_get_import_preview_table',
                 report_id: wpla_report_id,
                 query: query,
+                pagenum: page,
                 nonce: 'TODO'
             };
             jQuery( "#wpla_import_preview_table_container" ).load( ajaxurl, params, function() {
-                console.log('updated.');                
+                console.log('report rows were updated.');                
+                wpla_refresh_table_events();
+                wpla_show_or_hide_checkbox_column();
             });
 
         } // wpla_update_preview()
 
 
+        // handle select all checkbox in table header
+        function wpla_refresh_table_events() {
+            console.log('wpla_refresh_table_events');
+
+            // refresh listener
+            jQuery('#wpla_import_preview_table #cb-select-all-1').change(function(event) { 
+                console.log('select all checkbox was clicked');
+
+                if ( 'checked' == jQuery('#wpla_import_preview_table #cb-select-all-1').attr('checked') ) {
+                    jQuery('#wpla_import_preview_table tbody .check-column input').attr('checked','checked');   // tick all
+                } else {                    
+                    jQuery('#wpla_import_preview_table tbody .check-column input').attr('checked',null);        // untick all
+                }
+                
+            });
+
+        } // wpla_refresh_table_events()
+
+        // show or hide checkbox column
+        function wpla_show_or_hide_checkbox_column() {
+            console.log('wpla_show_or_hide_checkbox_column');
+
+            if ( 'none' == jQuery('#btn_process_selected_report_rows').css('display') ) {
+                // default mode: hide checkbox column
+                jQuery('#wpla_import_preview_table .check-column').hide();
+            } else {
+                // show checkbox column
+                jQuery('#wpla_import_preview_table .check-column').show();
+            }
+
+        } // wpla_show_or_hide_checkbox_column()
+
+
 
         // handle button "Select rows"
         jQuery('#btn_toggle_selection_mode').click(function(event) { 
-            jQuery('#wpla_import_preview_table .check-column').toggle();
             jQuery('#btn_process_selected_report_rows').toggle();
             jQuery('#btn_process_amazon_report').toggle();
+            wpla_show_or_hide_checkbox_column();
         });
 
 

@@ -76,7 +76,7 @@ class WPLA_InventoryCheck extends WPLA_Model  {
 					$lm->markItemAsModified( $item['post_id'] );
 				}
 
-				// in case the product is locked or missing, force the listing to be changed
+				// in case the product is missing, force the listing to be changed (?)
 				$lm->updateListing( $item['id'], array( 'status' => 'changed' ) );
 
 				$item['status'] = 'changed';
@@ -132,7 +132,6 @@ class WPLA_InventoryCheck extends WPLA_Model  {
 			$asin         = $item['asin'];
 			$status       = $item['status'];
 			$exists       = $item['exists'];
-			$locked       = $item['locked'] ? 'locked' : '';
 			$price        = woocommerce_price( $item['price'] );
 			$price_woo    = woocommerce_price( $item['price_woo'] );
 			$product_type = $item['type'] == 'simple' ? '' : $item['type'];
@@ -166,7 +165,7 @@ class WPLA_InventoryCheck extends WPLA_Model  {
 			// build table row
 			$msg .= "<tr>";
 			$msg .= "<td>$sku</td>";
-			$msg .= "<td>$edit_link <span style='color:silver'>$locked $product_type (#$post_id)</span></td>";
+			$msg .= "<td>$edit_link <span style='color:silver'>$product_type (#$post_id)</span></td>";
 			$msg .= "<td style='$stock_css'>$stock</td>";
 			$msg .= "<td style='$stock_css'>$qty</td>";
 			$msg .= "<td style='$price_css'>$price_woo</td>";

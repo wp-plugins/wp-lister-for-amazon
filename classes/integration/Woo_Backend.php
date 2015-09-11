@@ -34,6 +34,9 @@ class WPLA_WooBackendIntegration extends WPLA_Core {
 		add_filter( 'parse_query', array( &$this, 'wpla_woocommerce_admin_order_filter_query' ) );
 		add_filter( 'views_edit-shop_order', array( &$this, 'wpla_add_woocommerce_order_views' ) );
 
+		// custom filters for order table
+		add_action( 'restrict_manage_posts', array( $this, 'add_wc_order_table_filter_options' ) );
+
 		// submitbox actions
 		add_action( 'post_submitbox_misc_actions', array( &$this, 'wpla_product_submitbox_misc_actions' ), 100 );
 		add_action( 'woocommerce_process_product_meta', array( &$this, 'wpla_product_handle_submitbox_actions' ), 100, 2 );
@@ -450,13 +453,6 @@ class WPLA_WooBackendIntegration extends WPLA_Core {
 
 		// warn when changing the SKU for a published item
 		if ( in_array($status, array('online','changed','submitted') ) ) $this->add_js_to_prevent_changing_sku();
-
-        // show locked indicator
-        // if ( @$item->locked ) {
-        //     $tip_msg = 'This listing is currently locked.<br>Only inventory changes will be updated, other changes will be ignored.';
-        //     $img_url = WPLA_URL . '/img/lock-1.png';
-        //     $locktip = '<img src="'.$img_url.'" style="height:11px; padding:0;" class="tips" data-tip="'.$tip_msg.'"/>&nbsp;';
-        // } 
 
 		// get proper amazon_url
         if ( $item->asin && $item->account_id ) {
@@ -1073,22 +1069,40 @@ class WPLA_WooBackendIntegration extends WPLA_Core {
 	} // wpla_woocommerce_admin_order_filter_query_v1()
 
 
-	// filter the orders in admin based on ebay status
+	// filter the orders in admin based on amazon status
 	// add_filter( 'parse_query', 'wplister_woocommerce_admin_order_filter_query' );
 	function wpla_woocommerce_admin_order_filter_query( $query ) {
 		global $typenow, $wp_query, $wpdb;
 
 	    if ( $typenow == 'shop_order' ) {
 
-	    	// filter by ebay status
+	    	// filter by amazon status
 	    	if ( ! empty( $_GET['is_from_amazon'] ) ) {
 
 		    	if ( $_GET['is_from_amazon'] == 'yes' ) {
 
-		        	$query->query_vars['meta_query'][] = array(
-						'key'     => '_wpla_amazon_order_id',
-						'compare' => 'EXISTS'
-					);
+    		        $account_id = isset($_REQUEST['wpla_account_id']) ? $_REQUEST['wpla_account_id'] : false;
+    		        if ( $account_id ) {
+
+    		        	// find post_ids for all orders for this account
+    		        	$post_ids = array();
+    		        	$orders = WPLA_OrdersModel::getWhere( 'account_id', $account_id );
+    		        	foreach ($orders as $order) {
+    		        		if ( ! $order->post_id ) continue;
+    		        		$post_ids[] = $order->post_id;
+    		        	}
+	    		        if ( empty( $post_ids ) ) $post_ids = array('0');
+
+			        	$query->query_vars['post__in'] = $post_ids;
+
+    		        } else {
+
+			        	$query->query_vars['meta_query'][] = array(
+							'key'     => '_wpla_amazon_order_id',
+							'compare' => 'EXISTS'
+						);
+
+    		        }
 
 		        } elseif ( $_GET['is_from_amazon'] == 'no' ) {
 
@@ -1106,6 +1120,28 @@ class WPLA_WooBackendIntegration extends WPLA_Core {
 	} // wpla_woocommerce_admin_order_filter_query()
 
 
+	function add_wc_order_table_filter_options() {
+		global $typenow;
+		if ( $typenow != 'shop_order' ) return;
+		if ( ! isset( $_REQUEST['is_from_amazon'] ) ) return;
+
+        $wpl_accounts = WPLA_AmazonAccount::getAll( true );
+        $account_id   = isset($_REQUEST['wpla_account_id']) ? $_REQUEST['wpla_account_id'] : false;
+        ?>
+
+            <select name="wpla_account_id">
+                <option value=""><?php _e('All Amazon accounts','wpla') ?></option>
+                <?php foreach ($wpl_accounts as $account) : ?>
+                    <option value="<?php echo $account->id ?>"
+                        <?php if ( $account_id == $account->id ) echo 'selected'; ?>
+                        ><?php echo $account->title ?> (<?php echo $account->market_code ?>)</option>
+                <?php endforeach; ?>
+            </select>            
+
+            <input type="hidden" name="is_from_amazon" value="<?php echo isset($_REQUEST['is_from_amazon']) ? $_REQUEST['is_from_amazon'] : '' ?>">
+
+        <?php
+	} // add_wc_order_table_filter_options()
 
 } // class WPLA_WooBackendIntegration
 // $WPLA_WooBackendIntegration = new WPLA_WooBackendIntegration();

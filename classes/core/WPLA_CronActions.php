@@ -64,9 +64,12 @@ class WPLA_CronActions {
         	return;
         }
 
-		// update reports - if waiting for processing results
-		if ( get_option( 'wpla_reports_in_progress' ) )
-			do_action('wpla_update_reports');
+		// update reports - checks for submitted reports automatically now
+		do_action('wpla_update_reports');
+
+		// // update reports - if waiting for processing results
+		// if ( get_option( 'wpla_reports_in_progress' ) )
+		// 	do_action('wpla_update_reports');
 
 		// update feeds - if waiting for submission results
 		if ( get_option( 'wpla_feeds_in_progress' ) )
@@ -98,9 +101,12 @@ class WPLA_CronActions {
 	public function cron_daily_schedule() {
         WPLA()->logger->info("*** WP-CRON: cron_daily_schedule()");
 
-		// request daily FBA inventory report
-		if ( get_option( 'wpla_fba_enabled' ) )
-			do_action('wpla_request_daily_fba_report');
+    	// check timestamp
+        $last_run = get_option('wpla_daily_cron_last_run');
+        if ( $last_run > time() - 24 * 3600 ) {
+	        WPLA()->logger->warn('*** WP-CRON: cron_daily_schedule() EXIT - last run: '.human_time_diff( $last_run ).' ago');
+	        return;
+        }
 
 		// request daily inventory report
 		if ( get_option( 'wpla_autofetch_inventory_report' ) )
@@ -128,9 +134,20 @@ class WPLA_CronActions {
 	public function cron_fba_report_schedule() {
         WPLA()->logger->info("*** WP-CRON: cron_fba_report_schedule()");
 
+    	// check timestamp
+        $last_run = get_option('wpla_fba_report_cron_last_run');
+        if ( $last_run > time() - 24 * 3600 ) {
+	        WPLA()->logger->warn('*** WP-CRON: cron_fba_report_schedule() EXIT - last run: '.human_time_diff( $last_run ).' ago');
+	        return;
+        }
+
 		// request FBA shipments report
 		if ( get_option( 'wpla_fba_enabled' ) )
 			do_action('wpla_request_daily_fba_shipments_report');
+
+		// request daily FBA inventory report
+		if ( get_option( 'wpla_fba_enabled' ) )
+			do_action('wpla_request_daily_fba_report');
 
 		// store timestamp
 		update_option( 'wpla_fba_report_cron_last_run', time() );
@@ -311,7 +328,6 @@ class WPLA_CronActions {
         WPLA()->logger->info("do_action: wpla_update_orders");
 
 		$accounts = WPLA_AmazonAccount::getAll();
-		$importer = new WPLA_OrdersImporter();
 
 		foreach ($accounts as $account ) {
 
@@ -319,7 +335,7 @@ class WPLA_CronActions {
 
 			// get date of last order
 			$om = new WPLA_OrdersModel();
-			$lastdate = $om->getDateOfLastOrder();
+			$lastdate = $om->getDateOfLastOrder( $account->id );
 			WPLA()->logger->info('getDateOfLastOrder() returned: '.$lastdate);
 
 			$days = isset($_REQUEST['days']) && $_REQUEST['days'] ? $_REQUEST['days'] : false;
@@ -332,6 +348,7 @@ class WPLA_CronActions {
 			if ( is_array( $orders ) ) {
 
 				// run the import
+				$importer = new WPLA_OrdersImporter();
 				$success = $importer->importOrders( $orders, $account );
 
 				$msg  = sprintf( __('%s order(s) were processed for account %s.','wpla'), sizeof($orders), $account->title );
@@ -360,14 +377,32 @@ class WPLA_CronActions {
 	public function action_update_reports() {
         WPLA()->logger->info("do_action: wpla_update_reports");
 
+        // reset counter - will be updated in processReportsRequestList()
+		update_option( 'wpla_reports_in_progress', 0 );
+
 		$accounts = WPLA_AmazonAccount::getAll();
 
 		foreach ($accounts as $account ) {
 
 			$api = new WPLA_AmazonAPI( $account->id );
 
+			// get all submitted reports for this account
+			$submitted_reports = WPLA_AmazonReport::getSubmittedReportsForAccount( $account->id );
+			$ReportRequestIds = array();
+			foreach ($submitted_reports as $report) {
+				$ReportRequestIds[] = $report->ReportRequestId;
+			}
+
+			// do nothing if no submitted reports are found (disable to fetch all recent reports)
+			if ( empty( $ReportRequestIds ) ) {
+				$msg  = sprintf( __('No pending report request(s) for account %s.','wpla'), $account->title );
+				WPLA()->logger->info( $msg );
+				$this->showMessage( nl2br($msg),0,1 );
+				continue;
+			}
+
 			// get report requests
-			$reports = $api->getReportRequestList();
+			$reports = $api->getReportRequestList_v2( $ReportRequestIds );
 
 			if ( is_array( $reports ) )  {
 
@@ -375,7 +410,7 @@ class WPLA_CronActions {
 				// $this->processReportsRequestList( $reports, $account );
 
 				// process report request list
-				WPLA_AmazonReport::processReportsRequestList( $reports, $account );
+				WPLA_AmazonReport::processReportsRequestList( $reports, $account, true );
 
 				$msg  = sprintf( __('%s report request(s) were found for account %s.','wpla'), sizeof($reports), $account->title );
 				WPLA()->logger->info( $msg );
@@ -401,6 +436,7 @@ class WPLA_CronActions {
         WPLA()->logger->info("do_action: wpla_update_feeds");
 
 		$accounts = WPLA_AmazonAccount::getAll();
+		$feeds_in_progress = 0;
 
 		foreach ($accounts as $account ) {
 
@@ -412,7 +448,7 @@ class WPLA_CronActions {
 			if ( is_array( $feeds ) )  {
 
 				// run the import
-				WPLA_AmazonFeed::processFeedsSubmissionList( $feeds, $account );
+				$feeds_in_progress += WPLA_AmazonFeed::processFeedsSubmissionList( $feeds, $account );
 
 				$msg  = sprintf( __('%s feed submission(s) were found for account %s.','wpla'), sizeof($feeds), $account->title );
 				WPLA()->logger->info( $msg );
@@ -429,6 +465,9 @@ class WPLA_CronActions {
 			}
 
 		}
+
+		// update feed progress status
+		update_option( 'wpla_feeds_in_progress', $feeds_in_progress );
 
 	} // action_update_feeds()
 

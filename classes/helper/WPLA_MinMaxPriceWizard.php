@@ -65,25 +65,27 @@ class WPLA_MinMaxPriceWizard {
 
 			// get base price (min)
 			$base_price = 0;
-			if ( $min_base_price == 'price' ) 		$base_price = ProductWrapper::getPrice( $post_id );
-			if ( $min_base_price == 'sale_price' ) 	$base_price = ProductWrapper::getSalePrice( $post_id );
+			if ( $min_base_price == 'price' ) 		$base_price = WPLA_ProductWrapper::getPrice( $post_id );
+			if ( $min_base_price == 'sale_price' ) 	$base_price = WPLA_ProductWrapper::getSalePrice( $post_id );
 			if ( $min_base_price == 'msrp' ) 	    $base_price = get_post_meta( $post_id, '_msrp', true ) ? get_post_meta( $post_id, '_msrp', true ) : get_post_meta( $post_id, '_msrp_price', true );
 
 			// calculate new min price
 			if ( $min_price_percentage )			$base_price = $base_price + ( $base_price * floatval($min_price_percentage) / 100 );
 			if ( $min_price_amount )				$base_price = $base_price + floatval($min_price_amount);
+			if ( $min_base_price == 'no_change' ) 	$base_price = $item->min_price;
 			$new_min_price = round( $base_price, 2 );
 
 
 			// get base price (max)
 			$base_price = 0;
-			if ( $max_base_price == 'price' ) 		$base_price = ProductWrapper::getPrice( $post_id );
-			if ( $max_base_price == 'sale_price' ) 	$base_price = ProductWrapper::getSalePrice( $post_id );
+			if ( $max_base_price == 'price' ) 		$base_price = WPLA_ProductWrapper::getPrice( $post_id );
+			if ( $max_base_price == 'sale_price' ) 	$base_price = WPLA_ProductWrapper::getSalePrice( $post_id );
 			if ( $max_base_price == 'msrp' ) 	    $base_price = get_post_meta( $post_id, '_msrp', true ) ? get_post_meta( $post_id, '_msrp', true ) : get_post_meta( $post_id, '_msrp_price', true );
 
 			// calculate new max price
 			if ( $max_price_percentage )			$base_price = $base_price + ( $base_price * floatval($max_price_percentage) / 100 );
 			if ( $max_price_amount )				$base_price = $base_price + floatval($max_price_amount);
+			if ( $max_base_price == 'no_change' ) 	$base_price = $item->max_price;
 			$new_max_price = round( $base_price, 2 );
 
 

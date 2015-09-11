@@ -351,6 +351,8 @@ class WPLA_ListingsPage extends WPLA_Page {
 
 	public function showNotifications() {
 
+		self::checkForDeletedProducts();
+
         // get listing status summary
 		$listingsModel = new WPLA_ListingsModel();
         $summary = WPLA_ListingsModel::getStatusSummary();
@@ -445,6 +447,27 @@ class WPLA_ListingsPage extends WPLA_Page {
         }
 
 	} // showNotifications()
+	
+
+	static function checkForDeletedProducts() {
+		global $wpdb;
+
+        $items = $wpdb->get_var("
+            SELECT count(a.id)
+            FROM {$wpdb->prefix}amazon_listings a
+            LEFT JOIN {$wpdb->posts} p ON a.post_id = p.ID
+            WHERE a.post_id <> 0
+              AND p.ID IS NULL
+            ORDER BY a.post_id
+        ");
+
+		if ( ! empty($items) ) {
+			$link_url    = wp_nonce_url( 'admin.php?page=wpla-tools&tab=developer&action=wpla_fix_deleted_products', 'wpla_tools_page' );
+			$link_button = '&nbsp;&nbsp;<a href="'.$link_url.'" class="button button-small button-primary">Fix It Now</a>';
+			wpla_show_message( sprintf('Warning: There are %s listings linked to missing WooCommerce products.<br>These items need to be removed from WP-Lister to be able to list or import them again.', $items ) . $link_button, 'error' );
+		}
+
+	} // checkForDeletedProducts()
 	
 
 

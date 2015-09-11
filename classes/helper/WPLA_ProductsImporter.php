@@ -41,6 +41,11 @@ class WPLA_ProductsImporter {
 		$this->request_count++;
 		// echo "<pre>getMatchingProductForId() returned: ";print_r($result);echo"</pre>";#die();
 
+		// handle Import Variations As Simple option
+		if ( $result->success && get_option( 'wpla_import_variations_as_simple', 0 ) ) {
+			$result->product->variation_type = '_single_';
+		}
+
 
 		// handle empty result error
 		if ( $result->success && empty( $result->product->AttributeSets->ItemAttributes->Title ) ) {
@@ -92,11 +97,23 @@ class WPLA_ProductsImporter {
 				$lm->updateItemAttributes( $result->product->AttributeSets->ItemAttributes, $listing_id );
 
 				// get parent item - new request 
-				$parent_asin = $result->product->VariationParentASIN;
-				$api    = new WPLA_AmazonAPI( $account->id ); // new log record
-				$result = $api->getMatchingProductForId( $parent_asin, 'ASIN' );
+				$parent_asin   = $result->product->VariationParentASIN;
+				$api           = new WPLA_AmazonAPI( $account->id ); // new log record
+				$parent_result = $api->getMatchingProductForId( $parent_asin, 'ASIN' );
+				$parent_node   = $parent_result->success ? $parent_result->product : false;
 				$this->request_count++;
-				WPLA()->logger->info( $listing['asin']." is a child of parent ASIN $parent_asin" );
+				
+				// check for "variations without attributes" 
+				// if there are no variation attributes on the parent, fall back to creating a simple product instead
+				if ( 0 == self::countVariationChildNodes( $parent_node ) ) {
+					$msg = $listing['asin']." seems to be a child of parent ASIN $parent_asin - but that parent has no variation attributes set, so it will be imported as a simple product.";
+					WPLA()->logger->warn( $msg );
+					wpla_show_message( $msg, 'warn' );
+					$result->product->variation_type = '_invalid_parent_';
+				} else {
+					WPLA()->logger->info( $listing['asin']." is a child of parent ASIN $parent_asin" );
+					$result = $parent_result;
+				}
 
 			}
 
@@ -141,7 +158,7 @@ class WPLA_ProductsImporter {
 			$errors  = '';
 			$this->lastPostID = $woo->last_insert_id;
 
-		} elseif ( $result->Error->Message ) {
+		} elseif ( @$result->Error->Message ) {
 			$errors  = sprintf( __('There was a problem fetching product details for %s.','wpla'), $listing['asin'] ) .'<br>Error: '. $result->Error->Message;
 			$success = false;
 		} else {
@@ -220,11 +237,10 @@ class WPLA_ProductsImporter {
 	} // getOrCreateParentVariation( )
 
 
-	public function parseVariationChildNodes( $product_node, $parent_listing, $account ) {
-		WPLA()->logger->info( "parseVariationChildNodes()" );
-
-		if ( !    isset( $product_node->Relationships->VariationChild ) ) return $product_node;
-		// if ( ! is_array( $product_node->Relationships->VariationChild ) ) return $product_node;
+	// count max of variation attributes in a given parent product node
+	static public function countVariationChildNodes( $product_node ) {
+		WPLA()->logger->info( "countVariationChildNodes()" );
+		if ( !    isset( $product_node->Relationships->VariationChild ) ) return 0;
 
         // if only a single variation is returned, convert VariationChild node to array
 		if (  is_object( $product_node->Relationships->VariationChild ) ) {
@@ -241,6 +257,24 @@ class WPLA_ProductsImporter {
 			$number_of_attributes = max( $number_of_attributes, $attribute_count );
 		}
 		WPLA()->logger->info( "number of attributes: ".$number_of_attributes );
+
+		return $number_of_attributes;
+	} // countVariationChildNodes( )
+
+
+	public function parseVariationChildNodes( $product_node, $parent_listing, $account ) {
+		WPLA()->logger->info( "parseVariationChildNodes()" );
+
+		if ( !    isset( $product_node->Relationships->VariationChild ) ) return $product_node;
+		// if ( ! is_array( $product_node->Relationships->VariationChild ) ) return $product_node;
+
+        // if only a single variation is returned, convert VariationChild node to array
+		if (  is_object( $product_node->Relationships->VariationChild ) ) {
+			$product_node->Relationships->VariationChild = array( $product_node->Relationships->VariationChild );			
+		}
+
+		// count number of attributes
+		$number_of_attributes = self::countVariationChildNodes( $product_node );
 
 		// loop variations
 		$lm = new WPLA_ListingsModel();

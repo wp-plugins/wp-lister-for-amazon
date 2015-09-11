@@ -74,9 +74,6 @@
 										<label for="apply_changes_to_all_ended"><?php printf( __('update %s ended items','wpla'), count($wpl_ended_listings) ) ?></label>
 										<br class="clear" />
 
-										<input type="checkbox" name="wpla_apply_changes_to_all_locked" value="yes" id="apply_changes_to_all_locked" <?php #if ($wpl_locked_listings) echo 'checked' ?>/>
-										<label for="apply_changes_to_all_locked"><?php printf( __('update %s locked items','wpla'), count($wpl_locked_listings) ) ?></label>
-
 									<?php elseif ( count($wpl_profile_listings) > -1 ): ?>
 										<p><?php echo sprintf( __('There are %s items using this profile.','wpla'), count($wpl_profile_listings) ); ?></p>
 									<?php else: ?>

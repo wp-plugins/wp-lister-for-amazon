@@ -127,14 +127,14 @@ class WPLA_ListingsModel extends WPLA_Model {
 		// fallback disabled - check FBA and local stock separately
 		if ( $stock_status == 'is_in_stock' && ! $fallback_enabled ) {
 			$where_sql .= "
-			AND (   (     quantity > 0  AND ( fba_fcid = 'DEFAULT'    OR fba_fcid = '' OR fba_fcid IS NULL ) ) /* non-FBA */
-	  			 OR ( fba_quantity > 0  AND ( fba_fcid = 'AMAZON_NA'  OR fba_fcid = 'AMAZON_EU'            ) ) /*     FBA */
+			AND (   (     quantity > 0  AND ( fba_fcid = 'DEFAULT'    OR fba_fcid = ''           OR fba_fcid IS NULL        ) ) /* non-FBA */
+	  			 OR ( fba_quantity > 0  AND ( fba_fcid = 'AMAZON_NA'  OR fba_fcid = 'AMAZON_EU'  OR fba_fcid = 'AMAZON_IN'  ) ) /*     FBA */
 	  			) 
             ";
 		} elseif ( $stock_status == 'is_not_in_stock' && ! $fallback_enabled ) {
 			$where_sql .= "
-			AND (   (       quantity < 1                            AND ( fba_fcid = 'DEFAULT'    OR fba_fcid = '' OR fba_fcid IS NULL ) ) /* non-FBA */
-			     OR ( ( fba_quantity < 1 OR fba_quantity IS NULL )  AND ( fba_fcid = 'AMAZON_NA'  OR fba_fcid = 'AMAZON_EU'            ) ) /*     FBA */
+			AND (   (       quantity < 1                            AND ( fba_fcid = 'DEFAULT'    OR fba_fcid = ''           OR fba_fcid IS NULL        ) ) /* non-FBA */
+			     OR ( ( fba_quantity < 1 OR fba_quantity IS NULL )  AND ( fba_fcid = 'AMAZON_NA'  OR fba_fcid = 'AMAZON_EU'  OR fba_fcid = 'AMAZON_IN'  ) ) /*     FBA */
 			    )
 			";
 		} 
@@ -158,6 +158,7 @@ class WPLA_ListingsModel extends WPLA_Model {
         // filter profile_id
 		$profile_id = isset($_REQUEST['profile_id']) ? esc_sql( $_REQUEST['profile_id'] ) : false;
 		if ( $profile_id ) {
+			if ( $profile_id == '_NONE_' ) $profile_id = '0';
 			$where_sql .= "
 				 AND l.profile_id = '".$profile_id."'
 			";
@@ -848,8 +849,13 @@ class WPLA_ListingsModel extends WPLA_Model {
 	function updateItemFromReportCSV( $csv, $account_id )
 	{
 		global $wpdb;
-		
-		//#type $Detail ItemType
+
+		// skip if $csv is not the right format - seller-sku is required,
+		// localized report headers would insert empty rows in listings table
+		if ( ! isset( $csv['seller-sku'] ) || empty( $csv['seller-sku'] ) ) {
+			wpla_show_message('Error: Could not parse report row. Make sure to disable localized column headers in seller central.','error');
+			return false;
+		}
 		
 		// map CSV Report Row to DB columns
 		$data = self::mapMerchantReportItemCSVToDB( $csv );
@@ -910,6 +916,9 @@ class WPLA_ListingsModel extends WPLA_Model {
 		$data['date_published']		= date('Y-m-d H:i:s', strtotime( str_replace( '/', '-', $csv['open-date'] ) ) );
 		$data['source']             = isset($csv['source']) ? $csv['source'] : 'imported';
 
+		// store report_row for later reference - and convert all text columns to UTF8
+		$csv['item-name'] 			= self::convertToUTF8( $csv['item-name'] );
+		$csv['item-note'] 			= self::convertToUTF8( $csv['item-note'] );
 		$data['details'] 			= self::encodeObject( $csv );
 
 		return $data;
@@ -1777,6 +1786,7 @@ class WPLA_ListingsModel extends WPLA_Model {
 		// gather profile data
 		$data = array();
 		$data['profile_id'] = $profile->id;
+		$data['account_id'] = $profile->account_id;
 
 		// apply profile price
 		$data['price'] = WPLA_ProductWrapper::getPrice( $post_id );

@@ -190,6 +190,22 @@ class WPLA_LogTable extends WP_List_Table {
             }
         }
 
+        // GetReport - show ReportId
+        if ( 'GetReport' == $item['callname'] ) {
+            $parameters = maybe_unserialize( $item['parameters'] );
+            if ( isset( $parameters['ReportId'] ) ) {
+                $link .= ' <small>' . $parameters['ReportId'] . '</small>';
+            }
+        }
+
+        // GetReportRequestList - show MarketplaceId (unused)
+        if ( 'GetReportRequestList' == $item['callname'] ) {
+            $parameters = maybe_unserialize( $item['parameters'] );
+            if ( isset( $parameters['MarketplaceId'] ) ) {
+                $link .= ' <small>' . $parameters['MarketplaceId'] . '</small>';
+            }
+        }
+
         // ListOrderItems - show AmazonOrderId
         if ( 'ListOrderItems' == $item['callname'] ) {
             $parameters = maybe_unserialize( $item['parameters'] );

@@ -263,6 +263,75 @@ class WPLA_ProductBuilder {
 	
 		}
 
+		// add condition info to description
+		if ( $data['condition_note'] ) {
+
+			$condition_type = wpla_spacify( $data['condition_type'] );
+			$conditionHtml  = '<div class="amazon_condition">';
+			$conditionHtml .= '<span class="amazon_condition_label">';
+			$conditionHtml .= __('Item Condition','wpla') . ': ';
+			$conditionHtml .= '</span>';
+			$conditionHtml .= $condition_type . '. '.$data['condition_note'];
+			$conditionHtml .= '</div>' . "\n";
+			$conditionHtml = apply_filters( 'wpla_filter_imported_condition_html', $conditionHtml, $data );
+			$data['description'] .= "\n" . $conditionHtml;
+	
+		}
+
+		// parse Book specific attributes like author, binding and date published
+		if ( isset( $listing['attributes']->ProductGroup ) && $listing['attributes']->ProductGroup == 'Book' ) {
+
+			if ( isset( $listing['attributes']->Publisher ) ) {
+				$attrib                            = new stdClass();
+				$attrib->name                      = 'Publisher';
+				$attrib->value                     = is_array( $listing['attributes']->Publisher ) ? join('|', $listing['attributes']->Publisher) : $listing['attributes']->Publisher;
+				$data['attributes'][$attrib->name] = $attrib;
+			}
+
+			if ( isset( $listing['attributes']->Binding ) ) {
+				$attrib                            = new stdClass();
+				$attrib->name                      = 'Binding';
+				$attrib->value                     = $listing['attributes']->Binding;
+				$data['attributes'][$attrib->name] = $attrib;
+			}
+
+			if ( isset( $listing['attributes']->Edition ) ) {
+				$attrib                            = new stdClass();
+				$attrib->name                      = 'Edition';
+				$attrib->value                     = $listing['attributes']->Edition;
+				$data['attributes'][$attrib->name] = $attrib;
+			}
+
+			if ( isset( $listing['attributes']->PublicationDate ) ) {
+				$attrib                            = new stdClass();
+				$attrib->name                      = 'Publication date';
+				$attrib->value                     = $listing['attributes']->PublicationDate;
+				$data['attributes'][$attrib->name] = $attrib;
+			}
+
+			if ( isset( $listing['attributes']->NumberOfPages ) ) {
+				$attrib                            = new stdClass();
+				$attrib->name                      = 'Number of pages';
+				$attrib->value                     = $listing['attributes']->NumberOfPages;
+				$data['attributes'][$attrib->name] = $attrib;
+			}
+
+			if ( isset( $listing['attributes']->Creator ) ) {
+				$attrib                            = new stdClass();
+				$attrib->name                      = 'Author';
+				$attrib->value                     = is_array( $listing['attributes']->Creator ) ? join('|', $listing['attributes']->Creator) : $listing['attributes']->Creator;
+				$data['attributes'][$attrib->name] = $attrib;
+			}
+
+			if ( isset( $listing['attributes']->Author ) ) {
+				$attrib                            = new stdClass();
+				$attrib->name                      = 'Author';
+				$attrib->value                     = is_array( $listing['attributes']->Author  ) ? join('|', $listing['attributes']->Author ) : $listing['attributes']->Author;
+				$data['attributes'][$attrib->name] = $attrib;
+			}
+
+		}
+
 		// include variations from product node
 		if ( $product_node ) {
 			if ( isset( $product_node->variations ) && is_array( $product_node->variations ) ) {
@@ -284,6 +353,9 @@ class WPLA_ProductBuilder {
 
 			}
 		}
+
+		// allow other plugins to modify $data
+		$data = apply_filters( 'wpla_filter_imported_product_data', $data, $listing, $report_row );
 
 		return $data;
 
@@ -1111,8 +1183,8 @@ class WPLA_ProductBuilder {
 		// full url to source image
 		$img_url = $image; 
 
-		// limit title to 200 characters - filenames can only have 255 chars
-		$title = strlen($title) > 200 ? trim(substr($title, 0, 200)) : $title;
+		// limit title to 120 characters - filenames/guids can only have 255 chars
+		$title = strlen($title) > 120 ? trim(substr($title, 0, 120)) : $title;
 
 		// append amazon id to listing title
 		if ( $asin ) $title .= '-'.$asin;
@@ -1192,9 +1264,10 @@ class WPLA_ProductBuilder {
 		);
 
 		// Save the attachment data
-		$attachment_id = wp_insert_attachment( $attachment, $img_local_path, $post_id );
-		WPLA()->logger->info( 'attachment_id: ' . $attachment_id );
-		if ( !is_wp_error( $attachment_id ) ) {
+		// $attachment_id = wp_insert_attachment( $attachment, $img_local_path, $post_id );
+		$attachment_id = self::wp_insert_attachment_with_error_handling( $attachment, $img_local_path, $post_id );
+		if ( ! is_wp_error( $attachment_id ) ) {
+
 
 			// if ( $is_new_image ) {
 			// 	wp_update_attachment_metadata( $attachment_id, wp_generate_attachment_metadata( $attachment_id, $img_local_path ) );
@@ -1203,6 +1276,7 @@ class WPLA_ProductBuilder {
 
 			// if ( $is_new_image ) ... removed because it would leave image meta data empty, resulting a in 1px image in admin
 			// WPLA()->logger->info( 'wp_update_attachment_metadata()' );
+			WPLA()->logger->info( 'new attachment_id: ' . $attachment_id );
 
 			// make sure we have wp_generate_attachment_metadata() available
 			require_once( ABSPATH . 'wp-admin/includes/image.php' );
@@ -1219,10 +1293,28 @@ class WPLA_ProductBuilder {
 			WPLA()->logger->info( 'product image: ' . $img_local_url );
 
 		} else {
-			WPLA()->logger->error( 'there was a problem assigning this image: ' . $img_local_path );
+			wpla_show_message( 'Failed to create attachment from image ' . $img_local_path . '<br>Error: '.$attachment_id->get_error_message(), 'warn' );
+			WPLA()->logger->error( 'Failed to create attachment from image ' . $img_local_path . '<br>Error: '.$attachment_id->get_error_message() );
 		}
 		return $attachment_id;
 	} // addProductImage()
+
+	static function wp_insert_attachment_with_error_handling( $args, $file = false, $parent = 0 ) {
+	    $defaults = array(
+	        'file'        => $file,
+	        'post_parent' => 0
+	    );
+	 
+	    $data = wp_parse_args( $args, $defaults );
+	 
+	    if ( ! empty( $parent ) ) {
+	        $data['post_parent'] = $parent;
+	    }
+	 
+	    $data['post_type'] = 'attachment';
+	 
+	    return wp_insert_post( $data, true ); // allow WP_Error object to be returned
+	} // wp_insert_attachment_with_error_handling()
 
 	public function get_attachment_id_for_filename( $imgfile ) {
 		global $wpdb;
@@ -1354,13 +1446,17 @@ class WPLA_ProductBuilder {
 
 
 		// 
-		// update item-condition - fix missing data from previous imports
+		// update item-condition - if enabled
 		// 
 		if ( $reports_update_woo_condition ) {
 
 			$amazon_condition_type = WPLA_ImportHelper::convertNumericConditionIdToType( $report_row['item-condition'] );
 			update_post_meta( $product_id, '_amazon_condition_type', $amazon_condition_type);
-			update_post_meta( $product_id, '_amazon_condition_note', $report_row['item-note'] );
+
+			$amazon_condition_note = WPLA_ListingsModel::convertToUTF8( $report_row['item-note'] );
+			update_post_meta( $product_id, '_amazon_condition_note', $amazon_condition_note );
+			WPLA()->logger->info( "updated condition for product $product_id: $amazon_condition_type / ".$amazon_condition_note );
+			// WPLA()->logger->info( "stored condition note: " . get_post_meta( $product_id, '_amazon_condition_note', true ) );
 
 		}
 

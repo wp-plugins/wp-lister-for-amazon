@@ -270,12 +270,12 @@ class WPLA_ToolsPage extends WPLA_Page {
 		");
 
 		foreach ($min_prices as $record) {
-			$wpdb->update( $wpdb->prefix.'amazon_listings', array( 'min_price' => $record->meta_value ), array( 'post_id' => $record->post_id ) );
+			$wpdb->update( $wpdb->prefix.'amazon_listings', array( 'min_price' => $record->meta_value, 'pnq_status' => 1 ), array( 'post_id' => $record->post_id ) );
 			// echo "<pre>";print_r($wpdb->last_query);echo"</pre>";#die();
 		}
 
 		foreach ($max_prices as $record) {
-			$wpdb->update( $wpdb->prefix.'amazon_listings', array( 'max_price' => $record->meta_value ), array( 'post_id' => $record->post_id ) );
+			$wpdb->update( $wpdb->prefix.'amazon_listings', array( 'max_price' => $record->meta_value, 'pnq_status' => 1 ), array( 'post_id' => $record->post_id ) );
 			// echo "<pre>";print_r($wpdb->last_query);echo"</pre>";#die();
 		}
 

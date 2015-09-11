@@ -181,7 +181,7 @@ class WPLA_RepricingTable extends WPLA_ListingsTable {
     
     function get_edit_price_field( $col, $price, $item ){
 
-        $price = is_numeric( $price ) ? number_format( $price, 2 ) : $price;
+        $price = is_numeric( $price ) ? number_format( $price, 2, '.', '' ) : $price;
 
         $form_field  = '<input type="text" ';
         $form_field .= 'value="'.$price.'" ';

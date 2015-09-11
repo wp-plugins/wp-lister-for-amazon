@@ -2,7 +2,7 @@
 Contributors: wp-lab
 Tags: amazon, woocommerce, products, export
 Requires at least: 4.0
-Tested up to: 4.2.2
+Tested up to: 4.3
 Stable tag: trunk
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -16,7 +16,7 @@ WP-Lister for Amazon integrates your WooCommerce product catalog with your inven
 = Features =
 
 * list any number of items
-* supports all official Amazon feed files
+* supports all official Amazon category feeds
 * supports product variations
 * view buy box price and competitor prices
 * includes SKU generator tool
@@ -25,7 +25,7 @@ WP-Lister for Amazon integrates your WooCommerce product catalog with your inven
 
 Visit http://www.wplab.com/plugins/wp-lister-for-amazon/ to read more about WP-Lister and the Pro version - including documentation, installation instructions and user reviews.
 
-WP-Lister Pro for Amazon will not only help you list items, but synchronize sales and orders across platforms and features automatic repricing.
+WP-Lister Pro for Amazon will not only help you list items, but synchronize sales and orders across platforms and features an automatic repricing tool.
 
 == Installation ==
 
@@ -44,9 +44,66 @@ No, and there are no plans on adding support for IIS.
 
 = Are there any more FAQ? =
 
-Please check out our growing knowledgebase at http://www.wplab.com/plugins/wp-lister-for-amazon/faq/
+Yes, there are. Please check out our growing knowledgebase at http://www.wplab.com/plugins/wp-lister-for-amazon/faq/
 
 == Changelog ==
+= 0.9.6.7 =
+* fixed issue where activity indicator could show reports in progress when all reports were already processed 
+* improved multiple offers indicator on repricing page - explain possible up-pricing issues in tooltip 
+* feed generation: leave external_product_id_type empty if there is no external_product_id (parent variations) 
+* skip invalid rows when processing inventory report - prevent inserting empty rows in amazon_listings 
+* don't allow processing an inventory report that has localized column headers 
+* added filter hook wpla_filter_imported_product_data and wpla_filter_imported_condition_html 
+
+= 0.9.6.6.8 =
+* fixed issue where sale dates were sent if sale price was intentionally left blank in listing profile 
+* fixed inline price editor for large amounts - remove thousands separator from edit price field 
+* fixed no change option in min/max price wizard  
+
+= 0.9.6.6.7 =
+* fixed sale start and end date not being set automatically 
+* fixed repricing changelog showing integer prices when force decimal comma option was enabled  
+* feed generation: leave external_product_id_type empty if there is no external_product_id (parent variations) 
+
+= 0.9.6.6.6 =
+* added warning note on import page about sale prices not being imported, but being removed when an imported product is updated 
+* fixed issue where sale start and end date would be set for rows without a price (like parent variations in a listing data feed) 
+
+= 0.9.6.6.5 =
+* added warning on listing page if listings linked to missing products are found 
+* added support for tracking details set by Shipment Tracking and Shipstation plugins (use their tracking number and provider in Order Fulfillment feed) 
+* if no sale price is set send regular price with sale end date in the past (the only way to remove previously sent sale prices) 
+* fixed stored number of pending feeds when multiple accounts are checked 
+
+= 0.9.6.6.4 =
+* include item condition note in imported product description 
+* automatically create matched listing for simple products when ASIN is entered manually 
+* trigger new Price&Quantity feed when updating min/max prices from WooCommerce (tools page) 
+* updating reports checks pending ReportRequestIds only (make sure that each report is processed using the account it was requested by) 
+* fixed issue where reports for different marketplaces would return the same results 
+* fixed shipping date not being sent as UTC when order is manually marked as shipped 
+* fixed importing books with multiple authors 
+* added more feed templates for amazon.ca 
+
+= 0.9.6.6.3 =
+* added option to filter orders by Amazon account on WooCommerce Orders page 
+* added prev/next buttons to import preview and fixed select all checkbox on search results 
+* import book specific attributes - like author, publisher, binding and date published 
+* extended option to set how often to request FBA Shipment reports to apply to FBA Inventory report as well 
+* fixed importing item condition and condition note when report contains special characters 
+* fixed possible error updating min/max prices 
+
+= 0.9.6.6.2 =
+* profile editor: do not require external_product_id if assigned account has the brand registry option enabled 
+* update wp_amazon_listings.account_id when updating / applying listing profile 
+* fixed issue where FBA enabled products would be marked as out of stock in WooCommerce if FBA stock is zero but still stock left in WC 
+* fixed rare issue saving report processing options on import page 
+
+= 0.9.6.6.1 =
+* added option to import variations as simple products 
+* fall back to import as simple product if there are no variation attributes on the parent listing (fix importing "variations without attributes") 
+* fixed issue importing images for very long listing titles 
+* improved error handling during importing process 
 
 = 0.9.6.6 =
 * added filter option to hide empty fields in profile editor

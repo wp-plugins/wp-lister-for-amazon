@@ -159,16 +159,18 @@ class WPLA_AmazonWebHelper {
 
         // handle errors
         if ( is_wp_error( $response ) ) {
-            echo "<pre>";print_r($response);echo"</pre>";   
+            // echo "<pre>";print_r($response);echo"</pre>";   
             // $this->showMessage( "Couldn't fetch URL $listing_url - ".$response->get_error_message(), 1, 1 );
             WPLA()->logger->error("Couldn't fetch URL $listing_url - ".$response->get_error_message());
-            $this->errors[] = "Couldn't fetch URL $listing_url - ".$response->get_error_message();
+            wpla_show_message("Couldn't fetch URL $listing_url - ".$response->get_error_message() );
+            $this->errors[] = "Couldn't fetch URL $listing_url - ".$response->get_error_message(); // doesn't show
             return false;
         }
         if ( $response['response']['code'] != 200 ) {
-            echo "<pre>Couldn't fetch URL $listing_url - server returned error code ".$response['response']['code']."</pre>";
+            // echo "<pre>Couldn't fetch URL $listing_url - server returned error code ".$response['response']['code']."</pre>";
             // $this->showMessage( "Couldn't fetch URL $listing_url - server returned error code ".$response['response']['code'], 1, 1 );
             WPLA()->logger->error("Couldn't fetch URL $listing_url - server returned error code ".$response['response']['code'] );
+            wpla_show_message("Couldn't fetch URL $listing_url - server returned error code ".$response['response']['code'] );
             $this->errors[] = "Couldn't fetch URL $listing_url - server returned error code ".$response['response']['code'];
             return false;
         }

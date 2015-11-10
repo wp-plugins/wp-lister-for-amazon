@@ -902,10 +902,10 @@ class WPLA_WooBackendIntegration extends WPLA_Core {
 		// show warning
 		$errors_msg = '';
 		if ( ! empty($invalid_skus) ) {
-			$errors_msg .= __('Warning: This SKU is not valid:','wpla') .' <b>'. join($invalid_skus, ', ') . '</b> - only letters, numbers, dashes and underscores are allowed.<br>';
+			$errors_msg .= __('Warning: This SKU is not valid:','wpla') .' <b>'. htmlspecialchars( join($invalid_skus, ', ') ) . '</b> - only letters, numbers, dashes and underscores are allowed.<br>';
 		}
 		if ( ! empty($invalid_product_ids) ) {
-			$errors_msg .= __('Warning: This product ID does not seem to be a valid UPC / EAN:','wpla') .' <b>'. join($invalid_product_ids, ', ') . '</b><br>';
+			$errors_msg .= __('Warning: This product ID does not seem to be a valid UPC / EAN:','wpla') .' <b>'. htmlspecialchars( join($invalid_product_ids, ', ') ) . '</b><br>';
 			$errors_msg .= __('Valid UPCs have 12 digits, EANs have 13 digits.','wpla') . '<br>';
 		}
 		if ( ! empty($errors_msg) ) {

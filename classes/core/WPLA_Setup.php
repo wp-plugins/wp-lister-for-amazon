@@ -195,6 +195,18 @@ class WPLA_Setup extends WPLA_Core {
 			,'warn');
 		}
 
+		// OpenSSL 0.9.8o or later is required by Amazon (as of late 2015)
+		// https://sellercentral.amazon.com/forums/ann.jspa?annID=284
+		if ( defined('OPENSSL_VERSION_NUMBER') && ( OPENSSL_VERSION_NUMBER < 0x009080ff ) ) {
+			wpla_show_message( 
+				'<p>'
+				. '<b>Warning: Your version of '.OPENSSL_VERSION_TEXT.' is outdated and not supported by Amazon anymore.</b>'
+				. '<br><br>'
+				. 'To prevent any issues communicating with the Amazon API, please ask your hosting provider to update OpenSSL to version 0.9.8o or better.'
+				. '</p>'
+			,'warn');
+		}
+
 	}
 
 

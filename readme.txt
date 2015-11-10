@@ -2,7 +2,7 @@
 Contributors: wp-lab
 Tags: amazon, woocommerce, products, export
 Requires at least: 4.0
-Tested up to: 4.3
+Tested up to: 4.3.1
 Stable tag: trunk
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -47,6 +47,45 @@ No, and there are no plans on adding support for IIS.
 Yes, there are. Please check out our growing knowledgebase at http://www.wplab.com/plugins/wp-lister-for-amazon/faq/
 
 == Changelog ==
+= 0.9.6.12 =
+* improved storing taxes in created WooCommerce orders 
+* fixed order line item product_id and variation_id for created WooCommerce orders containing variations 
+* skip FBA orders from being auto completed on Amazon / Order Fulfillment Feed 
+* fixed "The order id ... was not associated with your merchant" error for FBA orders
+* repricing tool: restore listing view filters after using min/max price wizard 
+* added option to filter order to import by marketplace - prevent duplicate orders if the same account is connected to multiple marketplaces 
+* added feed template / category "Sport & Freizeit" on amazon.de 
+* added Deutsche Post shipping provider 
+
+= 0.9.6.11 =
+* fixed missing variation_theme values for some templates like Jewellery and Clothing 
+* fixed Error 99001: A value is required for the "feed_product_type" field (for parent variations) 
+* fixed missing bullet points for (parent) variations 
+* fixed FBA cron job not running more often than 24 hours 
+* fixed duplicate description on imported products - leave product short description empty 
+* fixed possible layout issue caused by 3rd party CSS 
+* fixed empty external_product_id_type column for amazon.in 
+* send SellerId instead of Merchant in SubmitFeed request header (SDK bug) 
+* added DPD shipping service on edit order page 
+
+= 0.9.6.10 =
+* added experimental support for amazon.in 
+* improved order processing for large numbers of orders 
+* fixed error: A value is required for the brand_name / item_name field 
+
+= 0.9.6.9 =
+* added filter option to show listings with no profile assigned 
+* fixed issue where orders were not imported / synced correctly if ListOrderItems requests are throttled 
+* fixed issue where some orders were not imported if multiple accounts are used 
+* fixed possible issue where lowest prices would not be updated from Amazon 
+
+= 0.9.6.8 =
+* fixed issue where variable items would be imported as simple products 
+* fixed issue where parent attributes (e.g. brand) were missing for child variations (attribute_brand shortcode) 
+* parent variations should only have three columns set: item_sku, parent_child, variation_theme 
+* fixed possible php notice on inventory check (tools page) 
+* added filter hook wpla_reason_for_not_creating_wc_order - allow other plugins to decide whether an order is created 
+
 = 0.9.6.7 =
 * fixed issue where activity indicator could show reports in progress when all reports were already processed 
 * improved multiple offers indicator on repricing page - explain possible up-pricing issues in tooltip 

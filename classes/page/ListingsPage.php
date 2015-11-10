@@ -607,7 +607,7 @@ class WPLA_ListingsPage extends WPLA_Page {
 			// $msg .= $this->renderDupeTable( $duplicateASINs, 'asin' );
 			$msg .= $this->renderDupeTable( $duplicateProducts, 'post_id' );
 
-			// $msg .= __('If you are not planning to use the inventory sync, you can hide this warning in settings.','wpla');
+			// $msg .= __('If you are not planning to use the synchronize sales option, you can hide this warning in settings.','wpla');
 			$msg .= '</p></div>';
 			$this->showMessage( $msg, 2 );				
 		}

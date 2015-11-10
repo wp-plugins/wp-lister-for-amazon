@@ -115,7 +115,8 @@ class WPLA_API_Hooks {
 		// disable default action for save_post
 		// global $wplister_amazon;
 		// remove_action( 'save_post', array( & $wplister_amazon->woo_backend, 'wpla_on_woocommerce_product_quick_edit_save' ), 10, 2 );
-		remove_action( 'save_post', array( WPLA()->woo_backend, 'wpla_on_woocommerce_product_quick_edit_save' ), 10, 2 );
+		remove_action( 'save_post', array( WPLA()->woo_backend, 'wpla_on_woocommerce_product_quick_edit_save' ), 20, 2 );
+		remove_action( 'save_post', array( WPLA()->woo_backend, 'wpla_on_woocommerce_product_bulk_edit_save'  ), 20, 2 );
 
 		// add new save_post action to collect changed post IDs
 		add_action( 'save_post', array( &$this, 'collect_updated_products' ), 10, 2 );
@@ -127,7 +128,7 @@ class WPLA_API_Hooks {
 
 	// collect changed product IDs
 	function collect_updated_products( $post_id, $post ) {
-		// WPLA()->logger->info("collect_updated_products( $post_id )");
+		WPLA()->logger->info("CSV: collect_updated_products( $post_id )");
 
 		if ( !$_POST ) return $post_id;
 		// if ( is_int( wp_is_post_revision( $post_id ) ) ) return;
@@ -152,7 +153,7 @@ class WPLA_API_Hooks {
 		if ( ! in_array( $post_id, $collected_products ) )
 			$collected_products[] = $post_id;
 
-		// WPLA()->logger->info("collected products".print_r($collected_products,1));
+		// WPLA()->logger->info("collected products: ".print_r($collected_products,1));
 
 		// update queue
 		update_option( 'wpla_updated_products_queue', $collected_products );
@@ -165,16 +166,20 @@ class WPLA_API_Hooks {
 		if ( ! is_array( $collected_products ) ) $collected_products = array();
 
 		// DEBUG
-		// WPLA()->logger->info("update_products_on_shutdown() - collected_products: ".print_r($collected_products,1));
+		WPLA()->logger->info("CSV: update_products_on_shutdown() - collected_products: ".print_r($collected_products,1));
 
 		// mark each queued product as modified
+		$lm = new WPLA_ListingsModel();
 		foreach ($collected_products as $post_id ) {
-			do_action( 'wpla_product_has_changed', $post_id );
+			// do_action( 'wpla_product_has_changed', $post_id );
+			$lm->markItemAsModified( $post_id, true ); // set $skip_updating_feeds = true
 		}
 
 		// clear queue
 		delete_option( 'wpla_updated_products_queue' );
 
+		// update pending feeds - after all items have been updated
+		if ( ! empty($collected_products) ) WPLA_AmazonFeed::updatePendingFeeds();
 	}
 
 }

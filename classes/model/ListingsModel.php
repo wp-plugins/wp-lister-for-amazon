@@ -917,8 +917,8 @@ class WPLA_ListingsModel extends WPLA_Model {
 		$data['source']             = isset($csv['source']) ? $csv['source'] : 'imported';
 
 		// store report_row for later reference - and convert all text columns to UTF8
-		$csv['item-name'] 			= self::convertToUTF8( $csv['item-name'] );
-		$csv['item-note'] 			= self::convertToUTF8( $csv['item-note'] );
+		$csv['item-name'] 			= self::convertToUTF8(  $csv['item-name'] );
+		$csv['item-note'] 			= self::convertToUTF8( @$csv['item-note'] );
 		$data['details'] 			= self::encodeObject( $csv );
 
 		return $data;
@@ -1319,8 +1319,11 @@ class WPLA_ListingsModel extends WPLA_Model {
 		$wpdb->update( $this->tablename, array( 'quantity' => $quantity ), array( 'post_id' => $post_id ) );
 	}
 
-	public function markItemAsModified( $post_id ) {
+	public function markItemAsModified( $post_id, $skip_updating_feeds = false ) {
 		global $wpdb;	
+
+		WPLA()->logger->info("markItemAsModified() - post_id: $post_id");
+		// WPLA()->logger->callStack( debug_backtrace() );
 
 		// $listingsModel  = new WPLA_ListingsModel();
 		// $listing_id     = $this->getListingIDFromPostID( $post_id );
@@ -1408,7 +1411,7 @@ class WPLA_ListingsModel extends WPLA_Model {
 		} // each listing
 
 		// update pending feed
-		if ( $there_were_changes ) {
+		if ( $there_were_changes && ! $skip_updating_feeds ) {
 			WPLA_AmazonFeed::updatePendingFeeds();
 		}
 

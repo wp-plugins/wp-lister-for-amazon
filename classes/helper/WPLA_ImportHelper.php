@@ -226,6 +226,7 @@ class WPLA_ImportHelper {
 		// if fallback is enabled, clear FBA data before processing first page
 		$account_id          = $report->account_id;
 		$fba_enable_fallback = get_option( 'wpla_fba_enable_fallback', 0 );
+		$fba_only_mode       = get_option( 'wpla_fba_only_mode', 0 );
 
 		if ( $task['from_row'] == 1 && $fba_enable_fallback ) {
 	
@@ -259,7 +260,7 @@ class WPLA_ImportHelper {
 			if ( $fba_condition == 'UNSELLABLE' ) continue;
 
 			// if fallback enabled, skip rows with zero quantity
-			if ( $fba_quantity == 0 && $fba_enable_fallback ) continue;
+			if ( $fba_quantity == 0 && $fba_enable_fallback && ! $fba_only_mode ) continue;
 			
 
 			$update_data = array(
@@ -277,9 +278,9 @@ class WPLA_ImportHelper {
 				$post_id = $listing_item->post_id;
 				if ( $post_id ) {
 
-					// update stock level - if lower than FBA
+					// update stock level - if lower than FBA, or FBA only mode enabled
 					$woo_stock = get_post_meta( $post_id, '_stock', true );
-					if ( $woo_stock < $fba_quantity ) {
+					if ( $woo_stock < $fba_quantity || $fba_only_mode == 1 ) {
 						update_post_meta( $post_id, '_stock', $fba_quantity );
 						$woo_stock = $fba_quantity;
 

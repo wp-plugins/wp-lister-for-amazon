@@ -46,13 +46,33 @@ class WPLA_AmazonAPI {
 
     // init MWS API
     public function initAPI( $section = false ) {
+        WPLA()->logger->debug('initAPI() '.$section);
 
         // set up environment
         self::fixMissingIconv();
         if ( ! defined('DATE_FORMAT') ) define('DATE_FORMAT', 'Y-m-d H:i:s');
 
-        // include base class
-        set_include_path(get_include_path() . PATH_SEPARATOR . WPLA_PATH . '/includes/amazon/src/.');     
+        // set up include_path
+        $success = set_include_path(get_include_path() . PATH_SEPARATOR . WPLA_PATH . '/includes/amazon/src');     
+        if ( $success === false && ( strpos( get_include_path(), 'amazon/src' ) === false ) ) {
+            WPLA()->logger->error('This server does not support set_include_path()' );
+
+            // display error message
+            wpla_show_message('<b>Serious Error:</b> This server does not support <i>set_include_path()</i>, which is required by WP-Lister to communicate with Amazon.<br><br>You need to contact your hosting provider to have this fixed - or switch to a better hoster!', 'error');
+            do_action('wpla_admin_notices');
+
+            // log to db
+            $this->dblogger->updateLog( array(
+                'callname'    => 'Serious Error: This server does not support set_include_path()',
+                'response'    => "Serious Error: This server does not support set_include_path(),\nwhich is required by WP-Lister to communicate with Amazon.\n\nYou need to contact your hosting provider to have this fixed - or switch to a better hoster!",
+                'request'     => get_include_path() . PATH_SEPARATOR . WPLA_PATH . '/includes/amazon/src',
+                'result'      => get_include_path(),
+                'http_code'   => 500,
+                'success'     => 'Error'
+            ));
+        }
+
+        // include base classes
         require_once WPLA_PATH . '/includes/amazon/src/MarketplaceWebService/Client.php';
         require_once WPLA_PATH . '/includes/amazon/src/MarketplaceWebServiceSellers/Client.php';
         require_once WPLA_PATH . '/includes/amazon/src/MarketplaceWebServiceProducts/Client.php';
@@ -253,7 +273,7 @@ class WPLA_AmazonAPI {
         $marketplaceIdArray = array("Id" => array( $this->MarketplaceId ) );
 
         $request = new MarketplaceWebService_Model_SubmitFeedRequest();
-        $request->setMerchant( $this->SellerId );
+        $request->setSellerId( $this->SellerId );
         $request->setMarketplaceIdList( $marketplaceIdArray );
         $request->setPurgeAndReplace( false );
         $request->setFeedType( $FeedType );
@@ -1160,7 +1180,8 @@ class WPLA_AmazonAPI {
         // $params['MarketplaceId.Id.1'] = $this->MarketplaceId; // 
         // $marketplaceIdArray = array("Id" => array( $this->MarketplaceId ) );
         // $request->setMarketplaceIdList( $marketplaceIdArray );
-        if ( is_array( $this->allowed_marketplace_ids ) && ! empty( $this->allowed_marketplace_ids ) ) {
+        $enable_orders_filter = get_option( 'wpla_fetch_orders_filter', 0 );
+        if ( is_array( $this->allowed_marketplace_ids ) && ! empty( $this->allowed_marketplace_ids ) && ! $enable_orders_filter ) {
             $i = 1;
             foreach ($this->allowed_marketplace_ids as $MarketplaceId) {
                 $params['MarketplaceId.Id.'.$i] = $MarketplaceId; // fetch orders from all marketplaces for account

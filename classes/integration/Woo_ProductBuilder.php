@@ -173,7 +173,7 @@ class WPLA_ProductBuilder {
 		$data['quantity']               = $listing['quantity'];
 		$data['price']                  = $listing['price'];
 		$data['sku']                    = $listing['sku'];
-		$data['additional_description'] = $listing['description'];
+		$data['additional_description'] = '';
 		$data['products_date_added']    = $listing['date_published'];
 		$data['categories']             = array();
 		$data['variations']             = array();

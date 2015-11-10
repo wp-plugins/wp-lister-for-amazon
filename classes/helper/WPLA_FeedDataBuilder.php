@@ -162,9 +162,9 @@ class WPLA_FeedDataBuilder {
 			
 			case 'external_product_id_type':
 				$value = get_post_meta( $post_id, '_amazon_id_type', true );
-				// leave id type empty if there is no product id (parent variations)
-				$external_product_id = WPLA()->memcache->getColumnValue( $product->sku, 'external_product_id' );
-				if ( empty( $external_product_id ) ) $value = '[---]';
+				// // leave id type empty if there is no product id (parent variations) (incompatible with amazon.in)
+				// $external_product_id = WPLA()->memcache->getColumnValue( $product->sku, 'external_product_id' );
+				// if ( empty( $external_product_id ) ) $value = '[---]';
 				break;
 			
 			case 'sku':			// update feed
@@ -502,6 +502,25 @@ class WPLA_FeedDataBuilder {
 			'department_name',
 			'product_description',
 			'item_type',
+			'feed_product_type',
+			'bullet_point1',		// bullet points should be set for parent variations (confirmed by amazon)
+			'bullet_point2',
+			'bullet_point3',
+			'bullet_point4',
+			'bullet_point5',
+			'special_features1',
+			'special_features2',
+			'special_features3',
+			'special_features4',
+			'special_features5',
+			'style_name',
+			'closure_type',
+			'lifestyle',
+			'material_type',
+			'material_type1',
+			'pattern_type',
+			'model_year',
+			'shoe_dimension_unit_of_measure',
 		);
 		if ( $product->product_type == 'variable' && ! in_array( $column, $parent_var_columns ) ) {
 			$value = '';

@@ -49,6 +49,11 @@
         <input type="hidden" name="action" value="wpla_bulk_apply_minmax_prices" />
         <input type="hidden" name="item_ids" value="<?php echo join( ',', $wpl_selected_items ) ?>" />
 
+        <input type="hidden" name="s"                value="<?php echo isset($_REQUEST['s']) ? $_REQUEST['s'] : ''; ?>" />
+        <input type="hidden" name="repricing_status" value="<?php echo isset($_REQUEST['repricing_status']) ? $_REQUEST['repricing_status'] : ''; ?>" />
+        <input type="hidden" name="stock_status"     value="<?php echo isset($_REQUEST['stock_status'])     ? $_REQUEST['stock_status']     : ''; ?>" />
+        <input type="hidden" name="fba_status"       value="<?php echo isset($_REQUEST['fba_status'])       ? $_REQUEST['fba_status']       : ''; ?>" />
+
         <table>
             <tr>
                 <td style="width:128px">

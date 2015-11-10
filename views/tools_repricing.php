@@ -216,8 +216,15 @@
 
 					if ( 'minmax_price_wiz' == selected_action ) {
 
+						// set extra parameters for ajax URL - to return user to the same page/view
+						var ajaxurl_extra_params = '';
+						ajaxurl_extra_params += '&s='                + "<?php echo isset($_REQUEST['s'])                ? urlencode( $_REQUEST['s'] )   : ''; ?>";
+						ajaxurl_extra_params += '&repricing_status=' + "<?php echo isset($_REQUEST['repricing_status']) ? $_REQUEST['repricing_status'] : ''; ?>";
+						ajaxurl_extra_params += '&stock_status='     + "<?php echo isset($_REQUEST['stock_status'])     ? $_REQUEST['stock_status']     : ''; ?>";
+						ajaxurl_extra_params += '&fba_status='       + "<?php echo isset($_REQUEST['fba_status'])       ? $_REQUEST['fba_status']       : ''; ?>";
+
 						// load MinMax wizard
-				        var tbURL = ajaxurl + "?action=wpla_show_minmax_price_wizard&item_ids="+item_ids.join(',')+"&width=640&height=420"; 
+				        var tbURL = ajaxurl + "?action=wpla_show_minmax_price_wizard&item_ids="+item_ids.join(',') + ajaxurl_extra_params + "&width=640&height=420"; 
 				        tb_show("Set minimum and maximum prices for "+item_ids.length+" product(s)", tbURL);
 
 						return false;

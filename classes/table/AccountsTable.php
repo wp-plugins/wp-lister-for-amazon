@@ -168,8 +168,10 @@ class WPLA_AccountsTable extends WP_List_Table {
             // check if active market matches the selected site
             if ( $active_market ) {
                 $amazon_market = new WPLA_AmazonMarket( $item['market_id'] );
+                $amazon_market_url = 'www.'.$amazon_market->url;
+                $amazon_market_url = str_replace( 'amazon.co.jp', 'amazon.jp', $amazon_market_url ); // JP URL is .co.jp, but Amazon still returns .jp in allowed markets
 
-                if ( $active_market->DomainName != 'www.'.$amazon_market->url ) {
+                if ( $active_market->DomainName != $amazon_market_url ) {
                     $msg = sprintf('The marketplace ID %s does not seem to match the site: Amazon %s', $active_marketplace_id, $amazon_market->code);
                     $html .= '<span style="color:darkred">Warning: '.$msg.'</span><br>';
                     // echo "<pre>";print_r($active_market);echo"</pre>";#die();

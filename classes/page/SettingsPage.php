@@ -145,6 +145,7 @@ class WPLA_SettingsPage extends WPLA_Page {
 
 			'fba_enabled'    				  => self::getOption( 'fba_enabled' ),
 			'fba_enable_fallback' 		      => self::getOption( 'fba_enable_fallback' ),
+			'fba_only_mode' 		          => self::getOption( 'fba_only_mode' ),
 			'fba_fulfillment_center_id' 	  => self::getOption( 'fba_fulfillment_center_id', 'AMAZON_NA' ),
 			'fba_report_schedule' 	  		  => self::getOption( 'fba_report_schedule', 'daily' ),
 
@@ -283,11 +284,13 @@ class WPLA_SettingsPage extends WPLA_Page {
 			self::updateOption( 'new_order_status',					$this->getValueFromPost( 'option_new_order_status' ) );
 			self::updateOption( 'shipped_order_status',				$this->getValueFromPost( 'option_shipped_order_status' ) );
 
+			self::updateOption( 'fetch_orders_filter', 		        $this->getValueFromPost( 'fetch_orders_filter' ) );	
 			self::updateOption( 'disable_new_order_emails', 		$this->getValueFromPost( 'disable_new_order_emails' ) );	
 			self::updateOption( 'disable_processing_order_emails', 	$this->getValueFromPost( 'disable_processing_order_emails' ) );
 			self::updateOption( 'disable_completed_order_emails', 	$this->getValueFromPost( 'disable_completed_order_emails' ) );
 			self::updateOption( 'disable_changed_order_emails', 	$this->getValueFromPost( 'disable_changed_order_emails' ) );
 			self::updateOption( 'disable_new_account_emails', 		$this->getValueFromPost( 'disable_new_account_emails' ) );
+			self::updateOption( 'create_orders_without_email', 		$this->getValueFromPost( 'create_orders_without_email' ) );
 			self::updateOption( 'auto_complete_sales', 				$this->getValueFromPost( 'auto_complete_sales' ) );
 			self::updateOption( 'default_shipping_provider', 		$this->getValueFromPost( 'default_shipping_provider' ) );
 			self::updateOption( 'default_shipping_service_name', 	$this->getValueFromPost( 'default_shipping_service_name' ) );
@@ -297,6 +300,7 @@ class WPLA_SettingsPage extends WPLA_Page {
 			self::updateOption( 'fba_enabled', 						$this->getValueFromPost( 'fba_enabled' ) );
 			self::updateOption( 'fba_autosubmit_orders', 			$this->getValueFromPost( 'fba_autosubmit_orders' ) );
 			self::updateOption( 'fba_enable_fallback', 				$this->getValueFromPost( 'fba_enable_fallback' ) );
+			self::updateOption( 'fba_only_mode', 					$this->getValueFromPost( 'fba_only_mode' ) );
 			self::updateOption( 'fba_default_delivery_sla', 		$this->getValueFromPost( 'fba_default_delivery_sla' ) );
 			self::updateOption( 'fba_default_order_comment', 		$this->getValueFromPost( 'fba_default_order_comment' ) );
 			self::updateOption( 'fba_default_notification', 		$this->getValueFromPost( 'fba_default_notification' ) );

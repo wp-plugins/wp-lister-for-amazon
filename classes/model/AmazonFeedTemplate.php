@@ -129,7 +129,20 @@ class WPLA_AmazonFeedTemplate {
 		// convert to assoc array with field names as keys
 		$values = array();
 		foreach ($items as $item) {
-			$values[ $item['field'] ] = $item;
+			if ( ! isset( $values[ $item['field'] ] ) ) {
+				// default: simply add new field
+				$values[ $item['field'] ] = $item;
+			} else {
+				// if field is already set, merge new values (for variation_theme, etc.)
+				$existing_values = explode( '|', $values[ $item['field'] ]['values'] );
+				// WPLA()->logger->info("existing values: ".print_r($existing_values,1));
+				$new_values      = explode( '|', $item['values'] );
+				// WPLA()->logger->info("adding values: ".print_r($new_values,1));
+				$combined_values = array_unique(array_merge( $existing_values, $new_values ));
+				// WPLA()->logger->info("combined values: ".print_r($combined_values,1));
+				// store combined values
+				$values[ $item['field'] ]['values'] = join( $combined_values, '|' );
+			}
 		}
 
 		return $values;

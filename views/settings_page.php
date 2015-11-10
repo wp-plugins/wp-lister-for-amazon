@@ -63,9 +63,9 @@
 									<?php endif; */ ?>
 
 									<?php if ( $wpl_option_cron_schedule && $wpl_option_sync_inventory ): ?>
-										<p><?php echo __('Inventory sync is enabled.','wpla') ?></p>
+										<p><?php echo __('Sync is enabled. Sales will be synchronized between WooCommerce and Amazon.','wpla') ?></p>
 									<?php else: ?>
-										<p><?php echo __('Inventory sync is currently disabled.','wpla') ?></p>
+										<p><?php echo __('Sync is currently disabled. Amazon and WooCommerce sales will not be synchronized!','wpla') ?></p>
 									<?php endif; ?>
 
 									</div>
@@ -167,7 +167,7 @@
 
 
 					<div class="postbox" id="UpdateOptionBox">
-						<h3 class="hndle"><span><?php echo __('Inventory sync','wpla') ?></span></h3>
+						<h3 class="hndle"><span><?php echo __('Background Tasks','wpla') ?></span></h3>
 						<div class="inside">
 							<!-- <p><?php echo __('Enable to update listings and transactions using WP-Cron.','wpla'); ?></p> -->
 
@@ -231,6 +231,19 @@
 
 							<p class="desc fba_option" style="display: block;">
 								<?php echo __('Fall back to remaining WooCommerce stock when FBA stock reaches zero.','wpla'); ?>
+							</p>
+
+							<label for="wpl-fba_only_mode" class="fba_option text_label">
+								<?php echo __('Enable FBA only mode','wpla') ?> 
+                                <?php wpla_tooltip('With this option enabled, WP-Lister will assume that all items from your FBA Inventory Report are fulfilled by Amazon only.<br><br>When processing an FBA Inventory Report, all FBA stock levels will be synchronized to WooCommerce.<br><br>Falling back to seller fulfillment will be disabled.') ?>
+							</label>
+							<select id="wpl-fba_only_mode" name="wpla_fba_only_mode" class="fba_option required-entry select">
+								<option value="0" <?php if ( $wpl_fba_only_mode != '1' ): ?>selected="selected"<?php endif; ?>><?php echo __('No','wpla'); ?></option>
+								<option value="1" <?php if ( $wpl_fba_only_mode == '1' ): ?>selected="selected"<?php endif; ?>><?php echo __('Yes','wpla'); ?></option>
+							</select>
+
+							<p class="desc fba_option" style="display: block;">
+								<?php echo __('Enable this if all your products use FBA or to sync all FBA stock levels to WooCommerce.','wpla'); ?>
 							</p>
 
 

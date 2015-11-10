@@ -101,7 +101,7 @@ class WPLA_CronActions {
 	public function cron_daily_schedule() {
         WPLA()->logger->info("*** WP-CRON: cron_daily_schedule()");
 
-    	// check timestamp
+    	// check timestamp - do not run daily schedule more often than every 24 hours
         $last_run = get_option('wpla_daily_cron_last_run');
         if ( $last_run > time() - 24 * 3600 ) {
 	        WPLA()->logger->warn('*** WP-CRON: cron_daily_schedule() EXIT - last run: '.human_time_diff( $last_run ).' ago');
@@ -134,9 +134,9 @@ class WPLA_CronActions {
 	public function cron_fba_report_schedule() {
         WPLA()->logger->info("*** WP-CRON: cron_fba_report_schedule()");
 
-    	// check timestamp
+    	// check timestamp - do not run FBA schedule more often than every 3 hours
         $last_run = get_option('wpla_fba_report_cron_last_run');
-        if ( $last_run > time() - 24 * 3600 ) {
+        if ( $last_run > time() -  3 * 3600 ) {
 	        WPLA()->logger->warn('*** WP-CRON: cron_fba_report_schedule() EXIT - last run: '.human_time_diff( $last_run ).' ago');
 	        return;
         }

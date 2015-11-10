@@ -335,9 +335,9 @@ class WPLA_FeedTemplateIndex {
 						),
 					),
 
-					// Clothing & Accessories
+					// Clothing, Accessories & Luggage
 					'Clothing' => array(
-						'title' => 'Clothing & Accessories',
+						'title' => 'Clothing, Accessories & Luggage',
 						'templates' => array(
 							'Flat.File.Clothing-Template.csv',
 							'Flat.File.Clothing-DataDefinitions.csv',	
@@ -1466,6 +1466,19 @@ class WPLA_FeedTemplateIndex {
 						'btguides' => array(
 							'de_baby_browse_tree_guide.csv',
 							'de_toys_browse_tree_guide.csv',
+						),
+					),
+
+					// Sport & Freizeit
+					'Sports' => array(
+						'title' => 'Sport & Freizeit',
+						'templates' => array(
+							'Flat.File.Sports.de-Template.csv',
+							'Flat.File.Sports.de-DataDefinitions.csv',	
+							'Flat.File.Sports.de-ValidValues.csv',								
+						),
+						'btguides' => array(
+							'de_sports_browse_tree_guide.csv',
 						),
 					),
 

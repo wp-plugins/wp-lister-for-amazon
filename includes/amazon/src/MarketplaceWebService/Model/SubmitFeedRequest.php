@@ -30,7 +30,7 @@ require_once ('MarketplaceWebService/Model/ContentType.php');
  * <ul>
  * 
  * <li>Marketplace: string</li>
- * <li>Merchant: string</li>
+ * <li>SellerId: string</li>
  * <li>MarketplaceIdList: MarketplaceWebService_Model_IdList</li>
  * <li>FeedContent: string</li>
  * <li>FeedType: string</li>
@@ -51,7 +51,7 @@ class MarketplaceWebService_Model_SubmitFeedRequest extends MarketplaceWebServic
      * <ul>
      * 
      * <li>Marketplace: string</li>
-     * <li>Merchant: string</li>
+     * <li>SellerId: string</li>
      * <li>MarketplaceIdList: MarketplaceWebService_Model_IdList</li>
      * <li>FeedContent: string</li>
      * <li>FeedType: string</li>
@@ -73,7 +73,7 @@ class MarketplaceWebService_Model_SubmitFeedRequest extends MarketplaceWebServic
 
         $this->fields = array (
         'Marketplace' => array('FieldValue' => null, 'FieldType' => 'string'),
-        'Merchant' => array('FieldValue' => null, 'FieldType' => 'string'),
+        'SellerId' => array('FieldValue' => null, 'FieldType' => 'string'),
         'MarketplaceIdList' => array('FieldValue' => null, 'FieldType' => 'MarketplaceWebService_Model_IdList'),
         'FeedContent' => array ('FieldValue' => null, 'FieldType' => 'string'),
         'FeedType' => array('FieldValue' => null, 'FieldType' => 'string'),
@@ -165,48 +165,48 @@ class MarketplaceWebService_Model_SubmitFeedRequest extends MarketplaceWebServic
     }
 
     /**
-     * Gets the value of the Merchant property.
+     * Gets the value of the SellerId property.
      * 
-     * @return string Merchant
+     * @return string SellerId
      */
-    public function getMerchant() 
+    public function getSellerId() 
     {
-        return $this->fields['Merchant']['FieldValue'];
+        return $this->fields['SellerId']['FieldValue'];
     }
 
     /**
-     * Sets the value of the Merchant property.
+     * Sets the value of the SellerId property.
      * 
-     * @param string Merchant
+     * @param string SellerId
      * @return this instance
      */
-    public function setMerchant($value) 
+    public function setSellerId($value) 
     {
-        $this->fields['Merchant']['FieldValue'] = $value;
+        $this->fields['SellerId']['FieldValue'] = $value;
         return $this;
     }
 
     /**
-     * Sets the value of the Merchant and returns this instance
+     * Sets the value of the SellerId and returns this instance
      * 
-     * @param string $value Merchant
+     * @param string $value SellerId
      * @return MarketplaceWebService_Model_SubmitFeedRequest instance
      */
-    public function withMerchant($value)
+    public function withSellerId($value)
     {
-        $this->setMerchant($value);
+        $this->setSellerId($value);
         return $this;
     }
 
 
     /**
-     * Checks if Merchant is set
+     * Checks if SellerId is set
      * 
-     * @return bool true if Merchant  is set
+     * @return bool true if SellerId  is set
      */
-    public function isSetMerchant()
+    public function isSetSellerId()
     {
-        return !is_null($this->fields['Merchant']['FieldValue']);
+        return !is_null($this->fields['SellerId']['FieldValue']);
     }
 
     /**
